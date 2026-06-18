@@ -2,7 +2,7 @@
   "ci": {
     "collect": {
       "startServerCommand": "pnpm start",
-      "url": ["http://localhost:3000/"],
+      "url": ["http://localhost:3000/no"],
       "numberOfRuns": 3,
       "settings": {
         "chromeFlags": "--no-sandbox"

@@ -56,6 +56,7 @@ export default async function HomePage({ params }: Props) {
       </section>
 
       <section className="mx-auto w-full max-w-6xl px-6 py-14">
+        <h2 className="sr-only">{t("highlightsHeading")}</h2>
         <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {highlights.map((h, i) => (
             <li key={i}>
