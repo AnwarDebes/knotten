@@ -1,0 +1,217 @@
+# Threat model: Knotten, Sjøutsikt i Rødberg
+
+Status: living document, owned under SPEC-23 (Security hardening and threat model). First drafted June 2026 during Phase 1 (architecture and specs). Honesty note on maturity: at the time of this draft no application code exists yet; the ADRs (0001-0014) are accepted, but every SPEC (00-26) is "not started". This document is therefore a design-stage threat model. Each mitigation below is tagged [implemented], [planned], or [to be confirmed] so the reader is never misled about what is actually running. Nothing here may be cited as a "reviewed and tested control" until the corresponding SPEC ships and its acceptance gate passes. The model is mapped to the OWASP Top 10 (2021) and to GDPR Article 32 (security of processing). It is scoped to the public platform: a Next.js (App Router, TypeScript) application on Vercel, with managed PostgreSQL in an EU region accessed through Drizzle ORM, Plausible (EU, cookieless) analytics, an EU/EEA transactional email provider, and MapLibre with OpenStreetMap plus Kartverket Høydedata for terrain. See ADR 0001-0014 for the architecture decisions this model assumes. Provider identities (database host, email provider, captcha vendor) are EU-resident defaults still to be confirmed with the developer; see OPEN-QUESTIONS.
+
+The crown jewel is the lead database. The front line is the public interest-registration form. Everything below is organised around protecting the former at the latter.
+
+Legal/DPO sign-off needed (flagged inline as [DPO REVIEW]): the lawful-basis and consent design, the retention schedule, the DSAR/erasure identity-verification process, the breach-notification timeline, the records of processing (Art. 30), the DPIA-lite, the data-processing agreements (DPAs) for each processor, and the EU-US Data Privacy Framework dependency for any non-EEA processor. None of these are an engineering call.
+
+## 1. Assets
+
+What is worth protecting, in priority order.
+
+| Asset | What it is | Why it matters | Sensitivity |
+|-------|-----------|----------------|-------------|
+| Lead personal data | Per SPEC-06: navn, e-post, optional telefon, optional interest/plot, source and timestamps | Personal data under GDPR; prospective-buyer contact data; the developer's commercial pipeline | Highest |
+| Consent records | The exact consent text, version and timestamp stored per lead, the double opt-in confirmation state, and any later withdrawal | The legal basis (consent) for processing every lead and the Art. 7(1) evidence of compliance; withdrawal must be as easy as giving consent (Art. 7(3)) | Highest |
+| Admin credentials and sessions | The single non-technical owner's login, password hash, TOTP secret, recovery codes, active session cookies | Compromise yields full read/write/export/erase over the crown jewel; the single account is also a single point of failure (bus factor) | Highest |
+| Database as a system, including backups | The managed Postgres instance, its connection strings, point-in-time and snapshot backups, and migration history | Holds and persists all of the above; a backup is a full, portable copy of the crown jewel and a single backup leak is a full breach | Highest |
+| Content | Plot data and status (ledig/reservert/solgt), indicative prices, timeline, FAQ, news, image slots, content blocks (SPEC-09) | Integrity and authenticity of public claims; defacement or false pricing damages trust and is materially misleading in a property context | Medium |
+| Operational secrets | DB credentials, email API key, captcha keys, error-tracking DSN, content-revalidation token, session/CSRF signing keys, the temporary push token | Each is a path to one of the assets above | High |
+| Reputation and availability | The public site and its uptime, pre-salgsstart | The platform's job is credibility; an outage or defacement during the pre-launch window is disproportionately costly | Medium |
+| Email-sending reputation and domain | The developer's sending domain and its SPF/DKIM/DMARC posture | Abuse of the double opt-in flow to relay mail, or spoofing of the domain, harms deliverability and can be used to phish leads | Medium |
+
+Out of scope by design: the buyer-value tools (SPEC-05, 10-16, 21) are stateless and collect no PII; any "email my results" routes exclusively through the consented lead flow. They remain in scope for injection, response headers, denial-of-service and cost amplification, but not for confidentiality of personal data, because they hold none. Explicitly out of scope of this document: the developer's own corporate IT, e-mail and devices; the security of third-party processor platforms beyond contractual and configuration controls; and physical security of the managed-cloud data centres (inherited from the provider's certifications, [to be confirmed] in the DPAs).
+
+## 2. Trust boundaries and entry points
+
+Each boundary is a place where data crosses from less-trusted to more-trusted, and therefore a place that must validate, authenticate or authorise.
+
+- **Public forms (untrusted to application).** The interest-registration form (SPEC-06) and any "email my results" submission. Anonymous, unauthenticated, internet-facing, adversarial by assumption. All input is hostile until validated server-side.
+- **Admin login and MFA (untrusted to privileged).** The admin sign-in (ADR 0008): password plus TOTP, with lockout and throttle. This boundary gates the entire admin dashboard (SPEC-07) and the content layer (SPEC-09). It is the single highest-value boundary because crossing it grants access to the crown jewel.
+- **Content layer (privileged to public).** Authenticated writes by the owner that become public reads via ISR revalidation (ADR 0012). The boundary is the revalidation trigger and the rendering path: stored content must be treated as untrusted at render time (stored XSS).
+- **Lead export boundary (privileged to local file).** Any CSV/Excel export of leads from the admin dashboard crosses from the application into a spreadsheet program on the owner's machine. This is a real boundary: spreadsheet formula injection (see A03.6) and the creation of an unencrypted local copy of the crown jewel both live here.
+- **API route handlers (application core).** Next.js Route Handlers are the only backend (ADR 0002). Every server mutation, lead write, admin action, content edit and DSAR operation passes through here. This is where authentication, authorisation, validation, CSRF and rate limiting are enforced; there is no second service to hide behind.
+- **Database boundary (application to data).** Drizzle ORM over a least-privilege connection to managed Postgres in the EU (ADR 0003). TLS in transit, encryption at rest, parameterised access only. Backups and point-in-time recovery sit behind this boundary and inherit its residency and access controls.
+- **Third-party processors (application to external).** Egress to: the email provider (EU/EEA, double opt-in and notifications), Plausible (EU), the captcha verification endpoint, error tracking, and at build/runtime the map and terrain tile sources (OpenStreetMap, Kartverket). Each is a data-flow out of the trust boundary and a dependency whose availability and integrity is not controlled here. A DPA must be recorded for every processor that touches personal data (docs/privacy) [DPO REVIEW]; the tile sources are not processors of personal data but do receive request metadata (IP, referer) from the visitor's browser and are noted in the privacy policy.
+- **CI/CD and deployment (developer to production).** The pipeline that builds and deploys from the default branch, and the platform secret store it reads. A compromise here bypasses every runtime control (see A08).
+
+Data-flow summary: visitor to public form to route handler (validate, captcha, rate-limit, CSRF) to Postgres (consent + lead) to email provider (double opt-in to the address the visitor supplied). Owner to admin login + TOTP to route handler (authorise) to Postgres (read/write/export/erase), with content writes fanning out to public render via ISR. A trust-boundary data-flow diagram is [planned] under SPEC-23 to make these flows reviewable rather than only described in prose.
+
+## 3. Threats, likelihood, impact and mitigations
+
+Likelihood and impact are rated Low / Medium / High for this specific deployment (a pre-launch, access-gated, low-traffic but high-value target where the sole operator is non-technical). Mitigation maturity is tagged [implemented] / [planned] / [to be confirmed]. At this draft date essentially all runtime mitigations are [planned], because no application code exists; the value of the table is to make each one a binding acceptance criterion for the relevant SPEC, not to claim coverage that is not there yet.
+
+### A01 Broken access control
+
+| # | Threat | Likelihood | Impact | Mitigation |
+|---|--------|-----------|--------|-----------|
+| A01.1 | Unauthenticated or non-MFA access reaches admin or content routes | Medium | High | [planned, SPEC-07] Server-side authorisation on every protected Route Handler, enforced in the handler itself, not only in middleware or the UI (Next.js middleware alone is documented as insufficient for authorisation). Middleware gate plus a per-handler session+role check (defence in depth). MFA required to establish any admin session (ADR 0008). |
+| A01.2 | IDOR on a single lead, consent record or DSAR export (guessing or enumerating ids) | Medium | High | [planned] No object reference is trusted from the client; every read/export/erase re-checks the authenticated admin role server-side. Non-sequential identifiers (UUID/ULID) for lead records. Admin scope is all-leads by design (single operator), so the control is "is this an authenticated admin", verified per request rather than per object. |
+| A01.3 | Forced browsing to API routes that mutate without a UI path | Medium | High | [planned] Every mutating handler verifies session, role and CSRF before acting. Default-deny: a route with no explicit auth check fails closed and is caught in review. Covered by integration tests (SPEC-24). |
+| A01.4 | Privilege escalation through a content-layer write reaching admin/lead functions | Low | High | [planned] Authorisation is per action, not per session: the content layer reuses the admin session but content-write handlers cannot invoke lead-export or erasure handlers. With a single role this is a code-structure control (separate handlers, separate checks), not RBAC in the multi-role sense; described honestly as such. |
+| A01.5 | Public production site indexed or reachable before go-live | Medium | Medium | [planned] Production stays access-gated and `noindex` until operator review and client go-live approval (README). Gate enforced at the edge (e.g. platform protection or middleware basic-gate), not only via robots directives, which are advisory and ignorable. The transition from gated to public is an explicit, reviewed step, not a silent default. |
+| A01.6 | Mass export or scripted bulk read of the lead table by a compromised or coerced admin session | Low | High | [planned] Re-authentication for export (A07.2); export is audit-logged with row count (A09.2); alerting on unusually large or frequent exports (A09.3). This control reduces detection time; it cannot prevent a fully compromised session, which is why session compromise is a named residual risk (§6). |
+
+### A02 Cryptographic failures
+
+| # | Threat | Likelihood | Impact | Mitigation |
+|---|--------|-----------|--------|-----------|
+| A02.1 | Personal data exposed in transit | Low | High | [planned] TLS everywhere: HTTPS enforced by HSTS (§4), DB connection over TLS with certificate verification (not `sslmode` disabled), email and captcha over HTTPS. No mixed content (enforced by CSP `upgrade-insecure-requests`). |
+| A02.2 | Personal data exposed at rest in the DB or in backups | Low | High | [to be confirmed] Encryption at rest on the managed Postgres instance and its backups (ADR 0003), confirmed against the chosen provider's actual configuration. Backups stay in the EU region; backup access is restricted to the provider's least-privilege project role; restore is tested (SPEC-26). A leaked backup is a full breach, so backup access and residency are first-class, not an afterthought. |
+| A02.3 | Weak password storage or weak admin secret handling | Low | High | [planned] Password hashed with a memory-hard algorithm (argon2id preferred, or bcrypt at an appropriate cost). TOTP secret encrypted at rest with a key held in the secret manager, never logged. Recovery codes stored hashed (one-way), not encrypted, so they cannot be read back. No home-grown crypto; use a maintained library. |
+| A02.4 | Secrets committed or leaked into the client bundle | Medium | High | [planned] Secrets via environment and the platform secret manager (ADR 0014), never in the repo. Only `NEXT_PUBLIC_` values reach the client, and a review rule confirms none of those is secret. Secret scanning in CI (§4). Note the inherent exposure: any value the browser needs (e.g. a public captcha site-key, the Plausible domain) is public by definition and must carry no trust. |
+| A02.5 | Sensitive data cached by intermediaries or the CDN | Low | Medium | [planned] Authenticated admin and lead responses set `Cache-Control: no-store`; only public marketing content is cacheable. Verified in CI header checks so a future refactor cannot silently make a lead response cacheable. |
+| A02.6 | Weak or absent signing of session/CSRF/revalidation tokens | Low | High | [planned] Session, CSRF and revalidation tokens use a strong random secret from the secret manager; signing keys are rotatable; token format and lifetime are explicit (A07.2, A07.5, A08.2). |
+
+### A03 Injection
+
+| # | Threat | Likelihood | Impact | Mitigation |
+|---|--------|-----------|--------|-----------|
+| A03.1 | SQL injection through the lead form or admin search/filter | Medium | High | [planned] Parameterised access only, through Drizzle (ADR 0003). No string-built SQL; if `sql` raw fragments are ever used they must be parameterised and flagged in review. Least-privilege DB user (no DDL, no superuser; migrations run under a separate, time-bound role). Allowlist validation of all input (Zod schemas) before it reaches the data layer. |
+| A03.2 | Stored XSS via lead fields rendered in the admin dashboard | Medium | High | [planned] Server-side validation on write (SPEC-06); contextual output encoding on render. React escapes by default; `dangerouslySetInnerHTML` is forbidden for lead and any user-supplied content. The admin dashboard is itself covered by the strict CSP, so an injected payload has no inline-script vector. |
+| A03.3 | Stored XSS via the content layer (FAQ, news, content blocks, image alt/forbehold fields) | Medium | High | [planned] Owner-authored content is still treated as untrusted at render. Rich text sanitised against an allowlist on write (e.g. a maintained sanitiser) and re-checked on render; strict nonce-based CSP (§4) blocks injected inline script as a second layer. Markdown/HTML rendering uses a sanitising pipeline, never raw `dangerouslySetInnerHTML` of stored HTML. |
+| A03.4 | Header, log or email-template injection (CRLF, template expressions) | Low | Medium | [planned] No personal data interpolated into log lines (A09.1). Email templates use a safe templating layer with auto-escaping and no server-side template-expression evaluation of user input; user values never placed into headers (to, subject, reply-to) without validation; e-post validated and normalised before use. |
+| A03.5 | Reflected XSS via query parameters on tools or i18n routes | Low | Medium | [planned] Output encoding throughout; no reflection of raw query params into the DOM; the i18n locale is validated against an allowlist (`no`, `en`); CSP backstop. |
+| A03.6 | CSV/Excel formula injection in lead export | Medium | Medium | [planned] A lead field beginning with `=`, `+`, `-`, `@`, tab or carriage return can execute as a formula when the export is opened in a spreadsheet. Exports neutralise such values (prefix with a single quote or wrap as text) and/or are offered as a format that does not auto-execute formulas. This is a commonly missed but realistic path to code execution on the operator's own machine from attacker-controlled form input. |
+
+### A04 Insecure design
+
+| # | Threat | Likelihood | Impact | Mitigation |
+|---|--------|-----------|--------|-----------|
+| A04.1 | Over-collection of personal data widening breach impact | Medium | Medium | [planned] Data minimisation by design: at most navn, e-post, optional telefon plus consent (SPEC-06, §10). Deeper qualification happens in the human follow-up, never in the form. Smaller dataset, smaller blast radius. |
+| A04.2 | Consent that is bundled, pre-ticked or unversioned, undermining lawful basis | Medium | High | [planned, DPO REVIEW] Explicit, unbundled, opt-in consent (no pre-ticked boxes), clear purpose and policy link, with exact text + version + timestamp stored per lead, plus double opt-in (§10, SPEC-06). Consent withdrawal must be as easy as giving it (Art. 7(3)): a stated, low-friction withdrawal route is required, not only an unsubscribe link. This is a design control; the lawful-basis assessment is a legal decision. |
+| A04.3 | Indefinite retention of un-actioned leads | Medium | Medium | [planned, DPO REVIEW] Defined retention with automatic, documented deletion of un-actioned and unconfirmed leads (§10, docs/privacy). Enforcement is a scheduled job, not a manual chore; the schedule, its trigger and its evidence (what ran, what it deleted by count) are part of SPEC-07/26. The retention period itself needs DPO sign-off. |
+| A04.4 | No abuse model for the public form (the front line designed naively) | Medium | Medium | [planned] Anti-abuse designed in (ADR 0013): honeypot, privacy-respecting challenge, layered rate limiting; see A07 and §4. |
+| A04.5 | Simulated or estimated figures presented as real, misleading buyers | Medium | Medium | [planned] Honesty rule: every estimate is labelled, sourced and disclaimed; the community-energy dashboard is marked an illustrative simulation (SPEC-13). This is an integrity-of-information design control with legal weight in a property sale (avhendingslova/markedsføringsloven exposure) [DPO/legal REVIEW for marketing-law claims]. |
+| A04.6 | Double opt-in turned into an email-relay or email-bombing tool | Medium | Medium | [planned] The confirmation flow sends mail to an address the submitter controls and to addresses they merely type, so an attacker can use it to bomb a victim's inbox or to send unsolicited mail through a trusted domain. Mitigated by per-IP and per-address rate limits on form submission (§4), the captcha challenge, generic responses, and a hard cap on confirmation resends per address. The internal owner notification is sent only after confirmation, so unconfirmed spam does not reach the owner. |
+| A04.7 | No defined breach-detection-to-notification path | Medium | High | [planned, DPO REVIEW] A personal-data breach triggers obligations to notify the Datatilsynet within 72 hours (Art. 33) and, where high risk, the affected individuals (Art. 34). An incident runbook (SPEC-26) must define detection, assessment, the 72-hour clock, who decides, and the notification templates. Absent this, even a well-mitigated system can fail its legal duty after an incident. |
+
+### A05 Security misconfiguration
+
+| # | Threat | Likelihood | Impact | Mitigation |
+|---|--------|-----------|--------|-----------|
+| A05.1 | Missing or weak security response headers | Medium | Medium | [planned] Full header set applied at the edge and verified in CI (§4). |
+| A05.2 | Verbose errors leaking stack traces, queries or PII to visitors | Medium | Medium | [planned] Generic error pages in production; detailed errors only in the error-tracking backend with PII scrubbing (§4). `NODE_ENV=production`; no debug endpoints shipped; no source-mapped stack traces served to clients. |
+| A05.3 | Permissive CORS on Route Handlers | Low | Medium | [planned] Same-origin by default; no wildcard CORS and no reflected-origin allow. The API is consumed by the same app, so cross-origin access is not granted. |
+| A05.4 | Default or broad cloud/database permissions, exposed admin surface | Low | High | [to be confirmed] Least-privilege DB user (ADR 0003); DB not publicly reachable beyond the application (IP allowlist or private networking where the provider supports it); platform secrets scoped per environment (ADR 0014); preview deployments carry neither production secrets nor production data. The actual provider permission model is verified, not assumed. |
+| A05.5 | Source maps or internal docs exposed in production | Low | Low | [planned] Production source maps are not publicly served (uploaded only to error tracking); `docs/_internal`, MASTER-BRIEF and PROGRESS are gitignored and never deployed. |
+| A05.6 | Preview/branch deployments leaking a working app or test data | Medium | Medium | [planned] Preview deployments are access-gated, use a separate database (no production data), carry only non-production secrets, and are `noindex`. A preview URL is shareable, so it is treated as semi-public. |
+
+### A06 Vulnerable and outdated components
+
+| # | Threat | Likelihood | Impact | Mitigation |
+|---|--------|-----------|--------|-----------|
+| A06.1 | Known-vulnerable npm dependency (Next.js, Drizzle, React Three Fiber, MapLibre, validation libs) | Medium | High | [planned] Lockfile committed; automated dependency vulnerability scanning in CI; nothing high or critical left open (SPEC-23, §4). Dependency-update automation with review. The 3D and map stacks are the largest dependency surface and are watched specifically. |
+| A06.2 | Transitive supply-chain compromise (typosquat, malicious postinstall) | Low | High | [planned] Pinned lockfile; CI installs from the lockfile only (`npm ci`/`--frozen-lockfile`); minimal dependency surface (route handlers chosen partly to keep it small, ADR 0002); install scripts disabled or reviewed where the package manager allows; provenance/attestation checked where available. |
+| A06.3 | Outdated runtime or unpatched managed services | Low | Medium | [to be confirmed] Platform-managed runtime on Vercel and managed Postgres receive provider patching; the Node major version and Postgres major version are pinned and upgraded under review; the provider's patch responsibility is confirmed in the DPA. |
+
+### A07 Identification and authentication failures
+
+| # | Threat | Likelihood | Impact | Mitigation |
+|---|--------|-----------|--------|-----------|
+| A07.1 | Brute force or password spraying on admin login | Medium | High | [planned] TOTP MFA on every admin sign-in (ADR 0008); account lockout and throttling; durable rate limiting on the auth route (§4); generic failure messages (no user enumeration); constant-time credential comparison. |
+| A07.2 | Session hijacking or fixation | Low | High | [planned] Cookies set `HttpOnly`, `Secure`, `SameSite=Lax` (or `Strict` for the admin session); session identifier rotated on login and on privilege change; short idle and absolute session lifetime; re-authentication required for sensitive actions (export, erasure) per §4. |
+| A07.3 | Credential stuffing using leaked passwords | Medium | Medium | [planned] MFA defeats reuse of a leaked password alone; strong password policy with a check against known-breached passwords at set time; the single admin account is a small, monitorable surface. |
+| A07.4 | TOTP recovery-code abuse, weak MFA enrolment, or lost device locking out the sole admin | Low | High | [planned] Recovery codes single-use, hashed, and shown once; enrolment bound to the authenticated session; lost-device recovery documented in a runbook (SPEC-26). Because there is exactly one admin, loss of both the TOTP device and the recovery codes is an availability incident with no second admin to recover it: the runbook must define a provider-level break-glass or a pre-agreed re-enrolment path, and recovery-code custody is the owner's responsibility, stated plainly to a non-technical owner. |
+| A07.5 | Lead double opt-in token guessing or replay | Low | Medium | [planned] Confirmation tokens are high-entropy (CSPRNG), single-use, time-limited and bound to the specific lead; tokens are looked up in constant time; unconfirmed leads expire and are deleted (A04.3). |
+| A07.6 | No second admin / no separation of duties (bus factor) | Medium | Medium | [accepted risk, design choice] A single non-technical operator is a deliberate constraint (ADR 0008, operability principle). The cost is no peer review of admin actions and no warm backup if the owner is unavailable. Compensating controls: full audit log (A09.2), provider-level access for the developer during the build only (revoked at handover), and a documented recovery path (A07.4). This residual is named in §6 rather than mitigated away. |
+
+### A08 Software and data integrity failures
+
+| # | Threat | Likelihood | Impact | Mitigation |
+|---|--------|-----------|--------|-----------|
+| A08.1 | Compromised CI/CD injecting code into a deploy | Low | High | [planned] Deploys from the reviewed default branch only; branch protection; secret scanning and dependency scanning gate the pipeline; CI secrets scoped and rotated on suspicion (ADR 0014, SPEC-26); least-privilege deploy credentials. The temporary push token (PROGRESS) is revoked at handover. |
+| A08.2 | Tampering with content or plot pricing via an unauthenticated write path | Low | High | [planned] All content writes pass admin auth and authorisation; ISR revalidation is triggered only by an authenticated write or a signed, secret revalidation token, never by an open public endpoint (ADR 0012). The revalidation token is treated as a secret (A02.6) and is rotatable. |
+| A08.3 | Unsigned or untrusted client-side dependencies loaded at runtime | Low | Medium | [planned] Strict CSP restricts script sources to `'self'` and explicit allowlist; no third-party script loads that is not allowlisted; Plausible is the only analytics, either first-party-proxied or its single host explicitly allowed (decision recorded; proxying also removes a `connect-src` third-party host). Subresource Integrity considered where any external asset is unavoidable. |
+| A08.4 | Insecure deserialisation of attacker-controlled data | Low | Medium | [planned] No deserialisation of untrusted serialized objects; data crosses boundaries as JSON validated against Zod schemas; no `eval`, no dynamic `Function`, no unsafe `JSON`-to-object hydration of untrusted input. |
+| A08.5 | Migration or schema-drift integrity failure | Low | Medium | [planned] Migrations are in the repo, reviewed, run forward-only in deploy under a dedicated migration role, and are tested against the restore path so a bad migration plus a known-good backup gives a recovery route (SPEC-26). |
+
+### A09 Security logging and monitoring failures
+
+| # | Threat | Likelihood | Impact | Mitigation |
+|---|--------|-----------|--------|-----------|
+| A09.1 | Personal data written into application logs | Medium | High | [planned] No personal data in logs (§4). Log lead actions by record id and event type, never by navn, e-post or telefon. Lint/review rule against logging request bodies of the lead and admin routes. Third-party/platform request logs are configured to avoid capturing form bodies and query strings carrying PII [to be confirmed against the provider]. |
+| A09.2 | No audit trail for admin and data actions | Medium | High | [planned] Audit logging for every admin and data action: who, what, when, on which record (login, failed login, export with row count, erasure, content edit, consent withdrawal) (SPEC-07). Audit entries carry record references only, no raw PII. The audit log is append-only or otherwise tamper-evident and retained per a defined period [DPO REVIEW on retention]. |
+| A09.3 | A breach or abuse goes unnoticed by a non-technical owner | Medium | Medium | [planned] Error tracking with anomaly alerting; uptime check; alerts on auth-failure spikes, rate-limit triggers, large/frequent exports, and serverless cost/usage spikes (A10.4) (SPEC-26). Alerts are actionable, plain-language, and routed somewhere the owner actually reads, with a documented response in the incident runbook; an alert the owner cannot interpret is not a control. |
+| A09.4 | Error tracking itself leaks PII to a processor | Medium | High | [planned, DPO REVIEW] PII scrubbing in the error-tracking client before transmission: request bodies, query strings, headers and cookies stripped or masked, with a default-deny scrubbing posture (scrub everything, allowlist the safe fields). The DSN is a secret; the provider is EU-resident and under a DPA; data-retention in the error tool is bounded. |
+| A09.5 | Logs and backups retained or located inconsistently with the retention/residency promise | Low | Medium | [planned, DPO REVIEW] Application logs, audit logs, error-tracking data and DB backups each have a stated retention and an EU residency, consistent with the privacy policy. A deleted lead must not silently survive in a 90-day log or an old backup beyond the documented window; the retention design accounts for backups explicitly. |
+
+### A10 Server-side request forgery (SSRF) and resource abuse
+
+| # | Threat | Likelihood | Impact | Mitigation |
+|---|--------|-----------|--------|-----------|
+| A10.1 | A handler fetching a user-supplied URL (image/content layer) reaches internal metadata or services | Low | High | [planned] No server-side fetch of arbitrary user-supplied URLs. Image handling in the content layer uses direct upload to managed storage with type/size validation, not server-side URL fetch. If any outbound fetch is ever added, the destination is allowlisted (scheme, host), redirects are not followed blindly, and private, link-local and cloud-metadata ranges (e.g. 169.254.169.254) are blocked. |
+| A10.2 | Map/terrain tile or geodata URL parameters abused to pivot egress | Low | Medium | [planned] Tile and terrain sources are fixed, allowlisted endpoints (OpenStreetMap, Kartverket); no user-controlled host in any server-side request. Outbound egress is limited to the known processor endpoints. Note: tile requests are made by the visitor's browser, so the visitor's IP and referer reach the tile host; this is a privacy disclosure, not an SSRF, and is stated in the privacy policy and the OSM/Kartverket usage terms compliance check. |
+| A10.3 | Webhook or revalidation callback pointed at an internal target | Low | Medium | [planned] Revalidation is internal and token-guarded; no inbound webhook accepts an attacker-controlled callback URL. Any future processor webhook (e.g. email events) is signature-verified. |
+| A10.4 | Denial-of-service or cost amplification on serverless and metered services | Medium | Medium | [planned] Serverless billing, captcha verification calls, email sends and tile usage are all metered, so volumetric abuse is a cost and availability risk even without a breach. Mitigated by the durable rate limiter (§4), the captcha gate, function timeouts and concurrency limits where the platform allows, and usage/cost alerting (A09.3). A purely volumetric edge flood is largely the platform's responsibility [to be confirmed in the provider terms]; the application-layer controls keep abuse off the metered paths. |
+
+## 4. Cross-cutting controls (specifics)
+
+Maturity: every control in this section is [planned] under SPEC-23 unless stated otherwise. They are written as concrete targets so they can be enforced as acceptance criteria, not so they can be read as already shipped.
+
+### Security response headers
+
+Applied at the edge for every response and verified in CI (SPEC-23 acceptance). Targets:
+
+- **Content-Security-Policy:** strict, nonce-based. `default-src 'self'`; `script-src 'self' 'nonce-<per-request>' 'strict-dynamic'` with no `unsafe-inline` and no broad host allowlist; `style-src 'self' 'nonce-<per-request>'` (note: some libraries inject runtime styles; if a hash or a tightly scoped style source proves unavoidable it is documented and justified rather than falling back to `unsafe-inline`); `img-src 'self' data: blob: <map/terrain tile hosts>`; `connect-src 'self' <plausible-or-proxy> <error-tracking> <tile hosts as needed>`; `worker-src 'self' blob:` if MapLibre/R3F need workers; `frame-ancestors 'none'`; `base-uri 'none'`; `object-src 'none'`; `form-action 'self'`; `upgrade-insecure-requests`. The nonce is generated per request in middleware and threaded into Next.js script and style tags. R3F and MapLibre load as first-party modules so they pass `'self'`; their actual runtime needs (workers, blob URLs, WASM) are verified against the policy rather than assumed, which is exactly why CSP ships in report-only first.
+- **Strict-Transport-Security:** `max-age=63072000; includeSubDomains; preload` (preload only once the apex and all subdomains are committed to HTTPS, since preload is hard to undo).
+- **X-Content-Type-Options:** `nosniff`.
+- **Clickjacking:** `frame-ancestors 'none'` in CSP, with `X-Frame-Options: DENY` kept as a legacy fallback.
+- **Referrer-Policy:** `strict-origin-when-cross-origin`.
+- **Permissions-Policy:** deny by default for features not used: `camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()`. Geolocation is granted only if and where a buyer-value map feature explicitly requests it, scoped to `self`. (The older `interest-cohort` token is obsolete; `browsing-topics` is the current Topics-API opt-out.)
+
+CSP and HSTS are rolled out in `report-only`/short-`max-age` first against a reporting endpoint, then tightened once clean, to avoid breaking the 3D showpiece and the map.
+
+### CSRF
+
+State-changing requests require CSRF protection. Route Handlers verify a per-session signed or double-submit CSRF token on every mutation (lead create, admin actions, content edits). `SameSite` cookies are a second layer, not the only layer. GET handlers never mutate state. The lead form is a public POST, so its CSRF strategy (e.g. an origin/`SameSite` check plus the captcha and rate limit) is defined explicitly, since a token bound to an authenticated session does not apply to an anonymous submitter.
+
+### Rate limiting and bot mitigation (the front line)
+
+Per ADR 0013 and SPEC-06: a honeypot field, a privacy-respecting challenge (e.g. Cloudflare Turnstile or hCaptcha, EU-appropriate, DPA recorded) [to be confirmed; DPO REVIEW on the vendor's data flow], and layered rate limiting, per IP and per e-post, on the public form, the confirmation/resend endpoint and the auth route. The limiter is durable (edge/KV-backed), not in-process, so it survives serverless cold starts and horizontal scale-out. Limits return generic 429s without revealing internal state. Double opt-in raises the cost of automated abuse (a confirmed mailbox is required before a lead counts) but is itself rate-limited so it cannot be turned into an email-bombing tool (A04.6).
+
+### Secret and dependency scanning
+
+CI runs secret scanning (e.g. gitleaks) and dependency vulnerability scanning on every push; the build fails on a detected secret or an unresolved high/critical advisory (SPEC-00, SPEC-23). Secrets live in the platform secret manager (ADR 0014) with documented rotation; the temporary push token referenced in operations (PROGRESS) is revoked at handover. The lockfile is the single source of installed versions, installed with a frozen/`ci` install.
+
+### Data handling in logs, audit and error tracking
+
+These three are deliberately separated:
+
+- **Application logs** carry operational events keyed by record id and event type, never raw navn, e-post or telefon. A review rule blocks logging of lead and admin request bodies. Log retention is bounded and EU-resident.
+- **Audit log** is a distinct, durable, tamper-evident record of admin and data actions (login, failed login, export with row count, erasure, content edit, consent withdrawal): actor, action, target reference, timestamp. It is the accountability trail required by Art. 5(2) and is itself free of raw PII.
+- **Error tracking** scrubs PII client-side before sending, default-deny: bodies, query strings, cookies and identifying headers are stripped or masked, with anomaly alerting. The provider is EU-resident and under a DPA, with bounded retention.
+
+### Lead export hardening
+
+Exports neutralise spreadsheet formulas (A03.6), are re-authenticated (A07.2), are audit-logged with a row count (A09.2), and carry a plain-language reminder to the owner that an export is an unencrypted copy of the crown jewel and must be stored and deleted responsibly. [DPO REVIEW on whether routine bulk export should exist at all, versus targeted record access.]
+
+## 5. GDPR Article 32 mapping
+
+Article 32 requires technical and organisational measures appropriate to the risk. The mapping shows where each obligation is intended to be met; given the project's stage, "met" means "designed and assigned to a SPEC", not "verified in production". [DPO REVIEW of the whole mapping before any reliance is placed on it.]
+
+| Art. 32 measure | How it is addressed here | Maturity |
+|-----------------|--------------------------|----------|
+| 32(1)(a) Pseudonymisation and encryption | TLS in transit and encryption at rest for the DB and backups (A02); minimisation reduces what is held at all (A04.1); logs and audit entries reference records rather than identities (A09.1) | planned / to be confirmed |
+| 32(1)(b) Ongoing confidentiality, integrity, availability and resilience | Access control and MFA (A01, A07); parameterised access and output encoding (A03); content and deploy integrity (A08); availability via the managed platform, rate limiting, cost-abuse controls and uptime monitoring (A04.4, A10.4, A09.3) | planned |
+| 32(1)(c) Restore availability and access after an incident | DB backups in the EU with a documented and tested restore, and a defined backup retention (SPEC-26); incident and breach-notification runbook for a non-technical owner (A04.7) | planned |
+| 32(1)(d) Regular testing and evaluation of measures | CI security gates, header verification, dependency and secret scanning, abuse testing of auth and forms, integration and E2E tests on the security and data paths (SPEC-23, SPEC-24); this threat model is reviewed and dated; a lightweight pre-go-live security review is scheduled | planned |
+| 32(2) Risk appropriate to the data (special-category check) | Only ordinary contact data is processed; no special categories (Art. 9). Ratings in §3 reflect a low-volume, high-value pre-launch target | by design |
+| 32(4) Processing under authority and instruction | Every processor (hosting, DB, email, captcha, analytics, error tracking) is EU/EEA-resident and bound by a DPA recorded in docs/privacy; sub-processor egress is enumerated in §2 | to be confirmed; DPO REVIEW |
+
+Accountability artefacts that must accompany this model, all under docs/privacy and all currently [planned, DPO REVIEW]: the records of processing (Art. 30), the DPIA-lite for lead capture, the consent and retention policy (including the withdrawal mechanism and the breach-notification process), the DSAR/erasure process with requester identity verification, and the signed DPAs. The privacy policy (NO/EN) is marked for legal/DPO review before public use. Note the live legal dependency: for any processor not resident in the EEA, lawfulness rests on the EU-US Data Privacy Framework, which the General Court upheld in Latombe (T-553/23, 3 Sept 2025) but which is under appeal (C-703/25 P, undecided as of June 2026); the current design avoids this by keeping every processor EU/EEA-resident (see docs/research/personvern-og-analyse.md). [DPO REVIEW before relying on any DPF-based transfer.]
+
+## 6. Residual risk and review
+
+Honest statement of maturity first: this is a design-stage model. The largest current "risk" is simply that none of the runtime controls exist yet; they become real only as SPEC-06, 07, 09, 23, 24 and 26 ship and pass their gates. Treat any claim of coverage above as a commitment, not a status.
+
+The highest standing residual risks, assuming the controls are built as specified, are:
+
+1. **Compromise of the single admin account.** Mitigated by MFA, lockout, short sessions, re-auth for sensitive actions, and audit logging, but never eliminated; a fully compromised session can read or export the crown jewel before detection. Recovery and detection are documented in the runbook (A06.1 detection, A07.4 recovery, A09.3 alerting).
+2. **Single non-technical operator (bus factor and no separation of duties).** A deliberate design constraint (A07.6); compensated, not removed. Loss of the owner's MFA device and recovery codes is an availability incident with no second admin to recover it.
+3. **A high/critical advisory in a core dependency between scans**, especially in the larger map/3D surface. Mitigated by failing CI and prompt patching, but a zero-day window remains.
+4. **Backup confidentiality.** A backup is a complete portable copy of the lead database; its leak is a full breach. Mitigated by encryption at rest, EU residency, restricted provider access and bounded retention, but it remains a concentrated point of catastrophic loss.
+5. **Legal/compliance exposure** that engineering cannot close alone: the lawful-basis and consent design, the retention period, the DSAR identity-verification process, the breach-notification readiness, and the EU-US Data Privacy Framework position for any future non-EEA processor. These carry [DPO REVIEW] and are why every processor is currently kept EU/EEA-resident (docs/research/personvern-og-analyse.md).
+
+This model is revisited at each release, on any incident, before go-live (a pre-launch review is a gate, not optional), and whenever a processor, a data field, an entry point or a regulatory position changes. The next required action is to keep the [planned] tags honest: as each control ships, update its tag to [implemented] with a pointer to the SPEC completion note and the test that proves it, so this document never drifts ahead of the code.
