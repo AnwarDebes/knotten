@@ -22,11 +22,11 @@ describe("Button", () => {
   it("renders as a child element when asChild is set", () => {
     render(
       <Button asChild>
-        <a href="/kontakt">Kontakt</a>
+        <a href="https://example.com/kontakt">Kontakt</a>
       </Button>,
     );
     const link = screen.getByRole("link", { name: "Kontakt" });
-    expect(link).toHaveAttribute("href", "/kontakt");
+    expect(link).toHaveAttribute("href", "https://example.com/kontakt");
     expect(link.className).toContain("inline-flex");
   });
 

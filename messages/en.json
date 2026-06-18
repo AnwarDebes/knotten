@@ -1,0 +1,451 @@
+{
+  "home": {
+    "metaTitle": "Knotten at Rødberg | Sea Views in Lindesnes",
+    "metaDescription": "Knotten is an energy-smart residential area in development at Rødberg by Sniksfjorden in Lindesnes. Sea views, robust quality and low energy costs. Register interest.",
+    "eyebrow": "A new residential area in Lindesnes",
+    "title": "Knotten at Rødberg, where nature and energy work together",
+    "lead": "At Rødberg by Sniksfjorden, where the Audna river meets the sea, we are planning a residential area with sea views and a considered energy solution from the very first groundwork. The ambition is a national reference project for energy-smart, robust homes.",
+    "blocks": [
+      {
+        "heading": "A location with sea views and nature",
+        "body": "Knotten sits at Rødberg by Sniksfjorden in Lindesnes municipality, at the outlet of the Audna river. Here the sea view and the surrounding area are the defining qualities, with the sea, the outdoors and walking terrain close at hand."
+      },
+      {
+        "heading": "Energy-smart from the ground up",
+        "body": "We are developing the infrastructure, the energy solution and the zoning in step with one another, before the zoning plan is finalised. The goal is one of Norway's most energy-efficient, robust and attractive residential areas, with every home built for low consumption and a long lifespan."
+      },
+      {
+        "heading": "Less exposed to power prices",
+        "body": "Rødberg lies in price zone NO2, with historically high and volatile power prices. Knotten is planned with solar energy, a shared energy base and passive house standard to reduce exposure to those prices and bring more predictable day-to-day economy."
+      },
+      {
+        "heading": "Register interest, with no obligation",
+        "body": "We are early in the process and before sales launch. If you want to follow the project and be contacted when more is in place, you can register your interest today. The number of plots and prices will be stated once the zoning is ready."
+      }
+    ],
+    "highlights": [
+      {
+        "title": "Energy solutions",
+        "body": "Solar energy (indicatively around 1000 to 1020 kWh/kWp per year on site, PVGIS), a shared energy base and prosumer status combine to keep energy costs down. As a prosumer you pay neither grid rent nor levies on the self-produced power you use yourself."
+      },
+      {
+        "title": "Robustness",
+        "body": "The homes are planned to passive house standard, with a tight building envelope (indicatively n50 = 0.6), balanced ventilation and a net heating demand of about 15 kWh/m² per year. That means solid comfort and low consumption, year after year."
+      },
+      {
+        "title": "Location",
+        "body": "Sea views across Sniksfjorden, proximity to the outlet of the Audna and a setting shaped by nature and outdoor life. The location is the project's foremost quality."
+      },
+      {
+        "title": "Sustainability",
+        "body": "Low energy use, local energy production and energy sharing within the property sit at the heart of the project. We build for a long lifespan and a low footprint, not for short-term fixes."
+      }
+    ],
+    "ctaSecondary": "See the energy concept",
+    "note": "All information is preliminary and indicative (as of June 2026). The project is before zoning and sales launch. The number of plots, prices, sizes and progress will be stated once the zoning is ready."
+  },
+  "visjon": {
+    "metaTitle": "Vision: Why Knotten - Rødberg, Lindesnes",
+    "metaDescription": "Knotten aims to be a national reference project for energy-efficient homes by Sniksfjorden: low energy demand, local generation, sharing and resilience.",
+    "eyebrow": "Vision",
+    "title": "Why Knotten",
+    "lead": "Knotten at Rødberg sets out to be one of Norway's most energy-efficient, robust and attractive residential areas, with sea views and nature as its setting. We are developing the infrastructure, energy solutions and zoning together, from the first day on site.",
+    "blocks": [
+      {
+        "heading": "A reference project, planned from the ground up",
+        "body": "Most housing schemes are laid out first, with energy and infrastructure added as an afterthought. At Knotten we reverse the order: energy solutions, sharing and storage are designed in before the zoning plan is finalised. The aim is a national reference project that shows how a neighbourhood can be built right from the start."
+      },
+      {
+        "heading": "Low energy demand at the core",
+        "body": "The standard takes passive-house performance as its baseline, with an indicative net heating demand of about 15 kWh/m² per year, a tight building envelope (n50 about 0.6) and balanced ventilation. Less energy in means lower running costs and less exposure to a volatile power market in price zone NO2."
+      },
+      {
+        "heading": "Local generation, sharing and storage",
+        "body": "Solar conditions on the site give an indicative 1000 to 1020 kWh per installed kWp per year (PVGIS). The concept explores a shared energy base with sharing between homes on the same property, and thermal storage (sand battery, referencing Polar Night Energy) to even out consumption over time."
+      },
+      {
+        "heading": "Resilience and independence",
+        "body": "Self-consumed power you generate yourself carries no grid tariff or levies, and energy sharing on the same property has been permitted since 1 October 2023 (up to 1 MW). The point is reduced exposure and greater independence, not guaranteed savings."
+      }
+    ],
+    "note": "All figures are indicative (as of June 2026) and may change through design development. The number of plots and prices will be published once zoning is in place. This is before sales launch and before zoning: you can register non-binding interest now."
+  },
+  "energikonseptet": {
+    "metaTitle": "The Energy Concept | Knotten at Rødberg",
+    "metaDescription": "A holistic energy concept for Knotten by Sniksfjorden: solar, geothermal, battery storage, a shared energy base and energy sharing. Planned with the infrastructure.",
+    "eyebrow": "The Energy Concept",
+    "title": "A holistic energy concept, planned from the first spade in the ground",
+    "lead": "Knotten is being developed with the ambition of becoming one of Norway's most energy-efficient, robust and attractive residential areas. The energy solutions are planned together with infrastructure and regulation from the very start, before the zoning plan is in place.",
+    "blocks": [
+      {
+        "heading": "Local generation: solar, wind and geothermal",
+        "body": "The foundation is renewable energy produced on site. Solar panels yield roughly 1000 to 1020 kWh per kWp per year on the plots by Sniksfjorden (PVGIS, indicative), supplemented by small-scale wind and geothermal heat where suitable. The homes are built towards passive house level, with an indicative net heating demand of about 15 kWh/m² per year, airtightness n50 = 0.6 and balanced ventilation."
+      },
+      {
+        "heading": "Storage and a shared energy base",
+        "body": "Energy produced while the sun shines should benefit the neighbourhood later too. The concept combines battery storage with a shared energy base for thermal storage, where a sand battery (reference: Polar Night Energy) is one of the solutions we are evaluating. This smooths out fluctuations across the day and the year."
+      },
+      {
+        "heading": "Energy hub, internal distribution and energy sharing",
+        "body": "A shared energy hub ties generation, storage and consumption together, with internal distribution between the homes. As a plus customer (plusskunde) you pay neither grid tariff nor levies on self-produced power you use yourself, and energy sharing within the same property has been possible since 1 October 2023 (up to 1 MW). V2G and V2H, where the electric car can feed power back to the home or the grid, is still an emerging technology, but it is part of the thinking."
+      },
+      {
+        "heading": "Less exposure in a volatile price zone",
+        "body": "Knotten sits in price zone NO2, which has historically seen high and volatile power prices. The energy concept is therefore about reduced exposure and greater independence, not guaranteed savings. The electricity support scheme covers 90% of the spot price above 77 øre/kWh excl. VAT, and Norgespris offers a fixed 50 øre/kWh incl. VAT: both schemes are decided to run through 2029."
+      }
+    ],
+    "note": "The interactive walkthrough is coming. This content describes the concept at a high level. The number of plots and prices will be stated once the zoning is in place. To follow the project further, you can register non-binding interest."
+  },
+  "omradet": {
+    "metaTitle": "The area and plots | Knotten, Rødberg",
+    "metaDescription": "Knotten sits at Rødberg by Sniksfjorden in Lindesnes, where the Audna river meets the sea. A nature-rich setting with sea views. Register your interest, no obligation.",
+    "eyebrow": "The area and plots",
+    "title": "Rødberg by Sniksfjorden",
+    "lead": "Knotten sits at Rødberg by Sniksfjorden in Lindesnes municipality, where the Audna river runs out to the sea. The location offers sea views and quick access to nature, and it is the starting point for a residential area we are developing alongside its infrastructure and regulation from day one.",
+    "blocks": [
+      {
+        "heading": "The location",
+        "body": "The site lies at the outlet of the Audna river into Sniksfjorden, a sheltered, nature-rich stretch of coast in Agder. The sea view and the open landscape toward the fjord are the first things you notice, and the immediate surroundings offer sea, forest and walking terrain right beyond the plot boundary. We describe the setting as it genuinely is, and we do not overstate sightlines or qualities that are not there."
+      },
+      {
+        "heading": "A reference project in the making",
+        "body": "The ambition is one of Norway's most energy-efficient, robust and attractive residential areas, a national reference project. That is why the technical solutions, the infrastructure and the regulation are developed in parallel, with the work beginning before the zoning plan is in place. The energy solutions and the standard are built into the area, not added on afterwards."
+      },
+      {
+        "heading": "Energy and location together",
+        "body": "Rødberg sits in price zone NO2, where electricity prices have historically been high and volatile. An area built for low energy demand, local production and sharing means less exposure to price swings and greater independence, not a guaranteed saving. The specific energy solutions are described in more detail under the Energy concept."
+      },
+      {
+        "heading": "Plots, sizes and prices",
+        "body": "The number of plots, their sizes, layout and prices are set through the regulation process and will be published as soon as the plan is ready. Until then we share what we know and stay with what has actually been decided. To follow the progress, you can register your interest with no obligation, and we will get in touch when there is news to share."
+      }
+    ],
+    "note": "The interactive plot map is on its way. The number of plots, sizes and prices will be published once the regulation is ready. We are at an early stage, before sales launch and before regulation, so all information is preliminary."
+  },
+  "robusthet": {
+    "metaTitle": "Resilience at Knotten | Rødberg, Lindesnes",
+    "metaDescription": "Knotten by Sniksfjorden is built to keep working when the grid fails: battery storage, local generation and sensible sizing in price zone NO2.",
+    "eyebrow": "Resilience",
+    "title": "A neighbourhood that stands firm, even when the grid does not",
+    "lead": "Knotten sits at Rødberg by Sniksfjorden in Lindesnes, where the river Audna meets the sea, in price zone NO2 with historically high and volatile power prices. We plan for resilience from the very first dig, alongside infrastructure and regulation, so the homes serve everyday life and hold up when the weather and the power market refuse to cooperate.",
+    "blocks": [
+      {
+        "heading": "Operation during power outages",
+        "body": "Long distances and exposed lines make outages a real part of rural life. Knotten is planned with energy solutions that keep essential functions alive through interruptions, not as an emergency light, but as part of the standard."
+      },
+      {
+        "heading": "Battery storage and local generation",
+        "body": "Rooftop solar (indicatively about 1000 to 1020 kWh per kWp a year at this site, PVGIS) is paired with storage, so self-generated power can be used when it matters most. As a plusskunde you pay neither grid rent nor levies on the share of your own production that you consume yourself."
+      },
+      {
+        "heading": "Sensible dimensioning",
+        "body": "Resilience is as much about needing little as about storing a lot. Passive house level with a net heating demand of about 15 kWh/m² a year, airtightness n50 = 0.6 and balanced ventilation means the homes need little, and that little is easy to source locally."
+      },
+      {
+        "heading": "Built for what comes next",
+        "body": "Energy sharing on the same property (possible since 1 October 2023, up to 1 MW) and a shared energy base looking toward thermal storage (reference: Polar Night Energy) give a neighbourhood that can absorb future scenarios. V2G and V2H are still emerging, and we prepare for them without promising more than the technology delivers."
+      }
+    ],
+    "note": "Figures are indicative (PVGIS, June 2026). The number of plots and prices will be stated once the zoning plan is in place. Register a non-binding interest to follow progress."
+  },
+  "baerekraft": {
+    "metaTitle": "Sustainability and standard | Knotten at Rødberg",
+    "metaDescription": "Knotten is being developed toward passive and plus-house standards with balanced ventilation, low energy use and reduced exposure to NO2 power prices. Indicative figures.",
+    "eyebrow": "Sustainability and standard",
+    "title": "Built for low energy demand and a long lifespan",
+    "lead": "Knotten at Rødberg by Sniksfjorden is being developed with the ambition of becoming one of Norway's most energy-efficient, robust and attractive residential areas. The standard is defined together with infrastructure and regulation from the start, before the zoning plan is in place.",
+    "blocks": [
+      {
+        "heading": "Passive and plus-house standard",
+        "body": "The homes are being developed toward passive-house level, with an indicative net heating demand of about 15 kWh/m² per year, airtightness of n50 = 0.6 and balanced ventilation with heat recovery. The energy solutions are designed to sit well within TEK17, with energy labelling and documented standard forming part of the prospectus."
+      },
+      {
+        "heading": "Solar power and on-site generation",
+        "body": "The location offers good conditions for solar panels, with an indicative yield of about 1000 to 1020 kWh per installed kWp per year (PVGIS). As a plus customer you pay neither grid rent nor levies on the power you generate and use yourself, and energy sharing is possible on the same property (up to 1 MW)."
+      },
+      {
+        "heading": "A shared energy base",
+        "body": "We are exploring a shared energy base for the local area, where concepts such as thermal storage and sand batteries (reference: Polar Night Energy) could even out consumption and generation across the year. V2G and V2H, where an electric car can feed power back to the home, are emerging technologies that we follow closely, without promising more than what exists today."
+      },
+      {
+        "heading": "Reduced exposure to power prices",
+        "body": "Rødberg lies in price zone NO2, where electricity prices have historically been high and volatile. Low energy demand and on-site generation are first and foremost about independence and reduced exposure, not guaranteed savings. As a framework around this, the electricity support scheme covers 90 % of the spot price above 77 øre/kWh excl. VAT, while Norgespris offers a fixed 50 øre/kWh incl. VAT; both schemes are decided to run through 2029."
+      }
+    ],
+    "note": "All figures are indicative (as of June 2026). The final standard, energy solutions, number of plots and prices will be stated once the zoning is complete. You are welcome to register non-binding interest."
+  },
+  "verktoy": {
+    "metaTitle": "Buyer Tools | Knotten at Rødberg",
+    "metaDescription": "Explore Knotten's upcoming tools: energy and savings, power security in NO2, monthly cost, solar on your plot, the local area and resilience. All indicative, no personal data.",
+    "eyebrow": "Tools",
+    "title": "Tools that make the value tangible",
+    "lead": "Knotten at Rødberg aims to become one of Norway's most energy-efficient and attractive residential areas. To show what that means in practice, we are building a set of simple tools that let you explore the location, the energy solutions and everyday economics before the zoning plan is in place.",
+    "blocks": [
+      {
+        "heading": "Why tools",
+        "body": "A national reference project deserves more than fine words. These tools translate the ambitions into something you can see, calculate and recognise from your own daily life."
+      },
+      {
+        "heading": "Coming soon",
+        "body": "The tools are in development and will be published as the project takes shape. Register your interest with no obligation, and we will let you know when they are ready."
+      },
+      {
+        "heading": "Indicative and privacy-friendly",
+        "body": "Every tool is illustrative and indicative. They collect no personal data, and the figures are meant to show order of magnitude, not to serve as guarantees or promises."
+      }
+    ],
+    "note": "The tools are in development. The number of plots and prices will be stated once the zoning is complete.",
+    "tools": [
+      {
+        "title": "Energy and savings",
+        "body": "See how passive house standard, self-produced solar power and a shared energy solution can reduce energy demand and exposure to power prices. As a plus customer you pay neither grid rent nor levies on the power you use yourself. Indicative figures, no guaranteed savings.",
+        "slug": "energi"
+      },
+      {
+        "title": "Power security in NO2",
+        "body": "Rødberg sits in price zone NO2, historically marked by high and volatile power prices. The tool shows how local production and support schemes such as the electricity subsidy and Norgespris can dampen exposure to price swings. Indicative.",
+        "slug": "stromtrygghet"
+      },
+      {
+        "title": "Monthly cost",
+        "body": "Get an indicative feel for how the energy solutions may affect a typical monthly cost. The tool illustrates order of magnitude and is not a price offer. The number of plots and prices will be stated once the zoning is complete.",
+        "slug": "manedskostnad"
+      },
+      {
+        "title": "Solar on your plot",
+        "body": "The location by Sniksfjorden offers good solar conditions, about 1000 to 1020 kWh per kWp per year (PVGIS, indicative). The tool illustrates how solar can be harnessed on a plot at Knotten.",
+        "slug": "sol"
+      },
+      {
+        "title": "The local area",
+        "body": "Explore the surroundings around Rødberg: sea views across Sniksfjorden, the nature where the Audna river meets the sea, and everyday life in Lindesnes municipality. The tool gathers what makes the location attractive.",
+        "slug": "naromrade"
+      },
+      {
+        "title": "When the power goes out",
+        "body": "What happens during a power outage? The tool shows how local production, storage and emerging solutions such as V2H can add resilience. The technology is new and is presented honestly, without overstated promises.",
+        "slug": "strombrudd"
+      }
+    ]
+  },
+  "prospekt": {
+    "metaTitle": "Prospekt for Knotten in Lindesnes",
+    "metaDescription": "The prospekt for Knotten by Sniksfjorden is being prepared. Register your interest with no obligation and be among the first to receive it when it is ready.",
+    "eyebrow": "Prospekt",
+    "title": "The prospekt is being prepared",
+    "lead": "Knotten is a residential area in planning at Rodberg by Sniksfjorden in Lindesnes, where the Audna river meets the fjord. The prospekt will gather location, energy solutions and progress in one place, and it is now being prepared.",
+    "blocks": [
+      {
+        "heading": "What the prospekt is intended to cover",
+        "body": "We are working to present the seaside location, the ambition for the area and the energy solutions it is built on. The contents are preliminary and may change before the zoning plan is in place."
+      },
+      {
+        "heading": "An area developed from the ground up",
+        "body": "Knotten is being developed together with infrastructure and regulation from the very start, before the zoning plan, with the ambition of becoming a national reference project for energy-efficient and robust residential areas. The idea is solid, attractive homes with sea views and nature close by."
+      },
+      {
+        "heading": "Energy that leaves you less exposed",
+        "body": "The area is planned with a focus on low energy demand, self-produced solar power (indicatively about 1000 to 1020 kWh per kWp a year on site, according to PVGIS) and energy sharing on the same property. The aim is reduced exposure to volatile power prices and greater self-sufficiency, not guaranteed savings."
+      },
+      {
+        "heading": "Register your interest and we will be in touch",
+        "body": "Would you like to receive the prospekt when it is ready? Register your interest with no obligation, and we will reach out as the plans take shape. The number of plots and prices will be stated once the zoning is complete."
+      }
+    ],
+    "note": "Download of the prospekt is coming. All figures are indicative and may change before regulation. The number of plots, prices and final standard will be stated later."
+  },
+  "meldInteresse": {
+    "metaTitle": "Register interest - Knotten by the fjord",
+    "metaDescription": "Register your non-binding interest in Knotten, a new residential area at Rodberg by Sniksfjorden in Lindesnes. Sea views, robust energy solutions and nature close by.",
+    "eyebrow": "Knotten by Sniksfjorden",
+    "title": "Register interest",
+    "lead": "Knotten is a residential project under development at Rodberg by Sniksfjorden in Lindesnes, where the Audna river meets the sea. If you would like to follow the project, you can register your interest here, with no obligation.",
+    "blocks": [
+      {
+        "heading": "No obligation",
+        "body": "Registering your interest commits you to nothing. There is no obligation to buy, and you are free to opt out at any time. We use your contact details only to keep you informed about the project."
+      },
+      {
+        "heading": "How we use what you share",
+        "body": "Your interest helps us shape the project around real needs and prioritise our progress. We add you to a list of interested parties and contact you when something significant happens."
+      },
+      {
+        "heading": "What happens next",
+        "body": "Knotten is still at an early stage, before zoning. We are developing the plots, energy solutions and infrastructure from the outset, with the ambition of a national reference project. The number of plots and prices will be published once the zoning plan is in place."
+      },
+      {
+        "heading": "Want to know more now",
+        "body": "You are also welcome to contact the developer directly. Sigve Simonsen, general manager of Sigve Simonsen AS, is happy to answer questions: sigve.simonsen@hotmail.com or +47 954 95 152."
+      }
+    ],
+    "note": "A form for registering interest is coming. Until it is in place, please get in touch at sigve.simonsen@hotmail.com or +47 954 95 152."
+  },
+  "aktuelt": {
+    "metaTitle": "News | Knotten by Sniksfjorden",
+    "metaDescription": "Follow the development of Knotten at Rodberg by Sniksfjorden in Lindesnes. We publish milestones, progress and updates on energy solutions and regulation.",
+    "eyebrow": "News",
+    "title": "News from Knotten",
+    "lead": "This is where we gather news and updates from our work on Knotten at Rodberg by Sniksfjorden in Lindesnes. Follow the milestones in the project and the development of its energy solutions along the way.",
+    "blocks": [
+      {
+        "heading": "What you will find here",
+        "body": "We share progress from a project built from the ground up, with infrastructure and regulation in place before the zoning plan is finalised. Once the regulation is ready, we will state the number of plots and prices here."
+      },
+      {
+        "heading": "Energy and technology",
+        "body": "The ambition is to create one of Norway's most energy-efficient and robust residential areas, a national reference project. We speak openly about the choices we make in solar energy, passive house standard, energy sharing and a shared energy base, with indicative figures where relevant."
+      },
+      {
+        "heading": "Register your interest",
+        "body": "Knotten is at an early stage, before sales launch and before regulation. If you want to follow the project closely, you can register your interest without obligation, and we will keep you updated as new information is published."
+      }
+    ],
+    "note": "No updates have been published yet."
+  },
+  "forPartnere": {
+    "metaTitle": "Knotten: a national reference project, Lindesnes",
+    "metaDescription": "Knotten at Rodberg by Sniksfjorden in Lindesnes is being developed as a national reference project for energy-efficient housing. Information for the municipality and partners.",
+    "eyebrow": "For the municipality and partners",
+    "title": "A national reference project at Rodberg",
+    "lead": "Knotten sits at Rodberg by Sniksfjorden in Lindesnes municipality (Agder), where the river Audna meets the sea, with sea views and nature as its defining qualities. The ambition is one of Norway's most energy-efficient, robust and attractive residential areas.",
+    "blocks": [
+      {
+        "heading": "The concept and the ambition",
+        "body": "Knotten is being developed as a reference project for residential areas of the future, where location, standard and energy solutions are connected from the very first line. The goal is a coherent whole built to last, not individual homes put up in isolation."
+      },
+      {
+        "heading": "Infrastructure and energy from the start",
+        "body": "The area is planned with energy and infrastructure integrated before zoning, rather than added on afterwards. The concept builds on passive house standard (indicative net heating demand of about 15 kWh/m² per year, airtightness n50 = 0.6 and balanced ventilation), local solar generation (indicative, about 1000 to 1020 kWh/kWp per year on site) and a shared energy base with scope for energy sharing on the same property."
+      },
+      {
+        "heading": "Basis for the zoning process",
+        "body": "This material forms the basis for the continued dialogue with the municipality and for the zoning plan to be prepared. The number of plots, the standard and prices will be set and stated once the zoning is in place."
+      },
+      {
+        "heading": "Material and contact",
+        "body": "A concise one-pager and supporting concept material will be made available to download. For dialogue, a site visit or questions: Sigve Simonsen, general manager of Sigve Simonsen AS, sigve.simonsen@hotmail.com, +47 954 95 152."
+      }
+    ],
+    "note": "All figures are indicative (as of June 2026). Downloadable material is coming."
+  },
+  "kontakt": {
+    "metaTitle": "Contact Knotten | Register interest",
+    "metaDescription": "Have an informal chat about Knotten by Sniksfjorden in Lindesnes. Reach Sigve Simonsen, managing director, and register your interest early.",
+    "eyebrow": "Contact",
+    "title": "Let us have a chat",
+    "lead": "Knotten is at an early stage, before the zoning plan is in place. You are welcome to an informal chat if you are curious about the location, the energy solutions or the progress.",
+    "blocks": [
+      {
+        "heading": "Talk to the developer",
+        "body": "Sigve Simonsen, managing director of Sigve Simonsen AS, answers you directly. Call or send an email, and we will find a time that suits you."
+      },
+      {
+        "heading": "Sigve Simonsen",
+        "body": "Managing director, Sigve Simonsen AS. Email: sigve.simonsen@hotmail.com. Phone: +47 954 95 152."
+      },
+      {
+        "heading": "Register interest",
+        "body": "Would you like to stay updated on the progress? Register a non-binding interest, and we will get in touch as we approach key milestones. The number of plots and prices will be shared once the zoning plan is ready."
+      }
+    ],
+    "note": "The project is pre sales launch and pre zoning. All information is indicative and may change along the way."
+  },
+  "personvern": {
+    "metaTitle": "Privacy | Knotten at Rødberg",
+    "metaDescription": "How we handle personal data when you register interest in plots at Knotten by Sniksfjorden in Lindesnes. Consent, EU/EEA storage and your rights explained.",
+    "eyebrow": "Privacy",
+    "title": "Privacy policy",
+    "lead": "This policy explains which personal data we collect when you register non-binding interest in Knotten, why we collect it, and the rights you have. Knotten is a residential project at Rødberg by Sniksfjorden in Lindesnes municipality, still ahead of any sales launch and before the zoning plan is in place.",
+    "blocks": [
+      {
+        "heading": "Data controller",
+        "body": "The controller for the personal data is Sigve Simonsen AS (company reg. no.: [placeholder], address: [placeholder]). Contact for privacy matters: Sigve Simonsen, general manager, sigve.simonsen@hotmail.com, +47 954 95 152."
+      },
+      {
+        "heading": "What we collect and why",
+        "body": "When you register interest, we record your name, email address and, optionally, your phone number if you choose to provide it. The purpose is to process your registration of interest and keep you informed about progress, zoning and any future sales launch for Knotten."
+      },
+      {
+        "heading": "Lawful basis and consent",
+        "body": "The processing is based on your consent under the General Data Protection Regulation (GDPR). We use double opt-in: you confirm your registration of interest via a link sent by email, and we log the time and confirmation of your consent. You may withdraw consent at any time, without affecting the lawfulness of processing carried out before the withdrawal."
+      },
+      {
+        "heading": "Storage in the EU/EEA and use of Plausible",
+        "body": "Your personal data is stored with providers located within the EU/EEA. For visitor statistics we use Plausible Analytics, which is operated in the EU and is cookieless and does not track you across websites. We therefore display no cookie banner, and the statistics contain no information that identifies you."
+      },
+      {
+        "heading": "Buyer-value tools",
+        "body": "The calculators and insight tools on this site run locally and collect no personal data. The figures you enter are processed in your browser and are not stored by us."
+      },
+      {
+        "heading": "Retention",
+        "body": "We keep your data for as long as your registration of interest is active and the purpose lasts, normally until the project is concluded or you ask us to delete it. If you withdraw consent, we delete your data without undue delay, unless we are legally required to retain it for longer."
+      },
+      {
+        "heading": "Your rights",
+        "body": "You have the right to access, rectification, erasure and data portability, and to withdraw your consent. Requests can be sent to the contact named above. If you believe the processing breaches the rules, you may lodge a complaint with the Norwegian Data Protection Authority, Datatilsynet (www.datatilsynet.no)."
+      }
+    ],
+    "note": "Placeholders for company registration number and address are filled in before publication. Should be reviewed by a lawyer/DPO."
+  },
+  "common": {
+    "meldInteresse": "Register interest",
+    "lesMer": "Read more",
+    "kommerSnart": "Coming soon",
+    "underUtvikling": "In development",
+    "indikativtEstimat": "Indicative estimate",
+    "kilde": "Source",
+    "forbehold": "Subject to change. All information is preliminary and indicative.",
+    "alleFelter": "All fields are required"
+  },
+  "nav": {
+    "home": "Home",
+    "visjon": "Vision",
+    "energikonseptet": "The energy concept",
+    "omradet": "The area",
+    "robusthet": "Resilience",
+    "baerekraft": "Sustainability",
+    "verktoy": "Tools",
+    "prospekt": "Prospectus",
+    "aktuelt": "News",
+    "forPartnere": "For partners",
+    "kontakt": "Contact",
+    "meldInteresse": "Register interest",
+    "openMenu": "Open menu",
+    "brand": "Knotten"
+  },
+  "footer": {
+    "tagline": "A residential area at Rødberg by the Sniksfjorden in Lindesnes, developed with energy solutions, resilience and sea views at its core.",
+    "colOmradet": "The area",
+    "colForDeg": "For you",
+    "colKontakt": "Contact",
+    "personvern": "Privacy",
+    "legal": "Knotten is in development. All content is preliminary and indicative, and is subject to change ahead of zoning and sales launch."
+  },
+  "cta": {
+    "eyebrow": "No obligation",
+    "heading": "Want to follow Knotten as it takes shape?",
+    "body": "The project is at an early stage, before zoning and sales launch. Register your interest with no obligation, and we will keep you posted on progress, energy solutions and when the plots are released.",
+    "button": "Register interest",
+    "whatNextHeading": "What happens next?",
+    "whatNextSteps": [
+      {
+        "title": "You register interest",
+        "body": "Sign up with no obligation. No commitments, no cost."
+      },
+      {
+        "title": "We stay in touch",
+        "body": "You receive updates on progress, the energy concept and the zoning process."
+      },
+      {
+        "title": "You are first in line",
+        "body": "When the number of plots, prices and sales launch are set, you hear it from us first."
+      }
+    ]
+  },
+  "localeSwitcher": {
+    "label": "Language",
+    "no": "Norsk",
+    "en": "English"
+  }
+}

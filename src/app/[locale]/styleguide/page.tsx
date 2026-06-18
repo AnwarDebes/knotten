@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { setRequestLocale } from "next-intl/server";
 import { Info, CircleCheck, TriangleAlert, CircleX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -111,7 +112,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export default function StyleguidePage() {
+export default async function StyleguidePage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
+  setRequestLocale(locale);
   return (
     <main id="main-content" className="mx-auto w-full max-w-5xl space-y-10 px-6 py-12">
       <header className="space-y-2">
