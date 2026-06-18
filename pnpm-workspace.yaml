@@ -3,3 +3,5 @@ allowBuilds:
   unrs-resolver: true
   "@parcel/watcher": false
   "@swc/core": false
+  playwright: false
+  "@playwright/test": false
