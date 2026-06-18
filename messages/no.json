@@ -95,7 +95,88 @@
         "body": "Knotten ligger i prisområde NO2, som historisk har hatt høye og svingende strømpriser. Energikonseptet handler derfor om redusert eksponering og større uavhengighet, ikke om garanterte besparelser. Strømstøtten dekker 90 % av spotpris over 77 øre/kWh eks. mva., og Norgespris gir en fast pris på 50 øre/kWh inkl. mva.: begge ordningene er besluttet å gjelde ut 2029."
       }
     ],
-    "note": "Den interaktive gjennomgangen kommer. Innholdet her beskriver konseptet på overordnet nivå. Antall tomter og priser oppgis når reguleringen er klar. Vil du følge prosjektet videre, kan du melde uforpliktende interesse."
+    "elementsHeading": "Slik henger energiløsningene sammen",
+    "framingHeading": "Plusskunde og energideling",
+    "maturity": {
+      "proven": "Moden teknologi",
+      "emerging": "Under utvikling",
+      "concept": "Konsept, krever utredning"
+    },
+    "elements": [
+      {
+        "id": "sol",
+        "title": "Solenergi",
+        "explainer": "Solceller på tak og fasade, og felles solproduksjon i området, dekker en stor del av forbruket på lyse dager.",
+        "herNote": "På denne tomta gir sola indikativt om lag 1000 til 1020 kWh per installert kWp i året. Som plusskunde slipper du nettleie og avgifter på strømmen du bruker selv.",
+        "maturity": "proven",
+        "source": "PVGIS (EU JRC)"
+      },
+      {
+        "id": "vind",
+        "title": "Småskala vind",
+        "explainer": "Mindre vindløsninger kan supplere solenergien, særlig i de mørkere månedene når sola gir lite.",
+        "herNote": "Vind utredes som et mulig tillegg. Lokale vindforhold og regelverk avgjør om det er aktuelt.",
+        "maturity": "concept",
+        "source": "Konseptvurdering"
+      },
+      {
+        "id": "bergvarme",
+        "title": "Bergvarme",
+        "explainer": "Varmepumpe med energibrønner henter stabil varme fra grunnen til oppvarming og varmtvann, med lavt strømforbruk.",
+        "herNote": "Bergvarme er en moden løsning i Norge. Endelig dimensjonering krever grunnundersøkelser på stedet.",
+        "maturity": "proven",
+        "source": "Etablert teknologi"
+      },
+      {
+        "id": "batteri",
+        "title": "Batterilagring",
+        "explainer": "Batterier lagrer egenprodusert strøm til kvelden og til perioder med høye priser, og kan holde boligen i drift ved strømbrudd.",
+        "herNote": "Størrelsen tilpasses forbruk og ønsket reservetid. Dette er indikativt og avklares i prosjekteringen.",
+        "maturity": "proven",
+        "source": "Etablert teknologi"
+      },
+      {
+        "id": "delt-base",
+        "title": "Delt energibase",
+        "explainer": "En felles energibase med termisk lagring (sandbatteri, referanse Polar Night Energy) kan lagre overskuddsvarme over tid og deles mellom boligene.",
+        "herNote": "Dette er et konsept for området, ikke et ferdig produkt. Det krever en egen mulighetsstudie og prosjektering.",
+        "maturity": "concept",
+        "source": "Polar Night Energy (referanse)"
+      },
+      {
+        "id": "hub",
+        "title": "Energihub og deling",
+        "explainer": "Et felles tilknytningspunkt og intern distribusjon lar boligene dele egenprodusert strøm på samme eiendom.",
+        "herNote": "Energideling på samme gårds- og bruksnummer har vært tillatt siden 1. oktober 2023, med inntil 1 MW samlet. Delt strøm slipper energiledd og elavgift.",
+        "maturity": "proven",
+        "source": "NVE/RME"
+      },
+      {
+        "id": "v2g",
+        "title": "Elbil som lager (V2G/V2H)",
+        "explainer": "Elbiler med toveis lading kan fungere som et ekstra batteri for boligen og området.",
+        "herNote": "Dette er en teknologi under utvikling (ISO 15118-20). Den krever lader og bil som støtter toveis lading, og er foreløpig ikke utbredt.",
+        "maturity": "emerging",
+        "source": "ISO 15118-20"
+      },
+      {
+        "id": "robusthet",
+        "title": "Robusthet ved strømbrudd",
+        "explainer": "Lokal produksjon og batteri gjør at boligen kan holde det viktigste i gang når strømmen går.",
+        "herNote": "Hvor lenge avhenger av batteristørrelse og forbruk. Tallene er indikative og avklares i prosjekteringen.",
+        "maturity": "proven",
+        "source": "Konsept, prosjektavhengig"
+      }
+    ],
+    "framing": {
+      "body": "Kjernen i økonomien er enkel: strøm du produserer og bruker selv, belastes verken spotpris, nettleie eller avgifter. Som plusskunde mater du inntil 100 kW til nettet, og på samme eiendom kan boligene dele overskuddsstrøm (inntil 1 MW) siden 1. oktober 2023.",
+      "points": [
+        "Egenforbruk er fritatt nettleie og avgifter",
+        "Deling på samme gårds- og bruksnummer",
+        "Inntil 1 MW samlet i delingsløsningen"
+      ],
+      "note": "Regler og satser kan endres. Tallene er indikative (per juni 2026) og må verifiseres før kjøp."
+    }
   },
   "omradet": {
     "metaTitle": "Tomtene og området | Knotten, Rødberg",

@@ -95,7 +95,88 @@
         "body": "Knotten sits in price zone NO2, which has historically seen high and volatile power prices. The energy concept is therefore about reduced exposure and greater independence, not guaranteed savings. The electricity support scheme covers 90% of the spot price above 77 øre/kWh excl. VAT, and Norgespris offers a fixed 50 øre/kWh incl. VAT: both schemes are decided to run through 2029."
       }
     ],
-    "note": "The interactive walkthrough is coming. This content describes the concept at a high level. The number of plots and prices will be stated once the zoning is in place. To follow the project further, you can register non-binding interest."
+    "elementsHeading": "How the energy solutions fit together",
+    "framingHeading": "Prosumer status and energy sharing",
+    "maturity": {
+      "proven": "Proven technology",
+      "emerging": "Emerging",
+      "concept": "Concept, needs a study"
+    },
+    "elements": [
+      {
+        "id": "sol",
+        "title": "Solar energy",
+        "explainer": "Solar panels on roofs and facades, plus shared solar production in the area, cover a large share of consumption on bright days.",
+        "herNote": "On this site the sun gives indicatively around 1000 to 1020 kWh per installed kWp per year. As a prosumer you pay no grid rent or levies on the power you use yourself.",
+        "maturity": "proven",
+        "source": "PVGIS (EU JRC)"
+      },
+      {
+        "id": "vind",
+        "title": "Small-scale wind",
+        "explainer": "Smaller wind solutions can supplement the solar energy, especially in the darker months when the sun gives little.",
+        "herNote": "Wind is being studied as a possible addition. Local wind conditions and regulations decide whether it is viable.",
+        "maturity": "concept",
+        "source": "Concept assessment"
+      },
+      {
+        "id": "bergvarme",
+        "title": "Ground-source heating",
+        "explainer": "A heat pump with energy wells draws stable heat from the ground for heating and hot water, with low electricity use.",
+        "herNote": "Ground-source heating is a mature solution in Norway. Final sizing needs ground surveys on site.",
+        "maturity": "proven",
+        "source": "Established technology"
+      },
+      {
+        "id": "batteri",
+        "title": "Battery storage",
+        "explainer": "Batteries store self-produced power for the evening and for high-price periods, and can keep the home running during an outage.",
+        "herNote": "The size is matched to consumption and the desired reserve time. This is indicative and settled during design.",
+        "maturity": "proven",
+        "source": "Established technology"
+      },
+      {
+        "id": "delt-base",
+        "title": "Shared energy base",
+        "explainer": "A shared energy base with thermal storage (a sand battery, after Polar Night Energy) can store surplus heat over time and share it between the homes.",
+        "herNote": "This is a concept for the area, not a finished product. It needs its own feasibility study and engineering.",
+        "maturity": "concept",
+        "source": "Polar Night Energy (reference)"
+      },
+      {
+        "id": "hub",
+        "title": "Energy hub and sharing",
+        "explainer": "A shared connection point and internal distribution let the homes share self-produced power within the same property.",
+        "herNote": "Energy sharing within the same land and property number has been allowed since 1 October 2023, up to 1 MW in total. Shared power avoids the energy tariff and electricity tax.",
+        "maturity": "proven",
+        "source": "NVE/RME"
+      },
+      {
+        "id": "v2g",
+        "title": "EV as storage (V2G/V2H)",
+        "explainer": "Electric cars with two-way charging can act as an extra battery for the home and the area.",
+        "herNote": "This is an emerging technology (ISO 15118-20). It needs a charger and a car that support two-way charging and is not yet widespread.",
+        "maturity": "emerging",
+        "source": "ISO 15118-20"
+      },
+      {
+        "id": "robusthet",
+        "title": "Resilience during outages",
+        "explainer": "Local production and a battery let the home keep the essentials running when the power goes out.",
+        "herNote": "How long depends on the battery size and consumption. The figures are indicative and settled during design.",
+        "maturity": "proven",
+        "source": "Concept, design-dependent"
+      }
+    ],
+    "framing": {
+      "body": "The economy at its core is simple: power you produce and use yourself carries neither the spot price, grid rent nor levies. As a prosumer you feed at most 100 kW to the grid, and within the same property the homes can share surplus power (up to 1 MW) since 1 October 2023.",
+      "points": [
+        "Self-consumption is free of grid rent and levies",
+        "Sharing within the same land and property number",
+        "Up to 1 MW in total in the sharing solution"
+      ],
+      "note": "Rules and rates can change. The figures are indicative (as of June 2026) and must be verified before a purchase."
+    }
   },
   "omradet": {
     "metaTitle": "The area and plots | Knotten, Rødberg",

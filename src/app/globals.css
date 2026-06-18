@@ -146,6 +146,20 @@
   }
 }
 
+/* Subtle, restrained pulse for the energy illustrations (opacity only). */
+@keyframes energy-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+.energy-pulse {
+  animation: energy-pulse 2.4s var(--ease-standard) infinite;
+}
+
 /* Honour reduced-motion: near-instant, no large transitions or animations. */
 @media (prefers-reduced-motion: reduce) {
   *,
