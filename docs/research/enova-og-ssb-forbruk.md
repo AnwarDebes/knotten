@@ -27,6 +27,7 @@ Cite the reference year explicitly so the calculator baseline is unambiguous.
 ### Kilder / Sources
 
 Checked June 2026:
+
 - https://www.enova.no/privat/alle-energitiltak/
 - https://www.enova.no/privat/alle-energitiltak/solenergi/
 - https://www.enova.no/privat/alle-energitiltak/pris--og-effektstyrt-energilagringssystem-for-boliger/

@@ -34,10 +34,10 @@ Necessity: contacting a prospective buyer requires a way to reach them. A name p
 
 Data minimisation (GDPR Article 5(1)(c)): the form collects at most three fields of personal data.
 
-| Field | Status | Why it is collected |
-| --- | --- | --- |
-| navn | required | to address the person and recognise them on follow-up |
-| e-post | required | the double opt-in channel and the primary contact method |
+| Field   | Status   | Why it is collected                                                   |
+| ------- | -------- | --------------------------------------------------------------------- |
+| navn    | required | to address the person and recognise them on follow-up                 |
+| e-post  | required | the double opt-in channel and the primary contact method              |
 | telefon | optional | an alternative contact channel, only if the person chooses to give it |
 
 Optional, non-personal qualifiers may also be captured (for example an interest in a specific plot, including a plot pre-filled from a shareable per-plot page, SPEC-18) to make the follow-up useful. A free-text field, if any, is a known minimisation risk: free text can attract unsolicited special-category data (Article 9) or third-party data, so the form should avoid free text or, if a short message field is included, warn against entering sensitive or third-party information and treat its contents under the same controls. **[review]** No special-category data is collected by design, and none is requested. The form does not ask for an address, date of birth, financial details, or any field beyond what a callback needs. Deeper qualification is deferred to the human follow-up call, which keeps the stored data minimal.
@@ -74,26 +74,27 @@ Processors. Each processor must be bound by a data processing agreement (Article
 
 Likelihood and severity are rated low, medium or high, before the mitigations in section 5 are credited (inherent risk). The data is ordinary contact data of adults who chose to submit it, not special-category data, and the volumes in a pre-sales phase are modest, which bounds inherent severity. The risk set has been widened beyond the original four to cover the threats that this specific architecture (public form, double opt-in by email, managed processors, an admin area, backups, and data-subject rights duties) actually carries.
 
-| Risk | What could happen | Inherent likelihood | Inherent severity |
-| --- | --- | --- | --- |
-| Unauthorised access or data breach (database) | An attacker reaches the lead database and reads or exfiltrates contact details (the platform's most sensitive asset) | Medium | Medium |
-| Admin account compromise | An admin credential is phished, reused, or its session stolen, giving an attacker full read, export and erasure over all leads | Medium | High |
-| Public form abuse and injection | The public form is used for injection (SQL/XSS), CSRF, or mass automated submission | Medium | Medium |
-| Double opt-in misuse: email bombing / enumeration | The confirmation flow is abused to send unsolicited confirmation emails to third parties, or to probe which addresses are already registered | Medium | Low to medium |
-| Excessive retention | Contact details (and backups) are kept longer than needed, growing the data held and the exposure if a breach occurs | Medium | Low to medium |
-| Profiling or function creep | The data is combined, enriched or used for behavioural profiling, scoring, or a purpose beyond the callback the person asked for | Low | Medium |
-| Transfers or third-country access | Personal data is moved to, or made accessible from, a third country without an adequate basis, including via a processor's US parent, support access, or a sub-processor | Low to medium | Medium |
-| Supply-chain / dependency compromise | A compromised npm dependency, build step, or third-party script (captcha, map tiles) exfiltrates form data client-side or server-side | Low to medium | Medium to high |
-| Logging / observability leakage | Personal data leaks into application logs, error reports, analytics, or email metadata despite the no-PII-in-logs intent | Medium | Low to medium |
-| Data-subject rights failure | An access, erasure, rectification or withdrawal request is missed, mishandled, or not honoured in backups, or identity is not verified, leading to non-compliance or disclosure to the wrong person | Medium | Medium |
-| Breach detection and notification failure | A breach is not detected, or not assessed and notified to Datatilsynet within 72 hours and to data subjects where required | Medium | Medium |
-| Inaccurate or misdirected contact | A typo or a third-party-entered address leads to contacting the wrong person, or follow-up contact that the person no longer wants | Low to medium | Low |
+| Risk                                              | What could happen                                                                                                                                                                                   | Inherent likelihood | Inherent severity |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- | ----------------- |
+| Unauthorised access or data breach (database)     | An attacker reaches the lead database and reads or exfiltrates contact details (the platform's most sensitive asset)                                                                                | Medium              | Medium            |
+| Admin account compromise                          | An admin credential is phished, reused, or its session stolen, giving an attacker full read, export and erasure over all leads                                                                      | Medium              | High              |
+| Public form abuse and injection                   | The public form is used for injection (SQL/XSS), CSRF, or mass automated submission                                                                                                                 | Medium              | Medium            |
+| Double opt-in misuse: email bombing / enumeration | The confirmation flow is abused to send unsolicited confirmation emails to third parties, or to probe which addresses are already registered                                                        | Medium              | Low to medium     |
+| Excessive retention                               | Contact details (and backups) are kept longer than needed, growing the data held and the exposure if a breach occurs                                                                                | Medium              | Low to medium     |
+| Profiling or function creep                       | The data is combined, enriched or used for behavioural profiling, scoring, or a purpose beyond the callback the person asked for                                                                    | Low                 | Medium            |
+| Transfers or third-country access                 | Personal data is moved to, or made accessible from, a third country without an adequate basis, including via a processor's US parent, support access, or a sub-processor                            | Low to medium       | Medium            |
+| Supply-chain / dependency compromise              | A compromised npm dependency, build step, or third-party script (captcha, map tiles) exfiltrates form data client-side or server-side                                                               | Low to medium       | Medium to high    |
+| Logging / observability leakage                   | Personal data leaks into application logs, error reports, analytics, or email metadata despite the no-PII-in-logs intent                                                                            | Medium              | Low to medium     |
+| Data-subject rights failure                       | An access, erasure, rectification or withdrawal request is missed, mishandled, or not honoured in backups, or identity is not verified, leading to non-compliance or disclosure to the wrong person | Medium              | Medium            |
+| Breach detection and notification failure         | A breach is not detected, or not assessed and notified to Datatilsynet within 72 hours and to data subjects where required                                                                          | Medium              | Medium            |
+| Inaccurate or misdirected contact                 | A typo or a third-party-entered address leads to contacting the wrong person, or follow-up contact that the person no longer wants                                                                  | Low to medium       | Low               |
 
 ## 5. Measures that reduce each risk
 
 All measures are **[planned]** unless explicitly verified; none should be reported as in place until the corresponding spec (SPEC-06, 07, 08, 22, 23, 24, 26) is built and its evidence recorded against the QA gate.
 
 ### Unauthorised access or data breach (database)
+
 - The lead database is treated as the crown jewel; the public forms are treated as a hostile entry point.
 - Allowlist validation and output encoding throughout; parameterised database access only; a least-privilege database user (no DDL or superuser rights from the application); CSRF on state-changing requests.
 - TLS in transit and encryption at rest (relying on the managed provider's at-rest encryption; verify it is enabled and documented for the chosen provider, and that key management is the provider's responsibility under the DPA).
@@ -103,6 +104,7 @@ All measures are **[planned]** unless explicitly verified; none should be report
 Residual after [planned] controls, assuming verified: low to medium. The honest position is that a managed-Postgres lead store remains a real target; residual cannot be driven below low while it holds live contact data.
 
 ### Admin account compromise
+
 - Admin access behind strong authentication with TOTP multi-factor, account lockout and throttling on failed attempts, least-privilege roles, and server-side authorisation re-checked on every protected action (not only at login).
 - Secure session handling: HttpOnly/Secure/SameSite cookies, short sessions, and re-authentication for sensitive actions (export, bulk erasure).
 - Audit logging of every admin and data action (who, what, when), retained and tamper-evident as far as the platform allows; alerting on anomalous patterns (many exports, mass erasure, logins from new locations). **[review]** the alerting design and who receives alerts must be defined for a non-technical owner.
@@ -111,6 +113,7 @@ Residual after [planned] controls, assuming verified: low to medium. The honest 
 Residual: low to medium. Compromise of the single privileged account is high-severity by definition; MFA and least privilege reduce likelihood but the owner's operational security (device, email account used for recovery) is the limiting factor and should be covered in the handover runbook.
 
 ### Public form abuse and injection
+
 - Allowlist validation and output encoding; parameterised queries; CSRF tokens on the state-changing request; size and content limits on every field.
 - Honeypot, a privacy-respecting challenge (Turnstile/hCaptcha), and per-IP and per-email rate limiting and throttling.
 - Abuse testing of the form and auth before go-live (part of SPEC-23/24).
@@ -118,6 +121,7 @@ Residual: low to medium. Compromise of the single privileged account is high-sev
 Residual: low.
 
 ### Double opt-in misuse (email bombing and enumeration)
+
 - Per-IP and per-email rate limiting so the confirmation endpoint cannot be used to spray confirmation emails at a third party.
 - Generic, non-revealing responses: the form and confirmation pages must not disclose whether an address is already registered (to prevent enumeration), and must not leak token validity beyond a generic success/failure.
 - Single-use, time-limited, unguessable confirmation tokens; unconfirmed entries pruned on schedule and never treated as leads.
@@ -126,6 +130,7 @@ Residual: low.
 Residual: low to medium. The double opt-in pattern itself can be a minor abuse vector toward third parties; rate limiting bounds it but cannot eliminate it.
 
 ### Excessive retention
+
 - A defined retention period for un-actioned leads, with automatic or documented deletion at the end of it. **[review]** the actual retention period (number of months) is not yet set and must be chosen and justified with the controller/DPO.
 - Unconfirmed double opt-in entries pruned rather than retained as leads.
 - Backups carry their own bounded retention and expire on schedule; the retention policy covers both the live store and backups.
@@ -134,6 +139,7 @@ Residual: low to medium. The double opt-in pattern itself can be a minor abuse v
 Residual: low, once the retention period is set and the deletion job is verified to run.
 
 ### Profiling or function creep
+
 - A single, stated purpose (callback), enforced by design; no advertising pixels, no behavioural tracking, no automated decision-making, no scoring.
 - The buyer-value tools are designed to be stateless and to collect no personal data, so they cannot feed a profile (section 7).
 - Analytics is cookieless and EU-hosted (Plausible) and is treated as processing no personal data, so platform usage is not tied to an identified person.
@@ -142,6 +148,7 @@ Residual: low, once the retention period is set and the deletion job is verified
 Residual: low.
 
 ### Transfers or third-country access
+
 - Email, database and analytics are selected to be EU/EEA-resident; the hosting region is an EU region.
 - DPAs are recorded with every processor, and EU/EEA residency is a selection criterion for each.
 - Sub-processors and the location of administrative/support access are checked per processor, not only the primary region, because some EU-region services are operated by companies with a US parent that may have lawful-access exposure or non-EU support staff. Where such exposure exists, the standard transfer mechanism (SCCs plus, where relied upon, the EU-US Data Privacy Framework) and any supplementary measures are recorded, and a provider with cleaner EU residency is preferred. **[review]**
@@ -150,6 +157,7 @@ Residual: low.
 Residual: low, conditional on the per-processor sub-processor and access review being completed.
 
 ### Supply-chain / dependency compromise
+
 - Lockfile committed; automated dependency vulnerability scanning and secret scanning in CI, with nothing high or critical left open at release.
 - A strict CSP that constrains which origins can load scripts and receive data, reducing the blast radius of a compromised third-party script; the captcha and map-tile origins are explicitly allow-listed and nothing else.
 - Minimise third-party scripts on the form page; the interest form should load as little third-party code as possible.
@@ -158,6 +166,7 @@ Residual: low, conditional on the per-processor sub-processor and access review 
 Residual: low to medium. A client-side form is exposed to script-supply-chain risk; CSP and minimised dependencies reduce but do not remove it.
 
 ### Logging / observability leakage
+
 - No personal data in application logs by design; structured logging that excludes form field values.
 - Error tracking with PII scrubbing configured and verified (test that a submitted email/phone does not appear in an error report).
 - Email provider and notification content reviewed so personal data is not exposed in subjects or metadata beyond what is necessary.
@@ -166,6 +175,7 @@ Residual: low to medium. A client-side form is exposed to script-supply-chain ri
 Residual: low, conditional on the scrubbing being tested rather than assumed.
 
 ### Data-subject rights failure
+
 - One-click erasure and per-subject export in the admin area; a documented DSAR runbook for access, rectification, erasure, restriction, objection and consent withdrawal.
 - Identity verification proportionate to risk before acting on a request, to avoid disclosing or deleting on the strength of an unverified claim.
 - Response within one month (Article 12(3)); a log of requests and how they were handled.
@@ -175,12 +185,14 @@ Residual: low, conditional on the scrubbing being tested rather than assumed.
 Residual: low to medium. This depends heavily on the non-technical owner following the runbook; the handover and demo must cover it. **[review]**
 
 ### Breach detection and notification failure
+
 - Audit logging and anomaly alerting (above) support detection.
 - An incident-response runbook covering assessment, containment, the 72-hour notification to Datatilsynet (Article 33), notification to affected data subjects where the risk is high (Article 34), and who is responsible. **[planned] [review]** the responsible person and contact path must be named once the controller identity is fixed.
 
 Residual: medium until the incident runbook exists and a responsible contact is named; this is a genuine gap today.
 
 ### Inaccurate or misdirected contact
+
 - Double opt-in confirms the address belongs to the person and is correct.
 - Server-side validation of email and phone format; the person can correct or withdraw at any time.
 - Follow-up contact respects withdrawal and the stated no-obligation framing.

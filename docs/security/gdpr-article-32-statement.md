@@ -29,62 +29,62 @@ When a measure is built and verified, its status is updated here and a completio
 
 ## 3. Pseudonymisation and encryption (Art. 32(1)(a))
 
-| Measure | Status | Notes |
-|---|---|---|
-| TLS in transit for all traffic | Designed | HTTPS enforced; HSTS response header (SPEC-23, ADR 0001 Vercel). |
-| Encryption at rest for the database | Designed | Managed PostgreSQL in the EU provides at-rest encryption; confirm the chosen provider's encryption and key management before production (ADR 0003; provider parked in `docs/OPEN-QUESTIONS.md`). |
-| Encryption at rest for backups | Planned | Backups inherit provider encryption; verify under SPEC-26. |
+| Measure                                           | Status   | Notes                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| TLS in transit for all traffic                    | Designed | HTTPS enforced; HSTS response header (SPEC-23, ADR 0001 Vercel).                                                                                                                                                                                                                                                                                                                                                       |
+| Encryption at rest for the database               | Designed | Managed PostgreSQL in the EU provides at-rest encryption; confirm the chosen provider's encryption and key management before production (ADR 0003; provider parked in `docs/OPEN-QUESTIONS.md`).                                                                                                                                                                                                                       |
+| Encryption at rest for backups                    | Planned  | Backups inherit provider encryption; verify under SPEC-26.                                                                                                                                                                                                                                                                                                                                                             |
 | Minimisation as a substitute for pseudonymisation | Designed | The strongest control here is collecting almost nothing: name, email and an optional phone number. Buyer-value tools hold no personal data, so most of the platform has nothing to pseudonymise. Pseudonymisation of stored leads is not currently planned, because the data is needed in identifiable form to respond to an enquiry; this is a deliberate, documented choice to revisit if retention or volume grows. |
-| Analytics without personal data | Designed | Plausible is cookieless and EU-hosted and, per the provider, processes no personal data and does not read the device; this removes a class of data rather than encrypting it. Re-verify the provider's claims and residency before go-live. |
+| Analytics without personal data                   | Designed | Plausible is cookieless and EU-hosted and, per the provider, processes no personal data and does not read the device; this removes a class of data rather than encrypting it. Re-verify the provider's claims and residency before go-live.                                                                                                                                                                            |
 
 ## 4. Confidentiality, integrity, availability and resilience (Art. 32(1)(b))
 
 **Confidentiality**
 
-| Measure | Status |
-|---|---|
-| Least-privilege database user for the application (no superuser, scoped to required tables and operations) | Designed (SPEC-23) |
-| Admin authentication with TOTP multi-factor, lockout and throttling | Designed (ADR 0008, SPEC-07) |
-| Least-privilege admin roles; server-side authorisation on every protected action | Designed (SPEC-23) |
-| Hardened sessions: `HttpOnly`, `Secure`, `SameSite` cookies, short session lifetime, re-authentication for sensitive actions | Designed (SPEC-23) |
-| No personal data in application logs; error tracking with PII scrubbing | Designed (SPEC-23, SPEC-26) |
-| Secrets via environment and the platform secret manager, never in the repository, with documented rotation | Designed (ADR 0014) |
+| Measure                                                                                                                                                     | Status                                          |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| Least-privilege database user for the application (no superuser, scoped to required tables and operations)                                                  | Designed (SPEC-23)                              |
+| Admin authentication with TOTP multi-factor, lockout and throttling                                                                                         | Designed (ADR 0008, SPEC-07)                    |
+| Least-privilege admin roles; server-side authorisation on every protected action                                                                            | Designed (SPEC-23)                              |
+| Hardened sessions: `HttpOnly`, `Secure`, `SameSite` cookies, short session lifetime, re-authentication for sensitive actions                                | Designed (SPEC-23)                              |
+| No personal data in application logs; error tracking with PII scrubbing                                                                                     | Designed (SPEC-23, SPEC-26)                     |
+| Secrets via environment and the platform secret manager, never in the repository, with documented rotation                                                  | Designed (ADR 0014)                             |
 | All processing and storage in the EU/EEA, with a data processing agreement recorded for each processor (hosting, database, email, analytics, captcha, maps) | Designed; DPAs to be recorded before production |
 
 **Integrity**
 
-| Measure | Status |
-|---|---|
-| Parameterised database access only (no string-built SQL); Drizzle ORM with migrations in the repository | Designed (ADR 0003, SPEC-23) |
-| Input validation (allowlist) and output encoding throughout | Designed (SPEC-23) |
-| CSRF protection on all state-changing requests | Designed (SPEC-23) |
-| Strict Content Security Policy (nonces or hashes), `X-Content-Type-Options`, `frame-ancestors`, `Referrer-Policy`, `Permissions-Policy` | Designed (SPEC-23) |
-| Versioned, timestamped consent record stored per lead (exact text and version) for evidential integrity | Designed (SPEC-06) |
-| Audit log for admin and data actions | Designed (SPEC-23) |
+| Measure                                                                                                                                 | Status                       |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| Parameterised database access only (no string-built SQL); Drizzle ORM with migrations in the repository                                 | Designed (ADR 0003, SPEC-23) |
+| Input validation (allowlist) and output encoding throughout                                                                             | Designed (SPEC-23)           |
+| CSRF protection on all state-changing requests                                                                                          | Designed (SPEC-23)           |
+| Strict Content Security Policy (nonces or hashes), `X-Content-Type-Options`, `frame-ancestors`, `Referrer-Policy`, `Permissions-Policy` | Designed (SPEC-23)           |
+| Versioned, timestamped consent record stored per lead (exact text and version) for evidential integrity                                 | Designed (SPEC-06)           |
+| Audit log for admin and data actions                                                                                                    | Designed (SPEC-23)           |
 
 **Availability and resilience**
 
-| Measure | Status |
-|---|---|
-| Managed, EU-region hosting and database with provider-level redundancy | Designed (ADR 0001, ADR 0003) |
-| Database backups | Planned; provider-managed backups to be configured (SPEC-26) |
-| Tested restore: a restore from backup is performed and verified, not assumed | Planned; this is an acceptance criterion of SPEC-26 and is not satisfied until a restore has actually succeeded |
-| Rate limiting and bot mitigation on public forms and authentication, to absorb abuse without loss of service | Designed (ADR 0013, SPEC-23) |
-| Uptime monitoring and alerting on anomalies | Planned (SPEC-26) |
+| Measure                                                                                                      | Status                                                                                                          |
+| ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| Managed, EU-region hosting and database with provider-level redundancy                                       | Designed (ADR 0001, ADR 0003)                                                                                   |
+| Database backups                                                                                             | Planned; provider-managed backups to be configured (SPEC-26)                                                    |
+| Tested restore: a restore from backup is performed and verified, not assumed                                 | Planned; this is an acceptance criterion of SPEC-26 and is not satisfied until a restore has actually succeeded |
+| Rate limiting and bot mitigation on public forms and authentication, to absorb abuse without loss of service | Designed (ADR 0013, SPEC-23)                                                                                    |
+| Uptime monitoring and alerting on anomalies                                                                  | Planned (SPEC-26)                                                                                               |
 
 Backups without a tested restore give false assurance. Until a restore has been executed and verified under SPEC-26, availability for the lead data should be regarded as unproven.
 
 ## 5. Regular testing, assessment and evaluation (Art. 32(1)(d))
 
-| Measure | Status |
-|---|---|
+| Measure                                                                                                                            | Status                                                                                        |
+| ---------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
 | Threat model maintained under `docs/security/`, mapped to the OWASP Top 10, covering assets, entry points, threats and mitigations | Planned; authored and finalised in SPEC-23 (a stub exists; the full model is not yet written) |
-| Automated dependency vulnerability scanning in CI, with no high or critical findings left open | Designed (SPEC-23) |
-| Secret scanning in CI | Designed (ADR 0014, SPEC-23) |
-| Security tests in CI (headers, CSP, auth and form abuse cases) | Designed (SPEC-23, SPEC-24) |
-| Abuse testing of the public forms and the authentication flow (injection, XSS, CSRF, brute force, automated submission) | Planned; an acceptance criterion of SPEC-23 |
-| Lockfile committed; reproducible builds | Designed (SPEC-00) |
-| Penetration testing by an external party | Not planned for v1; flag for the controller to decide on scope and budget before go-live |
+| Automated dependency vulnerability scanning in CI, with no high or critical findings left open                                     | Designed (SPEC-23)                                                                            |
+| Secret scanning in CI                                                                                                              | Designed (ADR 0014, SPEC-23)                                                                  |
+| Security tests in CI (headers, CSP, auth and form abuse cases)                                                                     | Designed (SPEC-23, SPEC-24)                                                                   |
+| Abuse testing of the public forms and the authentication flow (injection, XSS, CSRF, brute force, automated submission)            | Planned; an acceptance criterion of SPEC-23                                                   |
+| Lockfile committed; reproducible builds                                                                                            | Designed (SPEC-00)                                                                            |
+| Penetration testing by an external party                                                                                           | Not planned for v1; flag for the controller to decide on scope and budget before go-live      |
 
 "Penetration" here means the structured abuse testing of forms and authentication defined in SPEC-23, not a formal third-party penetration test. Do not describe the platform as penetration-tested in the formal sense unless and until an external test is commissioned.
 

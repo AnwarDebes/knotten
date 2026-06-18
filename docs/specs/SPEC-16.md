@@ -31,7 +31,7 @@ A small contractor selling an energy-smart coastal development needs the buyer t
 
 - [ ] Fully working against placeholder house types, with zero hardcoding (a new type added in data appears with no code change).
 - [ ] Live recompute is correct and matches SPEC-05/10/11 for the same inputs.
-- [ ] Every output is labelled an *indikativt estimat*, with assumptions, source and the right disclaimer.
+- [ ] Every output is labelled an _indikativt estimat_, with assumptions, source and the right disclaimer.
 - [ ] Usable on mobile via the 2D fallback; keyboard operable; WCAG 2.2 AA.
 - [ ] Within the performance budget; the 3D chunk stays out of the initial bundle.
 - [ ] The house-type data gap is recorded in INPUTS-NEEDED.
@@ -49,7 +49,7 @@ A small contractor selling an energy-smart coastal development needs the buyer t
 ## Guardrails
 
 - Stateless buyer-value tool: collects and stores no personal data; any future "email my results" routes only through the consented SPEC-06 lead flow.
-- Every estimate is labelled, sourced (PVGIS, SSB, passivhus standards, NO2 schemes) and disclaimed: *indikativt, ikke et tilbud, krever profesjonell energimodellering*. Placement and house views are illustrative, with standard *forbehold*.
+- Every estimate is labelled, sourced (PVGIS, SSB, passivhus standards, NO2 schemes) and disclaimed: _indikativt, ikke et tilbud, krever profesjonell energimodellering_. Placement and house views are illustrative, with standard _forbehold_.
 - Performance: initial route JS within the SPEC-00 budget; 3D loads lazily and only on capable devices; motion is transform/opacity only.
 - Accessibility: WCAG 2.2 AA, full keyboard path, focus management, and a non-3D route to every result.
 

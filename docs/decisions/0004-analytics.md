@@ -17,6 +17,7 @@ The project is also still in a data-driven, placeholder state: unit and plot cou
 Use Plausible Cloud (EU region) as the single analytics tool for the site.
 
 Scope of what is collected:
+
 - Page views.
 - Traffic sources.
 - Goal events: interest-form completion, prospekt download, and each tool use (one goal per interactive tool).

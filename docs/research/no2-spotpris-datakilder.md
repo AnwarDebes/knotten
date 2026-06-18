@@ -37,6 +37,7 @@ Display `NOK_per_kWh` as the spot component, and add VAT (25%), grid tariff (net
 ## Kilder / Sources
 
 All URLs checked June 2026:
+
 - https://www.hvakosterstrommen.no/strompris-api
 - https://www.hvakosterstrommen.no/api/v1/prices/2026/06-18_NO2.json
 - https://transparency.entsoe.eu/

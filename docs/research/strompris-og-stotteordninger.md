@@ -19,6 +19,7 @@ Stroem som produseres og forbrukes bak egen maaler (for eksempel solceller, plus
 ### Kilder / Sources
 
 Lenkene under ble kontrollert i juni 2026:
+
 - https://www.regjeringen.no/no/tema/energi/strom/regjeringens-stromtiltak/id2900232/
 - https://www.regjeringen.no/no/tema/energi/strom/sporsmal-og-svar-om-norgespris/id3089310/
 - https://www.nve.no/reguleringsmyndigheten/kunde/stroem/dette-er-norgespris/
