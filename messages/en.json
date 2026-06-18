@@ -529,5 +529,34 @@
     "label": "Language",
     "no": "Norsk",
     "en": "English"
+  },
+  "terrain": {
+    "heading": "3D plot map",
+    "intro": "Explore the terrain by Snigsfjorden in 3D. The model is built on real elevation data from Kartverket. The plots shown are preliminary illustrations; their placement, number and views are not finally decided.",
+    "plotPrefix": "Plot",
+    "pricePending": "Price stated once the zoning is ready",
+    "selectHint": "Select a plot to see its view and status.",
+    "selectedSightline": "View toward the sea",
+    "status": {
+      "ledig": "Available",
+      "reservert": "Reserved",
+      "solgt": "Sold"
+    },
+    "sun": {
+      "label": "Sun",
+      "season": "Season",
+      "summer": "Summer",
+      "winter": "Winter",
+      "morning": "Morning",
+      "midday": "Midday",
+      "evening": "Evening"
+    },
+    "reset": "Reset view",
+    "fallbackTitle": "Simplified terrain view",
+    "fallbackNote": "The interactive 3D model is shown on larger screens with hardware that supports it. Here is a still image of the terrain, with the plots listed below.",
+    "imageAlt": "Terrain model of Snigsfjorden at Rødberg, with hillsides falling toward the fjord. Preliminary illustration.",
+    "attribution": "Terrain data: Hoydedata © Kartverket (CC BY 4.0)",
+    "forbehold": "Illustration based on real elevation data. Plot boundaries, number, prices and views are preliminary and not final.",
+    "plotsHeading": "Plots (preliminary)"
   }
 }

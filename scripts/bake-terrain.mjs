@@ -12,7 +12,7 @@ import { chromium } from "playwright";
 const ROOT = process.cwd();
 const THREE_BUILD = `${ROOT}/node_modules/three/build`;
 const heightmap = JSON.parse(fs.readFileSync("public/terrain/heightmap.json", "utf8"));
-const OUT = path.join("public", "terrain", "fallback.png");
+const OUT = path.join("public", "terrain", "fallback.jpg");
 const W = 1600;
 const H = 1000;
 
@@ -140,7 +140,7 @@ await page.goto(`http://127.0.0.1:${port}/`);
 await page.waitForFunction(() => window.__done === true, { timeout: 60000 });
 await page.waitForTimeout(400);
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
-await page.locator("canvas").screenshot({ path: OUT });
+await page.locator("canvas").screenshot({ path: OUT, type: "jpeg", quality: 82 });
 await browser.close();
 server.close();
 console.log(`Baked ${OUT} (${(fs.statSync(OUT).size / 1024).toFixed(0)} KB)`);

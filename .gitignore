@@ -43,3 +43,7 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Local scratch files
+_*.mjs
+_*.html

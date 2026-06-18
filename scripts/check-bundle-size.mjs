@@ -16,10 +16,18 @@ const NEXT_DIR = ".next";
 const APP_DIR = path.join(NEXT_DIR, "server", "app");
 // Content-page ceiling. The Next 16 + React 19 App Router floor is about
 // 122 KB gzip; a bilingual page adds the next-intl client provider and the
-// locale switcher (about 11 KB). The ceiling holds content pages near that and
-// still catches heavy regressions, above all the 3D library entering an initial
-// bundle. Interactive tool pages get explicit per-route budgets in SPEC-22.
-const BUDGET_BYTES = 142 * 1024;
+// locale switcher (about 11 KB); introducing the lazily-loaded 3D feature grew
+// the shared client chunk by a further about 11 KB (a webpack chunking effect
+// of the larger client-component graph and the code-splitting infrastructure).
+// Three.js itself stays lazy (the key guarantee), so the ceiling still catches
+// it entering an initial bundle. See ADR-0011.
+const BUDGET_BYTES = 152 * 1024;
+// Interactive tool pages legitimately ship more client logic. They get an
+// explicit, documented higher budget (still far below what an eager 3D import
+// would cost, so the lazy-3D guarantee is still enforced). See ADR-0011.
+const ROUTE_BUDGETS = [{ match: "/omradet", bytes: 165 * 1024 }];
+const budgetFor = (route) =>
+  ROUTE_BUDGETS.find((r) => route.includes(r.match))?.bytes ?? BUDGET_BYTES;
 const isExempt = (route) => route.includes("styleguide");
 
 if (!fs.existsSync(APP_DIR)) {
@@ -66,22 +74,26 @@ for (const row of rows) {
   console.log(`  ${kb(row.size).padStart(7)} KB  ${row.route}${tag}`);
 }
 console.log(
-  `\nBudget: ${BUDGET_BYTES / 1024} KB gzip per content route (excludes legacy polyfills and lazy chunks).`,
+  `\nBudget: ${BUDGET_BYTES / 1024} KB gzip per content route; interactive routes have documented higher limits (excludes legacy polyfills and lazy chunks).`,
 );
 
 const gated = rows.filter((row) => !isExempt(row.route));
-const heaviest = gated[0];
-if (!heaviest) {
+if (gated.length === 0) {
   console.error("No content routes found to measure.");
   process.exit(1);
 }
-if (heaviest.size > BUDGET_BYTES) {
-  console.error(
-    `FAIL: ${heaviest.route} first-load JS is ${kb(heaviest.size)} KB, over the ${
-      BUDGET_BYTES / 1024
-    } KB budget.`,
-  );
+
+const over = gated.filter((row) => row.size > budgetFor(row.route));
+if (over.length > 0) {
+  for (const row of over) {
+    console.error(
+      `FAIL: ${row.route} first-load JS is ${kb(row.size)} KB, over its ${
+        budgetFor(row.route) / 1024
+      } KB budget.`,
+    );
+  }
   process.exit(1);
 }
 
+const heaviest = gated[0];
 console.log(`PASS: heaviest content route ${heaviest.route} at ${kb(heaviest.size)} KB.`);

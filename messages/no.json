@@ -529,5 +529,34 @@
     "label": "Språk",
     "no": "Norsk",
     "en": "English"
+  },
+  "terrain": {
+    "heading": "Tomtekart i 3D",
+    "intro": "Utforsk terrenget ved Snigsfjorden i 3D. Modellen er bygget på reelle høydedata fra Kartverket. Tomtene som vises er foreløpige illustrasjoner, plassering, antall og utsikt er ikke endelig fastsatt.",
+    "plotPrefix": "Tomt",
+    "pricePending": "Pris oppgis når reguleringen er klar",
+    "selectHint": "Velg en tomt for å se utsikt og status.",
+    "selectedSightline": "Utsikt mot sjøen",
+    "status": {
+      "ledig": "Ledig",
+      "reservert": "Reservert",
+      "solgt": "Solgt"
+    },
+    "sun": {
+      "label": "Sol",
+      "season": "Årstid",
+      "summer": "Sommer",
+      "winter": "Vinter",
+      "morning": "Morgen",
+      "midday": "Midt på dagen",
+      "evening": "Kveld"
+    },
+    "reset": "Tilbakestill visning",
+    "fallbackTitle": "Forenklet terrengvisning",
+    "fallbackNote": "Den interaktive 3D-modellen vises på større skjermer med maskinvare som støtter den. Her er et fast bilde av terrenget med tomtene listet under.",
+    "imageAlt": "Terrengmodell av Snigsfjorden ved Rødberg, med åssider som faller mot fjorden. Foreløpig illustrasjon.",
+    "attribution": "Terrengdata: Høydedata © Kartverket (CC BY 4.0)",
+    "forbehold": "Illustrasjon basert på reelle høydedata. Tomtegrenser, antall, priser og utsikt er foreløpige og ikke endelige.",
+    "plotsHeading": "Tomter (foreløpige)"
   }
 }
