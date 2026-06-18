@@ -1,0 +1,15 @@
+# Open questions
+
+Decisions parked for the developer. Each is built around with a sensible default so progress is never blocked; the default is noted and can be revisited.
+
+| # | Question | Current default / assumption | Impact if changed |
+|---|----------|------------------------------|-------------------|
+| 1 | Should the GitHub repository be public or private? | Currently public. Recommendation: make it private until handover, since it holds draft client content and pre-launch material. | Low effort to change; reduces exposure. |
+| 2 | Who owns the codebase and under what licence at handover? | Proprietary, copyright Sigve Simonsen AS, all rights reserved. | Affects the LICENSE file and handover terms. |
+| 3 | Domain name and registrar? | Vercel preview URL until provided. | Affects SEO setup, email DNS, and go-live. |
+| 4 | Which accounts own the production services (developer vs Sigve Simonsen AS)? | Assume developer-owned during build, transfer at handover. | Affects billing and the handover runbook. |
+| 5 | Norwegian vs English as the canonical legal text for the privacy policy? | Norwegian canonical, English translation provided; both marked for legal review. | Affects which version governs. |
+| 6 | Will a megler handle later sales, changing the lead handover flow? | Assume the developer handles early interest directly. | Affects the admin and notification design later. |
+| 7 | Preferred providers where alternatives exist (database, email)? | Pick EU-resident defaults now (recorded in ADRs), confirm with developer. | Affects DPAs and cost ledger. |
+
+Resolve and remove items as decisions are made; record the outcome in the relevant ADR or document.

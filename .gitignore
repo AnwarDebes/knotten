@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.yarn/
+.npm/
+
+# Build output
+.next/
+out/
+build/
+dist/
+*.tsbuildinfo
+next-env.d.ts
+
+# Test and coverage
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+.lighthouseci/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pat
+*.token
+secrets/
+*.pem
+*.key
+
+# Caches and tooling
+.turbo/
+.vercel/
+.cache/
+.eslintcache
+.DS_Store
+Thumbs.db
+*.log
+
+# Editor
+.idea/
+.vscode/
+*.swp
