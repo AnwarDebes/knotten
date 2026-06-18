@@ -11,5 +11,6 @@ Decisions parked for the developer. Each is built around with a sensible default
 | 5 | Norwegian vs English as the canonical legal text for the privacy policy? | Norwegian canonical, English translation provided; both marked for legal review. | Affects which version governs. |
 | 6 | Will a megler handle later sales, changing the lead handover flow? | Assume the developer handles early interest directly. | Affects the admin and notification design later. |
 | 7 | Preferred providers where alternatives exist (database, email)? | Pick EU-resident defaults now (recorded in ADRs), confirm with developer. | Affects DPAs and cost ledger. |
+| 8 | Terrain showpiece surface: stylised material or real orthophoto? | Use a stylised terrain material by default. Kartverket elevation data is open (CC BY 4.0), but Norge i bilder orthophotos are Geovekst-licensed and need permission for commercial use. | A real orthophoto looks better but needs a licence and cost; the stylised option ships now with no licence. |
 
 Resolve and remove items as decisions are made; record the outcome in the relevant ADR or document.
