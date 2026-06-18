@@ -1,26 +1,159 @@
 @import "tailwindcss";
 
+/*
+  Knotten design tokens. The palette is built from the brand: a deep navy
+  wordmark and the sea/teal of Sniksfjorden. Semantic tokens (background,
+  foreground, primary, and so on) are what components consume, so the brand can
+  shift in one place. All foreground/background pairs meet WCAG 2.2 AA contrast.
+*/
+
 :root {
+  /* Brand scales */
+  --navy-50: #eef4f9;
+  --navy-100: #dbe7f1;
+  --navy-200: #b8cfe2;
+  --navy-300: #8db0cd;
+  --navy-400: #5a86ab;
+  --navy-500: #2a6699;
+  --navy-600: #1b4d77;
+  --navy-700: #123a5e;
+  --navy-800: #0e2740;
+  --navy-900: #0a1c2e;
+
+  --sea-50: #eef8fa;
+  --sea-100: #d6eef1;
+  --sea-200: #aadde3;
+  --sea-300: #74c4cf;
+  --sea-400: #38a3b3;
+  --sea-500: #1796a6;
+  --sea-600: #0e7c8b;
+  --sea-700: #0b6470;
+  --sea-800: #0c4f59;
+  --sea-900: #0d404a;
+
+  /* Semantic tokens */
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #0b2236;
+  --card: #ffffff;
+  --card-foreground: #0b2236;
+  --popover: #ffffff;
+  --popover-foreground: #0b2236;
+  --primary: #123a5e;
+  --primary-foreground: #ffffff;
+  --secondary: #eef4f9;
+  --secondary-foreground: #123a5e;
+  --muted: #eef2f6;
+  --muted-foreground: #47586a;
+  --accent: #eef8fa;
+  --accent-foreground: #0b6470;
+  --sea: #0b6470;
+  --sea-foreground: #ffffff;
+  --destructive: #b3261e;
+  --destructive-foreground: #ffffff;
+  --success: #1f6f43;
+  --success-foreground: #ffffff;
+  --warning: #8a5a00;
+  --warning-foreground: #ffffff;
+  --border: #cbd5e1;
+  --input: #cbd5e1;
+  --ring: #0e7c8b;
+
+  --radius: 0.625rem;
+
+  /* Motion signature */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-emphasis: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  --duration-slow: 400ms;
+
+  color-scheme: light;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-sea: var(--sea);
+  --color-sea-foreground: var(--sea-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-navy-50: var(--navy-50);
+  --color-navy-100: var(--navy-100);
+  --color-navy-200: var(--navy-200);
+  --color-navy-300: var(--navy-300);
+  --color-navy-400: var(--navy-400);
+  --color-navy-500: var(--navy-500);
+  --color-navy-600: var(--navy-600);
+  --color-navy-700: var(--navy-700);
+  --color-navy-800: var(--navy-800);
+  --color-navy-900: var(--navy-900);
+  --color-sea-50: var(--sea-50);
+  --color-sea-100: var(--sea-100);
+  --color-sea-200: var(--sea-200);
+  --color-sea-300: var(--sea-300);
+  --color-sea-400: var(--sea-400);
+  --color-sea-500: var(--sea-500);
+  --color-sea-600: var(--sea-600);
+  --color-sea-700: var(--sea-700);
+  --color-sea-800: var(--sea-800);
+  --color-sea-900: var(--sea-900);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+  ::selection {
+    background-color: var(--sea-100);
+    color: var(--navy-900);
+  }
+  /* Visible, consistent focus indicator for keyboard users. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Honour reduced-motion: near-instant, no large transitions or animations. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

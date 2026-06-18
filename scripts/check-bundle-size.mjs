@@ -18,6 +18,9 @@ const APP_DIR = path.join(NEXT_DIR, "server", "app");
 // catching heavy regressions, above all the 3D library entering an initial
 // bundle. Interactive tool pages get explicit per-route budgets in SPEC-22.
 const BUDGET_BYTES = 130 * 1024;
+// Internal reference routes are not public content pages and are exempt from
+// the content budget. They are still reported below for visibility.
+const EXEMPT = new Set(["styleguide"]);
 
 if (!fs.existsSync(APP_DIR)) {
   console.error(`No prerendered routes at ${APP_DIR}. Run \`pnpm build\` first.`);
@@ -54,13 +57,19 @@ const kb = (bytes) => (bytes / 1024).toFixed(1);
 
 console.log("First-load JS per prerendered route (gzipped, modern browsers):");
 for (const row of rows) {
-  console.log(`  ${kb(row.size).padStart(7)} KB  ${row.route}`);
+  const tag = EXEMPT.has(row.route) ? "  (exempt: internal reference)" : "";
+  console.log(`  ${kb(row.size).padStart(7)} KB  ${row.route}${tag}`);
 }
 console.log(
-  `\nBudget: ${BUDGET_BYTES / 1024} KB gzip per route (excludes legacy polyfills and lazy chunks).`,
+  `\nBudget: ${BUDGET_BYTES / 1024} KB gzip per content route (excludes legacy polyfills and lazy chunks).`,
 );
 
-const heaviest = rows[0];
+const gated = rows.filter((row) => !EXEMPT.has(row.route));
+const heaviest = gated[0];
+if (!heaviest) {
+  console.error("No content routes found to measure.");
+  process.exit(1);
+}
 if (heaviest.size > BUDGET_BYTES) {
   console.error(
     `FAIL: ${heaviest.route} first-load JS is ${kb(heaviest.size)} KB, over the ${
