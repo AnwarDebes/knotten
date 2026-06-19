@@ -558,5 +558,47 @@
     "attribution": "Terrain data: Hoydedata © Kartverket (CC BY 4.0)",
     "forbehold": "Illustration based on real elevation data. Plot boundaries, number, prices and views are preliminary and not final.",
     "plotsHeading": "Plots (preliminary)"
+  },
+  "energiKalkulator": {
+    "metaTitle": "Energy and savings calculator",
+    "metaDescription": "See indicative energy demand, solar production, self-sufficiency and saving for an energy-smart home at Knotten. Indicative estimates, no personal data is stored.",
+    "eyebrow": "Tools",
+    "title": "Energy and savings",
+    "lead": "See how passive house standard, your own solar power and a battery can affect energy demand, self-sufficiency and cost. All figures are indicative estimates.",
+    "inputsHeading": "Your choices",
+    "area": "Home size",
+    "orientation": "Orientation",
+    "household": "Household",
+    "ev": "Electric car",
+    "battery": "Battery",
+    "orientationOptions": {
+      "soer": "South",
+      "oestVest": "East/west",
+      "nord": "North"
+    },
+    "householdOptions": {
+      "small": "1-2 people",
+      "medium": "3-4 people",
+      "large": "5+ people"
+    },
+    "resultsHeading": "Indicative result",
+    "demand": "Indicative electricity demand",
+    "production": "Solar production",
+    "selfSufficiency": "Self-sufficiency",
+    "savings": "Indicative annual saving",
+    "resilience": "Reserve time in an outage",
+    "perYear": "per year",
+    "hours": "hours",
+    "assumptionsHeading": "Assumptions and sources",
+    "assumptions": [
+      "Heating: passive house level, about 15 kWh/m2 per year net, delivered by a heat pump (about 5 kWh/m2 electricity). Sources: NS 3700, TEK17.",
+      "Household electricity: 4000 to 8000 kWh per year by household size (indicative, SSB level).",
+      "Electric car: about 3000 kWh per year (15,000 km at 0.2 kWh/km).",
+      "Solar: about 1010 kWh per kWp per year (PVGIS, south). East/west and north give less.",
+      "Self-consumption of solar power: about 32% without a battery, about 60% with a battery (indicative).",
+      "Avoided cost: about 1.40 kr per self-consumed kWh (spot, grid rent and levies a prosumer avoids). Indicative for NO2, after current support.",
+      "Battery: 10 kWh, critical load about 0.7 kW in an outage."
+    ],
+    "disclaimer": "Indicative estimate, not a guarantee. Final figures need professional energy modelling. No personal data is stored."
   }
 }

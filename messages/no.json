@@ -558,5 +558,47 @@
     "attribution": "Terrengdata: Høydedata © Kartverket (CC BY 4.0)",
     "forbehold": "Illustrasjon basert på reelle høydedata. Tomtegrenser, antall, priser og utsikt er foreløpige og ikke endelige.",
     "plotsHeading": "Tomter (foreløpige)"
+  },
+  "energiKalkulator": {
+    "metaTitle": "Energi- og sparekalkulator",
+    "metaDescription": "Se indikativt energibehov, solproduksjon, selvforsyning og besparelse for en energismart bolig på Knotten. Indikative estimater, ingen personopplysninger lagres.",
+    "eyebrow": "Verktøy",
+    "title": "Energi og sparing",
+    "lead": "Se hvordan passivhusstandard, egen solstrøm og batteri kan påvirke energibehov, selvforsyning og kostnad. Alle tall er indikative estimater.",
+    "inputsHeading": "Dine valg",
+    "area": "Boligstørrelse",
+    "orientation": "Orientering",
+    "household": "Husstand",
+    "ev": "Elbil",
+    "battery": "Batteri",
+    "orientationOptions": {
+      "soer": "Sør",
+      "oestVest": "Øst/vest",
+      "nord": "Nord"
+    },
+    "householdOptions": {
+      "small": "1-2 personer",
+      "medium": "3-4 personer",
+      "large": "5+ personer"
+    },
+    "resultsHeading": "Indikativt resultat",
+    "demand": "Indikativt strømbehov",
+    "production": "Solproduksjon",
+    "selfSufficiency": "Selvforsyningsgrad",
+    "savings": "Indikativ årlig besparelse",
+    "resilience": "Reservetid ved strømbrudd",
+    "perYear": "i året",
+    "hours": "timer",
+    "assumptionsHeading": "Forutsetninger og kilder",
+    "assumptions": [
+      "Oppvarming: passivhusnivå, om lag 15 kWh/m² i året netto, levert via varmepumpe (om lag 5 kWh/m² strøm). Kilder: NS 3700, TEK17.",
+      "Husholdningsstrøm: 4000 til 8000 kWh i året etter husstand (indikativt, SSB-nivå).",
+      "Elbil: om lag 3000 kWh i året (15 000 km, 0,2 kWh/km).",
+      "Sol: om lag 1010 kWh per kWp i året (PVGIS, sør). Øst/vest og nord gir mindre.",
+      "Selvforbruk av solstrøm: om lag 32 % uten batteri, om lag 60 % med batteri (indikativt).",
+      "Unngått kostnad: om lag 1,40 kr per selvforbrukt kWh (spot, nettleie og avgifter som plusskunde slipper). Indikativt for NO2, etter dagens støtte.",
+      "Batteri: 10 kWh, kritisk last om lag 0,7 kW ved strømbrudd."
+    ],
+    "disclaimer": "Indikativt estimat, ikke en garanti. Endelige tall krever profesjonell energimodellering. Ingen personopplysninger lagres."
   }
 }
