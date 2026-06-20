@@ -9,6 +9,7 @@ import { SkipLink } from "@/components/ui/skip-link";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
 import { Analytics } from "@/components/analytics/plausible";
+import { SiteJsonLd } from "@/components/site/json-ld";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -64,6 +65,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           {children}
           <SiteFooter />
         </NextIntlClientProvider>
+        <SiteJsonLd />
         <Analytics />
       </body>
     </html>
