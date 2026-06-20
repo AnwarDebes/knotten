@@ -444,7 +444,11 @@
         "body": "A concise one-pager and supporting concept material will be made available to download. For dialogue, a site visit or questions: Sigve Simonsen, general manager of Sigve Simonsen AS, sigve.simonsen@hotmail.com, +47 954 95 152."
       }
     ],
-    "note": "All figures are indicative (as of June 2026). Downloadable material is coming."
+    "note": "All figures are indicative (as of June 2026). Downloadable material is coming.",
+    "kitHeading": "Download the concept kit",
+    "kitIntro": "The documents share the same figures as the site. All figures are indicative and require professional verification.",
+    "norwegianOnly": "Norwegian",
+    "kitNote": "The files are static and versioned. The figures are consistent with the site and the energy model."
   },
   "kontakt": {
     "metaTitle": "Contact Knotten | Register interest",

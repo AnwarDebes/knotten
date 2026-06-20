@@ -444,7 +444,11 @@
         "body": "En kortfattet one-pager og utfyllende konseptmateriale gjøres tilgjengelig for nedlasting. For dialog, befaring eller spørsmål: Sigve Simonsen, daglig leder i Sigve Simonsen AS, sigve.simonsen@hotmail.com, +47 954 95 152."
       }
     ],
-    "note": "Alle tall er indikative (per juni 2026). Nedlastbart materiale kommer."
+    "note": "Alle tall er indikative (per juni 2026). Nedlastbart materiale kommer.",
+    "kitHeading": "Last ned konseptpakken",
+    "kitIntro": "Dokumentene deler de samme tallene som nettstedet. Alle tall er indikative og krever profesjonell verifikasjon.",
+    "norwegianOnly": "norsk",
+    "kitNote": "Filene er statiske og versjonerte. Tallene er konsistente med nettstedet og energimodellen."
   },
   "kontakt": {
     "metaTitle": "Kontakt Knotten | Meld interesse",
