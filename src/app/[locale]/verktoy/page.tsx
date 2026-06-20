@@ -12,12 +12,17 @@ type Props = { params: Promise<{ locale: string }> };
 // Tools that are live link to their page; the rest are marked "coming soon".
 const AVAILABLE: Record<
   string,
-  "/verktoy/energi" | "/verktoy/strompris" | "/verktoy/manedskostnad" | "/verktoy/sol"
+  | "/verktoy/energi"
+  | "/verktoy/strompris"
+  | "/verktoy/manedskostnad"
+  | "/verktoy/sol"
+  | "/verktoy/naromrade"
 > = {
   energi: "/verktoy/energi",
   stromtrygghet: "/verktoy/strompris",
   manedskostnad: "/verktoy/manedskostnad",
   sol: "/verktoy/sol",
+  naromrade: "/verktoy/naromrade",
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

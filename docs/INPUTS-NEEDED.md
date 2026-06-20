@@ -34,6 +34,10 @@ The lead engine, admin and content layer run on an in-process database (PGlite) 
 
 Double opt-in and anti-abuse are fully tested in development; they get one end-to-end verification against the real database, email provider and captcha during go-live review.
 
+## Neighbourhood map (Livet her)
+
+18. The **exact site coordinate** and gnr/bnr (the map and the per-plot tools currently use an approximate placeholder), and municipal confirmation of which school is the **nærskole** for Rødberg/Snig, the **public sea access (båtutsett)** and the **signposted turstier**. These are flagged "bekreftes" in the amenities data until confirmed. Drive distances are indicative, anchored to Vigeland.
+
 ## Energy concept specifics (for accurate numbers, not just illustrative)
 
 17. Any engineering studies, measured data, or supplier quotes for the solar, wind, geothermal, storage or shared-energy elements, so figures can move from indicative estimates toward verified values.

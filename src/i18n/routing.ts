@@ -22,6 +22,7 @@ export const routing = defineRouting({
     "/verktoy/strompris": { no: "/verktoy/strompris", en: "/tools/price-security" },
     "/verktoy/manedskostnad": { no: "/verktoy/manedskostnad", en: "/tools/monthly-cost" },
     "/verktoy/sol": { no: "/verktoy/sol", en: "/tools/sun" },
+    "/verktoy/naromrade": { no: "/verktoy/naromrade", en: "/tools/neighbourhood" },
     "/prospekt": { no: "/prospekt", en: "/prospectus" },
     "/meld-interesse": { no: "/meld-interesse", en: "/register-interest" },
     "/aktuelt": { no: "/aktuelt", en: "/news" },

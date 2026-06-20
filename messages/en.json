@@ -763,5 +763,22 @@
     "outageValue": "{homes} homes kept power for {hours} h",
     "outageCaption": "on the shared battery",
     "sources": "Assumptions: PVGIS (solar), SSB (consumption) and the adopted schemes. Illustrative simulation, not live data."
+  },
+  "naromrade": {
+    "metaTitle": "Life here: neighbourhood and distances | Knotten",
+    "metaDescription": "See what is near Knotten: school, kindergarten, groceries, the sea and the road to Mandal and Kristiansand. Approximate distances.",
+    "eyebrow": "Tools",
+    "title": "Life here",
+    "lead": "The first thing many people ask is what is nearby. Here are the school, kindergarten, groceries, sea access and the road on to Mandal and Kristiansand, with approximate drive distances. The area is rural, yet close to most things.",
+    "listHeading": "Nearby",
+    "source": "Source",
+    "toConfirm": "to be confirmed",
+    "inArea": "in the area",
+    "note": "Distances are approximate and measured from Vigeland, the nearest service centre about 4 km north of the area, so add a few minutes. Items marked to be confirmed are not yet settled with the municipality. Indicative, not a guarantee.",
+    "mapHeading": "Map",
+    "mapPrompt": "The map loads from OpenStreetMap when you open it.",
+    "showMap": "Show map",
+    "mapLoading": "Loading map ...",
+    "attribution": "Map data © OpenStreetMap contributors. The exact position of the area is provisional."
   }
 }

@@ -763,5 +763,22 @@
     "outageValue": "{homes} boliger holdt strøm i {hours} t",
     "outageCaption": "på felles batteri",
     "sources": "Forutsetninger: PVGIS (solinnstråling), SSB (forbruk) og vedtatte ordninger. Illustrativ simulering, ikke sanntidsdata."
+  },
+  "naromrade": {
+    "metaTitle": "Livet her: nærområde og avstander | Knotten",
+    "metaDescription": "Se hva som er i nærheten av Knotten: skole, barnehage, dagligvare, sjø og veien til Mandal og Kristiansand. Omtrentlige avstander.",
+    "eyebrow": "Verktøy",
+    "title": "Livet her",
+    "lead": "Det første mange lurer på er hva som er i nærheten. Her er skole, barnehage, dagligvare, sjøtilgang og veien videre til Mandal og Kristiansand, med omtrentlige kjøreavstander. Området ligger landlig, men nær det meste.",
+    "listHeading": "I nærheten",
+    "source": "Kilde",
+    "toConfirm": "bekreftes",
+    "inArea": "i nærområdet",
+    "note": "Avstander er omtrentlige og målt fra Vigeland, nærmeste servicesenter om lag 4 km nord for området, så legg til noen minutter. Punkter merket bekreftes er ikke endelig avklart med kommunen. Indikativt, ikke en garanti.",
+    "mapHeading": "Kart",
+    "mapPrompt": "Kartet laster fra OpenStreetMap når du åpner det.",
+    "showMap": "Vis kart",
+    "mapLoading": "Laster kart ...",
+    "attribution": "Kartdata © OpenStreetMap-bidragsytere. Eksakt plassering av området er foreløpig."
   }
 }
