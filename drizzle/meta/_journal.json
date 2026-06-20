@@ -8,6 +8,13 @@
       "when": 1781971276968,
       "tag": "0000_broken_energizer",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781972697696,
+      "tag": "0001_quiet_otto_octavius",
+      "breakpoints": true
     }
   ]
 }
