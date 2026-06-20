@@ -1,6 +1,11 @@
 import { getDb } from "@/db";
-import { listPlots, listPublishedNews, listPublishedFaq, getBlock } from "./service";
+import { listPlots, listPublishedNews, listPublishedFaq, getBlock, getDashboard } from "./service";
 import type { Plot, NewsPost, FaqEntry, ContentBlock } from "@/db/schema";
+import {
+  parseSimulationParams,
+  DEFAULT_SIM_PARAMS,
+  type SimulationParams,
+} from "@/lib/energy-telemetry";
 
 /**
  * Read helpers for the public site. Each is resilient: if the database is
@@ -49,5 +54,16 @@ export async function getPublicBlock(key: string): Promise<ContentBlock | undefi
     return await getBlock(await getDb(), key);
   } catch {
     return undefined;
+  }
+}
+
+/** Community-dashboard simulation parameters, admin-editable, with safe defaults. */
+export async function getDashboardParams(): Promise<SimulationParams> {
+  if (isBuildPhase) return DEFAULT_SIM_PARAMS;
+  try {
+    const row = await getDashboard(await getDb());
+    return parseSimulationParams(row?.values);
+  } catch {
+    return DEFAULT_SIM_PARAMS;
   }
 }

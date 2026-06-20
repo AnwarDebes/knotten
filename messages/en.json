@@ -748,5 +748,20 @@
     ],
     "source": "Terrain: Høydedata © Kartverket (CC BY 4.0). Solar geometry: suncalc.",
     "disclaimer": "Indicative estimate, not professional advice. Clouds, vegetation and future buildings are not included."
+  },
+  "communityDashboard": {
+    "title": "The energy community right now",
+    "simBadge": "Illustrative simulation",
+    "intro": "How Knotten can behave as one energy community: local production, sharing, storage and resilience. Every figure here is an illustrative simulation, not live data from meters.",
+    "solarLabel": "Solar production today",
+    "solarCaption": "from the shared solar field",
+    "batteryLabel": "Shared battery",
+    "batteryCaption": "state of charge",
+    "selfLabel": "Self-sufficiency",
+    "selfCaption": "of the community's use",
+    "outageLabel": "During an outage",
+    "outageValue": "{homes} homes kept power for {hours} h",
+    "outageCaption": "on the shared battery",
+    "sources": "Assumptions: PVGIS (solar), SSB (consumption) and the adopted schemes. Illustrative simulation, not live data."
   }
 }

@@ -748,5 +748,20 @@
     ],
     "source": "Terreng: Høydedata © Kartverket (CC BY 4.0). Solgeometri: suncalc.",
     "disclaimer": "Indikativt estimat, ikke profesjonell rådgivning. Skyer, vegetasjon og fremtidige bygg er ikke medregnet."
+  },
+  "communityDashboard": {
+    "title": "Energifellesskapet akkurat nå",
+    "simBadge": "Illustrativ simulering",
+    "intro": "Slik kan Knotten oppføre seg som ett energifellesskap: lokal produksjon, deling, lagring og robusthet. Alle tall her er en illustrativ simulering, ikke sanntidsdata fra målere.",
+    "solarLabel": "Solproduksjon i dag",
+    "solarCaption": "fra det felles solanlegget",
+    "batteryLabel": "Felles batteri",
+    "batteryCaption": "ladningsnivå",
+    "selfLabel": "Selvforsyning",
+    "selfCaption": "av fellesskapets forbruk",
+    "outageLabel": "Ved strømbrudd",
+    "outageValue": "{homes} boliger holdt strøm i {hours} t",
+    "outageCaption": "på felles batteri",
+    "sources": "Forutsetninger: PVGIS (solinnstråling), SSB (forbruk) og vedtatte ordninger. Illustrativ simulering, ikke sanntidsdata."
   }
 }
