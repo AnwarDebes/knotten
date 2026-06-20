@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// The admin area is always rendered on demand: every route is auth-gated and
+// reads live data, so nothing here may be prerendered at build time.
+export const dynamic = "force-dynamic";
+
 /**
  * Root layout for the non-localized admin area. It is deliberately separate
  * from the public site shell: no marketing header or footer, no analytics, and

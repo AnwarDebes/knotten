@@ -50,3 +50,6 @@ _*.html
 
 # Local dev database (PGlite)
 .pglite/
+
+# Runtime content image uploads
+/public/uploads/

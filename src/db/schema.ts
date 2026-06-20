@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, integer, boolean, index } from "drizzle-orm/pg-core";
+import { pgTable, uuid, text, timestamp, integer, real, boolean, index } from "drizzle-orm/pg-core";
 
 /**
  * The lead database is the crown jewel. Data is minimised: name and email are
@@ -109,7 +109,139 @@ export const adminSessions = pgTable(
   (t) => [index("admin_sessions_admin_idx").on(t.adminId)],
 );
 
+/**
+ * Editable content (CMS-lite, SPEC-09). Every table is data-driven against
+ * clearly marked placeholders so the owner can keep the site current without
+ * code. Prices and counts stay indicative until real survey data arrives.
+ */
+
+/** Plots. Status is constrained; size, price and position stay nullable until surveyed. */
+export const plots = pgTable(
+  "plots",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    label: text("label").notNull(),
+    sizeM2: integer("size_m2"),
+    orientation: text("orientation"),
+    // ledig | reservert | solgt
+    status: text("status").notNull().default("ledig"),
+    priceIndicative: integer("price_indicative"),
+    gnrBnr: text("gnr_bnr"),
+    positionX: real("position_x"),
+    positionZ: real("position_z"),
+    sightlineBearing: real("sightline_bearing"),
+    note: text("note"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("plots_status_idx").on(t.status)],
+);
+
+/** Fremdrift timeline stages (bilingual labels, one marked current). */
+export const timelineStages = pgTable("timeline_stages", {
+  id: uuid("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  key: text("key").notNull(),
+  labelNo: text("label_no").notNull(),
+  labelEn: text("label_en").notNull(),
+  dateOrStage: text("date_or_stage"),
+  isCurrent: boolean("is_current").notNull().default(false),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** FAQ entries (bilingual, ordered, draft or published). */
+export const faqEntries = pgTable("faq", {
+  id: uuid("id")
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  questionNo: text("question_no").notNull(),
+  questionEn: text("question_en").notNull(),
+  answerNo: text("answer_no").notNull(),
+  answerEn: text("answer_en").notNull(),
+  status: text("status").notNull().default("published"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Aktuelt / news posts (bilingual, draft or published). */
+export const newsPosts = pgTable(
+  "news",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    slug: text("slug").notNull().unique(),
+    titleNo: text("title_no").notNull(),
+    titleEn: text("title_en").notNull(),
+    bodyNo: text("body_no").notNull(),
+    bodyEn: text("body_en").notNull(),
+    status: text("status").notNull().default("draft"),
+    publishedAt: timestamp("published_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("news_status_idx").on(t.status)],
+);
+
+/** Key content blocks (hero text, contact details), keyed and bilingual. */
+export const contentBlocks = pgTable("content_blocks", {
+  key: text("key").primaryKey(),
+  bodyNo: text("body_no").notNull(),
+  bodyEn: text("body_en").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Community-dashboard parameters (SPEC-13): illustrative values, clean interface. */
+export const dashboardParams = pgTable("dashboard_params", {
+  key: text("key").primaryKey(),
+  mode: text("mode").notNull().default("illustrative"),
+  values: text("values").notNull().default("{}"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Image slots: alt is required; forbehold and AI/illustration disclosure are captured. */
+export const imageSlots = pgTable("image_slots", {
+  slotKey: text("slot_key").primaryKey(),
+  assetRef: text("asset_ref"),
+  altNo: text("alt_no").notNull().default(""),
+  altEn: text("alt_en").notNull().default(""),
+  forbeholdText: text("forbehold_text"),
+  isAiOrIllustration: boolean("is_ai_or_illustration").notNull().default(false),
+  disclosureText: text("disclosure_text"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Generic version history for the entities where a change should be reversible. */
+export const contentVersions = pgTable(
+  "content_versions",
+  {
+    id: uuid("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    entity: text("entity").notNull(),
+    entityId: text("entity_id").notNull(),
+    snapshot: text("snapshot").notNull(),
+    editor: text("editor").notNull(),
+    at: timestamp("at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("content_versions_entity_idx").on(t.entity, t.entityId)],
+);
+
 export type Lead = typeof leads.$inferSelect;
 export type NewLead = typeof leads.$inferInsert;
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type AdminSession = typeof adminSessions.$inferSelect;
+export type Plot = typeof plots.$inferSelect;
+export type TimelineStage = typeof timelineStages.$inferSelect;
+export type FaqEntry = typeof faqEntries.$inferSelect;
+export type NewsPost = typeof newsPosts.$inferSelect;
+export type ContentBlock = typeof contentBlocks.$inferSelect;
+export type DashboardParam = typeof dashboardParams.$inferSelect;
+export type ImageSlot = typeof imageSlots.$inferSelect;
