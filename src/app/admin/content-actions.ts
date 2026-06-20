@@ -67,6 +67,7 @@ export async function saveStageAction(formData: FormData): Promise<void> {
   const db = await getDb();
   if (id) await content.updateStage(db, id, parsed.data, auth.admin.email);
   else await content.createStage(db, parsed.data, auth.admin.email);
+  revalidateBoth("/fremdrift");
   revalidateBoth("/visjon");
   redirect("/admin/innhold/fremdrift?saved=1");
 }
@@ -75,6 +76,7 @@ export async function deleteStageAction(formData: FormData): Promise<void> {
   const auth = await requireRole("owner");
   const db = await getDb();
   await content.deleteStage(db, String(formData.get("id") ?? ""), auth.admin.email);
+  revalidateBoth("/fremdrift");
   revalidateBoth("/visjon");
   redirect("/admin/innhold/fremdrift?deleted=1");
 }
@@ -89,6 +91,7 @@ export async function saveFaqAction(formData: FormData): Promise<void> {
   const db = await getDb();
   if (id) await content.updateFaq(db, id, parsed.data, auth.admin.email);
   else await content.createFaq(db, parsed.data, auth.admin.email);
+  revalidateBoth("/fremdrift");
   revalidateBoth("/kontakt");
   redirect("/admin/innhold/faq?saved=1");
 }
@@ -97,6 +100,7 @@ export async function deleteFaqAction(formData: FormData): Promise<void> {
   const auth = await requireRole("owner");
   const db = await getDb();
   await content.deleteFaq(db, String(formData.get("id") ?? ""), auth.admin.email);
+  revalidateBoth("/fremdrift");
   revalidateBoth("/kontakt");
   redirect("/admin/innhold/faq?deleted=1");
 }

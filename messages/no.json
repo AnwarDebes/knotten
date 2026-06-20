@@ -869,5 +869,16 @@
       "Plassering og boligvisning er illustrasjoner."
     ],
     "disclaimer": "Indikativt, ikke et tilbud. Krever profesjonell energimodellering."
+  },
+  "fremdrift": {
+    "metaTitle": "Fremdrift og spørsmål | Knotten",
+    "metaDescription": "Slik ligger Knotten an: regulering, bygging og innflytting, og svar på de vanligste spørsmålene om energideling, batteri og strømstøtte.",
+    "eyebrow": "Fremdrift",
+    "title": "Fremdrift og ofte stilte spørsmål",
+    "lead": "Knotten er før regulering og salgsstart. Her ser du hvor prosjektet ligger an, hva som skjer videre, og svar på de vanligste spørsmålene. Datoer er foreløpige og oppgis når reguleringen er klar.",
+    "timelineHeading": "Slik ligger vi an",
+    "current": "Nå",
+    "forbehold": "Datoer er foreløpige og uten forpliktelse. Endelig fremdrift oppgis når reguleringen er klar.",
+    "faqHeading": "Ofte stilte spørsmål"
   }
 }

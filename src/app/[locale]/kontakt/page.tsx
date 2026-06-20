@@ -48,7 +48,7 @@ export default async function KontaktPage({ params }: Props) {
           </h2>
           <dl className="border-border divide-border mt-4 divide-y rounded-lg border px-4">
             {faq.map((entry) => (
-              <div key={entry.id} className="py-4">
+              <div key={entry.key} className="py-4">
                 <dt className="text-foreground font-medium">
                   {en ? entry.questionEn : entry.questionNo}
                 </dt>

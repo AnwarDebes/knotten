@@ -17,6 +17,7 @@ export const routing = defineRouting({
     "/omradet": { no: "/omradet", en: "/the-area" },
     "/robusthet": { no: "/robusthet", en: "/resilience" },
     "/baerekraft": { no: "/baerekraft", en: "/sustainability" },
+    "/fremdrift": { no: "/fremdrift", en: "/progress" },
     "/verktoy": { no: "/verktoy", en: "/tools" },
     "/verktoy/energi": { no: "/verktoy/energi", en: "/tools/energy" },
     "/verktoy/strompris": { no: "/verktoy/strompris", en: "/tools/price-security" },

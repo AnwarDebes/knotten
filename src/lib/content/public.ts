@@ -1,11 +1,24 @@
 import { getDb } from "@/db";
-import { listPlots, listPublishedNews, listPublishedFaq, getBlock, getDashboard } from "./service";
-import type { Plot, NewsPost, FaqEntry, ContentBlock } from "@/db/schema";
+import {
+  listPlots,
+  listPublishedNews,
+  listPublishedFaq,
+  getBlock,
+  getDashboard,
+  listTimeline,
+} from "./service";
+import type { Plot, NewsPost, ContentBlock } from "@/db/schema";
 import {
   parseSimulationParams,
   DEFAULT_SIM_PARAMS,
   type SimulationParams,
 } from "@/lib/energy-telemetry";
+import {
+  DEFAULT_TIMELINE,
+  DEFAULT_FAQ,
+  type TimelineDefault,
+  type FaqDefault,
+} from "@/content/defaults";
 
 /**
  * Read helpers for the public site. Each is resilient: if the database is
@@ -39,12 +52,39 @@ export async function getPublicNews(): Promise<NewsPost[]> {
   }
 }
 
-export async function getPublicFaq(): Promise<FaqEntry[]> {
-  if (isBuildPhase) return [];
+/** Published FAQ from the content layer, falling back to the cited defaults. */
+export async function getPublicFaq(): Promise<FaqDefault[]> {
+  if (isBuildPhase) return DEFAULT_FAQ;
   try {
-    return await listPublishedFaq(await getDb());
+    const rows = await listPublishedFaq(await getDb());
+    if (rows.length === 0) return DEFAULT_FAQ;
+    return rows.map((r) => ({
+      key: r.id,
+      questionNo: r.questionNo,
+      questionEn: r.questionEn,
+      answerNo: r.answerNo,
+      answerEn: r.answerEn,
+    }));
   } catch {
-    return [];
+    return DEFAULT_FAQ;
+  }
+}
+
+/** Timeline stages from the content layer, falling back to the phase defaults. */
+export async function getPublicTimeline(): Promise<TimelineDefault[]> {
+  if (isBuildPhase) return DEFAULT_TIMELINE;
+  try {
+    const rows = await listTimeline(await getDb());
+    if (rows.length === 0) return DEFAULT_TIMELINE;
+    return rows.map((r) => ({
+      key: r.key,
+      labelNo: r.labelNo,
+      labelEn: r.labelEn,
+      dateOrStage: r.dateOrStage ?? "",
+      isCurrent: r.isCurrent,
+    }));
+  } catch {
+    return DEFAULT_TIMELINE;
   }
 }
 

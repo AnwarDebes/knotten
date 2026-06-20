@@ -869,5 +869,16 @@
       "Placement and house views are illustrations."
     ],
     "disclaimer": "Indicative, not an offer. Requires professional energy modelling."
+  },
+  "fremdrift": {
+    "metaTitle": "Progress and questions | Knotten",
+    "metaDescription": "Where Knotten stands: zoning, construction and move-in, and answers to the most common questions about energy sharing, the battery and electricity support.",
+    "eyebrow": "Progress",
+    "title": "Progress and frequently asked questions",
+    "lead": "Knotten is before zoning and sales launch. Here is where the project stands, what happens next, and answers to the most common questions. Dates are provisional and will be stated once the zoning is ready.",
+    "timelineHeading": "Where we stand",
+    "current": "Now",
+    "forbehold": "Dates are provisional and without obligation. The final progress is stated once the zoning is ready.",
+    "faqHeading": "Frequently asked questions"
   }
 }
