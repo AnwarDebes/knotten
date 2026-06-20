@@ -5,3 +5,4 @@ allowBuilds:
   "@swc/core": false
   playwright: false
   "@playwright/test": false
+  esbuild: true

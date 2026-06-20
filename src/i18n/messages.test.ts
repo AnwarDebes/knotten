@@ -8,8 +8,9 @@ describe("message catalogues", () => {
   });
 
   it("never uses an em dash", () => {
+    const EM_DASH = "\u2014";
     const hasEmDash = (value: unknown): boolean => {
-      if (typeof value === "string") return value.includes("—");
+      if (typeof value === "string") return value.includes(EM_DASH);
       if (Array.isArray(value)) return value.some(hasEmDash);
       if (value && typeof value === "object") return Object.values(value).some(hasEmDash);
       return false;

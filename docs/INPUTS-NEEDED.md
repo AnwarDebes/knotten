@@ -23,6 +23,17 @@ Data and decisions required from Sigve Simonsen AS to replace placeholders with 
 11. Whether a real-estate agent (megler) will handle sales in the later phase.
 12. Confirmation of the **ownership and licensing** arrangement for this codebase (see OPEN-QUESTIONS.md).
 
+## Production infrastructure (provision before go-live)
+
+The lead engine, admin and content layer run on an in-process database (PGlite) and a no-send email path in development. Production needs these, all EU/EEA, each with a data processing agreement (see HANDOVER.md for the step-by-step):
+
+13. **Hosted PostgreSQL in an EU region** (Neon, Supabase or Vercel Postgres). Set `DATABASE_URL`; run `pnpm db:migrate`.
+14. **EU/EEA transactional email provider** (Resend EU or equivalent) with a verified sending domain. Set `EMAIL_API_KEY`, `EMAIL_FROM`, `EMAIL_ADMIN_NOTIFY`.
+15. **Cloudflare Turnstile** keys for the bot challenge: `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`.
+16. A random `IP_HASH_SALT`, a random `CRON_SECRET` for the retention job, and the real `NEXT_PUBLIC_SITE_URL`.
+
+Double opt-in and anti-abuse are fully tested in development; they get one end-to-end verification against the real database, email provider and captcha during go-live review.
+
 ## Energy concept specifics (for accurate numbers, not just illustrative)
 
-13. Any engineering studies, measured data, or supplier quotes for the solar, wind, geothermal, storage or shared-energy elements, so figures can move from indicative estimates toward verified values.
+17. Any engineering studies, measured data, or supplier quotes for the solar, wind, geothermal, storage or shared-energy elements, so figures can move from indicative estimates toward verified values.

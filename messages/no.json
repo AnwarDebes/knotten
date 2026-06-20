@@ -360,7 +360,32 @@
         "body": "Du kan også ta direkte kontakt med utbygger. Sigve Simonsen, daglig leder i Sigve Simonsen AS, svarer gjerne på spørsmål: sigve.simonsen@hotmail.com eller +47 954 95 152."
       }
     ],
-    "note": "Skjema for å melde interesse kommer. Inntil det er på plass, ta kontakt på sigve.simonsen@hotmail.com eller +47 954 95 152."
+    "note": "Skjema for å melde interesse kommer. Inntil det er på plass, ta kontakt på sigve.simonsen@hotmail.com eller +47 954 95 152.",
+    "skjema": {
+      "name": "Navn",
+      "email": "E-post",
+      "phone": "Telefon",
+      "optional": "valgfritt",
+      "interest": "Jeg er interessert i",
+      "interestOptions": {
+        "generelt": "Området generelt",
+        "tomt": "En tomt",
+        "bolig": "En bolig"
+      },
+      "privacyLinkText": "Se personvernerklæringen",
+      "submit": "Meld interesse",
+      "sending": "Sender ...",
+      "success": "Takk! Vi har sendt deg en e-post. Åpne lenken i e-posten for å bekrefte interessen din.",
+      "errorGeneric": "Noe gikk galt. Prøv igjen om litt.",
+      "errorRate": "For mange forsøk akkurat nå. Prøv igjen senere.",
+      "errorValidation": "Sjekk at navn og e-post er fylt ut, og at du har samtykket.",
+      "confirmedTitle": "Interessen din er bekreftet",
+      "confirmedBody": "Takk! Vi tar kontakt når vi har mer å fortelle.",
+      "notConfirmedTitle": "Lenken virket ikke",
+      "notConfirmedBody": "Lenken kan være utløpt eller allerede brukt. Meld gjerne interesse på nytt.",
+      "withdrawnTitle": "Du er meldt av",
+      "withdrawnBody": "Samtykket ditt er trukket tilbake, og vi kontakter deg ikke mer om Knotten. Du kan melde interesse på nytt når som helst."
+    }
   },
   "aktuelt": {
     "metaTitle": "Aktuelt | Knotten ved Sniksfjorden",

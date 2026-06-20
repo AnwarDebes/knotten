@@ -113,6 +113,17 @@ Plausible (EU, cookieless) holds no personal data and is governed by its own con
 - Backups: deletions propagate to backups within the backup rotation window. The runbook documents that an erased subject re-appearing only inside an as-yet-unrotated encrypted backup is expected and is purged on the next rotation; restores must re-apply pending deletions. (Backup rotation and the tested restore are owned by SPEC-26; this policy states the requirement.)
 - The full procedure (schedule, thresholds, what is deleted, backup handling, verification) is written up in the DSAR/erasure runbook under `docs/runbooks/` (SPEC-26, MASTER-BRIEF section 12).
 
+### Implementation status (as built, SPEC-06)
+
+What ships in this release, so the go-live reviewer can map the policy to the code:
+
+- **Consent record:** stored verbatim per lead with version id `consent-v1-2026-06-20` (the placeholder `consent-v1` in section 3 is realised as this dated id), language, UTC timestamp and source. Single source of truth in `src/lib/leads/consent.ts`.
+- **Double opt-in:** new leads are stored `pending` with a single-use confirmation token; following the email link sets `confirmed`, writes `confirmedAt` and clears the token so it cannot be replayed. An unconfirmed lead stays `pending`.
+- **Withdrawal:** every confirmation email carries a one-click withdraw link (`/api/interesse/avmeld`) backed by a stable per-lead `unsubToken` that needs no login. Acting on it sets `unsubscribed`, writes `withdrawnAt` and logs `lead.withdrawn`. Re-registering reactivates the same record with fresh consent.
+- **Automatic retention:** `purgeStalePending` hard-deletes `pending` leads older than 30 days and logs a non-personal count. It runs via `POST /api/cron/retention` (Bearer `CRON_SECRET`), to be wired to the host's scheduler at go-live. The 18-month confirmed-un-actioned and 24-month actioned tails depend on the "actioned" flag introduced in SPEC-07 and are activated then.
+- **Audit log:** holds no PII; records `lead.created`, `lead.confirmed`, `lead.withdrawn`, `lead.erased` and `lead.retention.purged` with only ids and counts.
+- **Pending end-to-end verification:** double opt-in delivery, the withdraw link and the cron purge are unit-tested against in-process PostgreSQL now, and get a live end-to-end check once the real EU Postgres, email provider and scheduler are connected during go-live review (see `HANDOVER.md`).
+
 ## 8. Data subject requests: access, export (DSAR) and erasure
 
 Requests under GDPR art. 15 (access), art. 20 (portability) and art. 17 (erasure) are handled through the admin dashboard (SPEC-07) and the DSAR/erasure runbook.

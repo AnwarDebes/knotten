@@ -5,3 +5,4 @@ coverage/
 pnpm-lock.yaml
 public/
 next-env.d.ts
+drizzle/meta/

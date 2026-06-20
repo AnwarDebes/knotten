@@ -47,3 +47,6 @@ Thumbs.db
 # Local scratch files
 _*.mjs
 _*.html
+
+# Local dev database (PGlite)
+.pglite/

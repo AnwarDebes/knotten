@@ -360,7 +360,32 @@
         "body": "You are also welcome to contact the developer directly. Sigve Simonsen, general manager of Sigve Simonsen AS, is happy to answer questions: sigve.simonsen@hotmail.com or +47 954 95 152."
       }
     ],
-    "note": "A form for registering interest is coming. Until it is in place, please get in touch at sigve.simonsen@hotmail.com or +47 954 95 152."
+    "note": "A form for registering interest is coming. Until it is in place, please get in touch at sigve.simonsen@hotmail.com or +47 954 95 152.",
+    "skjema": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "optional": "optional",
+      "interest": "I am interested in",
+      "interestOptions": {
+        "generelt": "The area in general",
+        "tomt": "A plot",
+        "bolig": "A home"
+      },
+      "privacyLinkText": "See the privacy policy",
+      "submit": "Register interest",
+      "sending": "Sending ...",
+      "success": "Thank you. We have sent you an email. Open the link in it to confirm your interest.",
+      "errorGeneric": "Something went wrong. Please try again shortly.",
+      "errorRate": "Too many attempts right now. Please try again later.",
+      "errorValidation": "Please check that name and email are filled in and that you have consented.",
+      "confirmedTitle": "Your interest is confirmed",
+      "confirmedBody": "Thank you. We will be in touch when we have more to share.",
+      "notConfirmedTitle": "The link did not work",
+      "notConfirmedBody": "The link may be expired or already used. You are welcome to register again.",
+      "withdrawnTitle": "You have been unsubscribed",
+      "withdrawnBody": "Your consent has been withdrawn and we will no longer contact you about Knotten. You are welcome to register again at any time."
+    }
   },
   "aktuelt": {
     "metaTitle": "News | Knotten by Sniksfjorden",
