@@ -48,6 +48,20 @@ The admin area lives at `/admin`, is never indexed, and is locked behind passwor
 10. Verify the access gate and `noindex` are still active during review, then set `SITE_INDEXABLE=true` only when the client approves go-live.
 11. Confirm database backups and a tested restore (SPEC-26).
 
+## Runbooks
+
+Step-by-step guides written for a non-developer live in `docs/runbooks/`:
+
+- `deploy-and-secrets.md`: deploy a change and rotate secrets.
+- `backup-and-restore.md`: database backup and the restore procedure.
+- `incident-response.md`: what to do when something goes wrong, including the GDPR 72-hour breach clock.
+- `observability.md`: error tracking, uptime and what to watch.
+- `dsar-and-erasure.md`: access, export and erasure requests.
+- `content-editing.md`: edit plots, news, FAQ and images.
+- `analytics-owner-guide.md`: read the interest numbers in Plausible.
+
+The five-minute demo walkthrough is in `docs/DEMO.md`.
+
 ## Costs
 
 See `COSTS.md` for the indicative monthly cost ledger.

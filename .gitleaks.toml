@@ -1,0 +1,18 @@
+title = "Knotten gitleaks config"
+
+# Use the full default rule set, then allowlist the known test fixtures. These
+# are fake credentials used by the end-to-end suite, never real secrets; real
+# secrets live only in the host secret manager and never in the repository.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test fixtures only (fake credentials); real secrets never live in the repo"
+paths = [
+  '''tests/e2e/.*\.mjs''',
+  '''.*\.test\.(ts|tsx)$''',
+]
+regexes = [
+  '''[a-z-]*passord[a-z0-9-]*''',
+  '''test-bootstrap-secret''',
+]
