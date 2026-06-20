@@ -709,5 +709,44 @@
       "Power is priced at the cheaper of ordinary support and Norgespris, with an indicative NO2 average price."
     ],
     "disclaimer": "Indicative, not a loan offer. Talk to your bank or an adviser. Not financial advice."
+  },
+  "sol": {
+    "metaTitle": "Sun and daylight | Knotten",
+    "metaDescription": "See how much direct sun each plot at Knotten gets across the year, computed from real latitude and Kartverket terrain. Indicative estimate.",
+    "eyebrow": "Tools",
+    "title": "Sun and daylight on your plot",
+    "lead": "This far north, daylight is a decisive quality. Here you can see, per plot, how much direct sun to expect in June versus December, computed from the real latitude (58°N) and Kartverket terrain. This is an indicative clear-sky estimate, not a guarantee.",
+    "seasonGroup": "Choose season",
+    "summer": "Summer",
+    "winter": "Winter",
+    "see3d": "See it in the 3D terrain",
+    "loading": "Computing sun ...",
+    "error": "Could not load terrain data right now.",
+    "plot": "Plot",
+    "june": "June (sun/day)",
+    "december": "December (sun/day)",
+    "hoursShort": "h",
+    "daypartHeading": "sun through the day",
+    "daypart": {
+      "morning": "Morning",
+      "midday": "Midday",
+      "evening": "Evening"
+    },
+    "status": {
+      "ledig": "Available",
+      "reservert": "Reserved",
+      "solgt": "Sold"
+    },
+    "sunlit": "sun",
+    "shaded": "shade",
+    "methodHeading": "Method and sources",
+    "method": [
+      "Sun position computed with solar geometry (suncalc) for the plot's latitude (58°N).",
+      "Shadow computed against the Kartverket elevation model (terrain) along the sun direction.",
+      "Representative days: 21 June and 21 December. Clear sky, terrain as the only shadow caster.",
+      "Plot positions are provisional placements and update with survey data."
+    ],
+    "source": "Terrain: Høydedata © Kartverket (CC BY 4.0). Solar geometry: suncalc.",
+    "disclaimer": "Indicative estimate, not professional advice. Clouds, vegetation and future buildings are not included."
   }
 }

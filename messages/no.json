@@ -709,5 +709,44 @@
       "Strøm prises etter den rimeligste av ordinær strømstøtte og Norgespris, med en indikativ NO2-snittpris."
     ],
     "disclaimer": "Indikativt, ikke et lånetilbud. Snakk med banken eller en rådgiver. Ikke finansiell rådgivning."
+  },
+  "sol": {
+    "metaTitle": "Sol og dagslys | Knotten",
+    "metaDescription": "Se hvor mye direkte sol hver tomt på Knotten får gjennom året, beregnet fra ekte breddegrad og Kartverkets terreng. Indikativt estimat.",
+    "eyebrow": "Verktøy",
+    "title": "Sol og dagslys på tomta",
+    "lead": "Så langt nord er dagslys en avgjørende kvalitet. Her ser du, per tomt, hvor mye direkte sol du kan vente deg i juni mot desember, beregnet fra ekte breddegrad (58°N) og Kartverkets terreng. Dette er et indikativt estimat for klarvær, ikke en garanti.",
+    "seasonGroup": "Velg sesong",
+    "summer": "Sommer",
+    "winter": "Vinter",
+    "see3d": "Se i 3D-terrenget",
+    "loading": "Beregner sol ...",
+    "error": "Kunne ikke laste terrengdata akkurat nå.",
+    "plot": "Tomt",
+    "june": "Juni (sol/dag)",
+    "december": "Desember (sol/dag)",
+    "hoursShort": "t",
+    "daypartHeading": "sol gjennom dagen",
+    "daypart": {
+      "morning": "Morgen",
+      "midday": "Midt på dagen",
+      "evening": "Kveld"
+    },
+    "status": {
+      "ledig": "Ledig",
+      "reservert": "Reservert",
+      "solgt": "Solgt"
+    },
+    "sunlit": "sol",
+    "shaded": "skygge",
+    "methodHeading": "Metode og kilder",
+    "method": [
+      "Solposisjon beregnet med solgeometri (suncalc) for tomtas breddegrad (58°N).",
+      "Skygge beregnet mot Kartverkets høydemodell (terreng) langs solretningen.",
+      "Representative dager: 21. juni og 21. desember. Klarvær, kun terreng som skyggekaster.",
+      "Tomteposisjoner er foreløpige plasseringer og oppdateres med oppmåling."
+    ],
+    "source": "Terreng: Høydedata © Kartverket (CC BY 4.0). Solgeometri: suncalc.",
+    "disclaimer": "Indikativt estimat, ikke profesjonell rådgivning. Skyer, vegetasjon og fremtidige bygg er ikke medregnet."
   }
 }
