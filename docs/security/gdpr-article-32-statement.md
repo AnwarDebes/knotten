@@ -110,3 +110,17 @@ Until the runbook exists and contacts are confirmed, treat the incident process 
 ## 8. Review
 
 This is an initial draft and is not legal advice. It must be reviewed by a lawyer or data protection officer, and reconciled against the finished threat model (`docs/security/`), the records of processing (Article 30), the DPIA-lite for the lead-capture processing, and the signed data processing agreements, before the platform processes any real personal data. Re-verify the residency and personal-data claims of all third-party providers (in particular the analytics, email and database providers) at that point, since provider terms and the legal position can change.
+
+---
+
+## SPEC-23 implementation status (post-build, June 2026)
+
+The measures described above are now implemented in the platform:
+
+- Pseudonymisation and minimisation: only name, email and optional phone are collected, with consent; no raw IP is stored (salted hash); the buyer-value tools are stateless and collect nothing.
+- Confidentiality: mandatory MFA, RBAC, short hashed sessions, HttpOnly/Secure/SameSite cookies, an enforced CSP and security headers, and an admin area that is noindex and not cached.
+- Integrity: double opt-in with single-use tokens, a verbatim per-lead consent record (text, version, timestamp), an append-only PII-free audit log, and parameterised data access.
+- Availability and resilience: documented automatic retention purge; database backups and a tested restore are owned by SPEC-26 and confirmed at go-live.
+- Regular testing: unit, integration and end-to-end tests, a CI dependency audit and secret scan, and a documented threat model re-reviewed before go-live.
+
+Confirmed at go-live against the real EU infrastructure: TLS in transit, encryption at rest, the least-privilege database user, the EU/EEA email provider and the data processing agreements, plus the end-to-end verification of consent, anti-abuse and erasure. The controller identity is recorded in INPUTS-NEEDED and must be filled in before publication.

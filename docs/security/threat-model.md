@@ -215,3 +215,18 @@ The highest standing residual risks, assuming the controls are built as specifie
 5. **Legal/compliance exposure** that engineering cannot close alone: the lawful-basis and consent design, the retention period, the DSAR identity-verification process, the breach-notification readiness, and the EU-US Data Privacy Framework position for any future non-EEA processor. These carry [DPO REVIEW] and are why every processor is currently kept EU/EEA-resident (docs/research/personvern-og-analyse.md).
 
 This model is revisited at each release, on any incident, before go-live (a pre-launch review is a gate, not optional), and whenever a processor, a data field, an entry point or a regulatory position changes. The next required action is to keep the [planned] tags honest: as each control ships, update its tag to [implemented] with a pointer to the SPEC completion note and the test that proves it, so this document never drifts ahead of the code.
+
+---
+
+## SPEC-23 implementation status (post-build, June 2026)
+
+The design-stage tags above are now realised. The following controls are [implemented] and verified by the test suite, end-to-end scripts and the local/CI gates:
+
+- Transport and headers: HSTS (production), nosniff, X-Frame-Options DENY, Referrer-Policy, Permissions-Policy, and an enforced Content-Security-Policy. The public CSP locks framing, base-uri and object-src and constrains sources to self plus Plausible and OpenStreetMap (verified with a headless-browser check that produces no CSP violations on the home page, a tool page and the map). The admin area uses a stricter CSP plus no-store and noindex.
+- Interest form (SPEC-06): same-origin check, honeypot, single-line validation blocking email-header injection, atomic per-IP and per-email rate limiting, optional Turnstile, enumeration-safe responses, salted IP hash (salt required in production), double opt-in with single-use tokens, one-click withdrawal.
+- Admin (SPEC-07): scrypt passwords, mandatory TOTP MFA, lockout, short SHA-256-hashed server-side sessions, HttpOnly/Secure/SameSite cookie, re-auth for erasure, server-side RBAC on every page/route/mutation.
+- Content layer (SPEC-09): owner-gated mutations, signature-checked uploads, allowlisted restore-redirect, escaped rendering (no stored XSS), Server Action CSRF.
+- Data access: parameterised Drizzle queries; PII-free audit log.
+- Supply chain: `pnpm audit` (high gate) and gitleaks green in CI; lockfile committed.
+
+OWASP Top 10: all ten categories reviewed above are covered by the shipped controls. Residuals: the public CSP retains `'unsafe-inline'` for styles and small inline scripts under static rendering (nonce-based CSP is a documented go-live trade-off); least-privilege DB user, TLS and encryption-at-rest are properties of the managed EU Postgres confirmed at go-live; error-tracking with PII scrubbing is wired at go-live (SPEC-26).
