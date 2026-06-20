@@ -58,6 +58,35 @@ jobs:
       - name: Lighthouse
         run: pnpm dlx @lhci/cli@0.15.x autorun
 
+  e2e:
+    name: End-to-end journeys
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SITE_URL: "http://localhost:3000"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Build
+        run: pnpm build
+
+      - name: Run end-to-end journeys
+        run: pnpm e2e
+
   security:
     name: Secret and dependency scan
     runs-on: ubuntu-latest

@@ -28,7 +28,8 @@
     "bundle:check": "node scripts/check-bundle-size.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "prepare": "husky"
+    "prepare": "husky",
+    "e2e": "node scripts/e2e.mjs"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.3",
