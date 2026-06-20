@@ -1,7 +1,7 @@
-import type { AppPathname } from "@/i18n/routing";
+import type { StaticPathname } from "@/i18n/routing";
 
 /** All main pages, with the nav translation key and the localised route. */
-export const NAV_ITEMS: { key: string; href: AppPathname }[] = [
+export const NAV_ITEMS: { key: string; href: StaticPathname }[] = [
   { key: "visjon", href: "/visjon" },
   { key: "energikonseptet", href: "/energikonseptet" },
   { key: "omradet", href: "/omradet" },
@@ -15,7 +15,7 @@ export const NAV_ITEMS: { key: string; href: AppPathname }[] = [
 ];
 
 /** Curated subset shown in the desktop header. */
-export const PRIMARY_NAV: { key: string; href: AppPathname }[] = [
+export const PRIMARY_NAV: { key: string; href: StaticPathname }[] = [
   { key: "visjon", href: "/visjon" },
   { key: "energikonseptet", href: "/energikonseptet" },
   { key: "omradet", href: "/omradet" },
@@ -24,7 +24,7 @@ export const PRIMARY_NAV: { key: string; href: AppPathname }[] = [
 ];
 
 /** Footer column groupings. */
-export const FOOTER_OMRADET: { key: string; href: AppPathname }[] = [
+export const FOOTER_OMRADET: { key: string; href: StaticPathname }[] = [
   { key: "visjon", href: "/visjon" },
   { key: "energikonseptet", href: "/energikonseptet" },
   { key: "omradet", href: "/omradet" },
@@ -32,7 +32,7 @@ export const FOOTER_OMRADET: { key: string; href: AppPathname }[] = [
   { key: "baerekraft", href: "/baerekraft" },
 ];
 
-export const FOOTER_FORDEG: { key: string; href: AppPathname }[] = [
+export const FOOTER_FORDEG: { key: string; href: StaticPathname }[] = [
   { key: "verktoy", href: "/verktoy" },
   { key: "prospekt", href: "/prospekt" },
   { key: "aktuelt", href: "/aktuelt" },

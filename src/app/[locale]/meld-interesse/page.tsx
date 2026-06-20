@@ -6,8 +6,13 @@ import { InterestForm } from "@/components/forms/interest-form";
 
 type Props = {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ bekreftet?: string; avmeldt?: string }>;
+  searchParams: Promise<{ bekreftet?: string; avmeldt?: string; tomt?: string }>;
 };
+
+// Only accept a plot reference that looks like a real plot code.
+function plotRef(tomt: string | undefined): string | null {
+  return tomt && /^[A-Za-z]\d{1,2}$/.test(tomt) ? tomt.toUpperCase() : null;
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
@@ -19,7 +24,8 @@ type Step = { title: string; body: string };
 export default async function MeldInteressePage({ params, searchParams }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const { bekreftet, avmeldt } = await searchParams;
+  const { bekreftet, avmeldt, tomt } = await searchParams;
+  const tomtRef = plotRef(tomt);
   const t = await getTranslations("meldInteresse");
   const skjema = await getTranslations("meldInteresse.skjema");
   const cta = await getTranslations("cta");
@@ -59,9 +65,15 @@ export default async function MeldInteressePage({ params, searchParams }: Props)
           </Alert>
         ) : null}
 
+        {tomtRef ? (
+          <Alert className="mb-8">
+            <AlertTitle>{skjema("plotPrefilled", { code: tomtRef })}</AlertTitle>
+          </Alert>
+        ) : null}
+
         <div className="grid gap-10 lg:grid-cols-[1fr_18rem]">
           <div>
-            <InterestForm source="meld-interesse" />
+            <InterestForm source={tomtRef ? `tomt-${tomtRef}` : "meld-interesse"} />
           </div>
           <aside className="space-y-4">
             <h2 className="text-foreground text-lg font-semibold">{cta("whatNextHeading")}</h2>

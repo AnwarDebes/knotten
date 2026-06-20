@@ -389,7 +389,8 @@
       "notConfirmedTitle": "Lenken virket ikke",
       "notConfirmedBody": "Lenken kan være utløpt eller allerede brukt. Meld gjerne interesse på nytt.",
       "withdrawnTitle": "Du er meldt av",
-      "withdrawnBody": "Samtykket ditt er trukket tilbake, og vi kontakter deg ikke mer om Knotten. Du kan melde interesse på nytt når som helst."
+      "withdrawnBody": "Samtykket ditt er trukket tilbake, og vi kontakter deg ikke mer om Knotten. Du kan melde interesse på nytt når som helst.",
+      "plotPrefilled": "Interessen gjelder tomt {code}."
     }
   },
   "aktuelt": {
@@ -880,5 +881,38 @@
     "current": "Nå",
     "forbehold": "Datoer er foreløpige og uten forpliktelse. Endelig fremdrift oppgis når reguleringen er klar.",
     "faqHeading": "Ofte stilte spørsmål"
+  },
+  "tomt": {
+    "metaTitle": "Tomt {code} | Knotten",
+    "metaDescription": "Tomt {code} på Knotten ved Sniksfjorden: status, sol, beliggenhet og indikativ pris. Meld uforpliktende interesse.",
+    "eyebrow": "Tomt",
+    "title": "Tomt {code}",
+    "lead": "En av tomtene på Knotten ved Sniksfjorden. Status, sol og beliggenhet under er indikative inntil oppmåling og regulering er klar.",
+    "status": {
+      "ledig": "Ledig",
+      "reservert": "Reservert",
+      "solgt": "Solgt"
+    },
+    "specsHeading": "Om tomta",
+    "size": "Størrelse",
+    "orientation": "Orientering",
+    "orientationOptions": {
+      "soer": "Sør",
+      "oestVest": "Øst/vest",
+      "nord": "Nord"
+    },
+    "toConfirm": "bekreftes",
+    "price": "Indikativ pris",
+    "priceOnRequest": "Pris på forespørsel",
+    "sunHeading": "Sol gjennom året",
+    "june": "Juni (sol/dag)",
+    "december": "Desember (sol/dag)",
+    "hours": "t",
+    "sunTool": "Se sol for alle tomter",
+    "ctaHeading": "Interessert i tomt {code}?",
+    "ctaBody": "Meld uforpliktende interesse, så tar vi kontakt når mer er klart. Vi samler ingen opplysninger uten samtykke.",
+    "ctaButton": "Meld interesse for tomt {code}",
+    "see3d": "Se i 3D-terrenget",
+    "disclaimer": "Indikativt estimat. Tomtegrenser, areal, pris og posisjon bekreftes etter oppmåling og regulering."
   }
 }

@@ -389,7 +389,8 @@
       "notConfirmedTitle": "The link did not work",
       "notConfirmedBody": "The link may be expired or already used. You are welcome to register again.",
       "withdrawnTitle": "You have been unsubscribed",
-      "withdrawnBody": "Your consent has been withdrawn and we will no longer contact you about Knotten. You are welcome to register again at any time."
+      "withdrawnBody": "Your consent has been withdrawn and we will no longer contact you about Knotten. You are welcome to register again at any time.",
+      "plotPrefilled": "Your interest is for plot {code}."
     }
   },
   "aktuelt": {
@@ -880,5 +881,38 @@
     "current": "Now",
     "forbehold": "Dates are provisional and without obligation. The final progress is stated once the zoning is ready.",
     "faqHeading": "Frequently asked questions"
+  },
+  "tomt": {
+    "metaTitle": "Plot {code} | Knotten",
+    "metaDescription": "Plot {code} at Knotten by Sniksfjorden: status, sun, location and indicative price. Register non-binding interest.",
+    "eyebrow": "Plot",
+    "title": "Plot {code}",
+    "lead": "One of the plots at Knotten by Sniksfjorden. The status, sun and location below are indicative until survey and zoning are complete.",
+    "status": {
+      "ledig": "Available",
+      "reservert": "Reserved",
+      "solgt": "Sold"
+    },
+    "specsHeading": "About the plot",
+    "size": "Size",
+    "orientation": "Orientation",
+    "orientationOptions": {
+      "soer": "South",
+      "oestVest": "East/west",
+      "nord": "North"
+    },
+    "toConfirm": "to be confirmed",
+    "price": "Indicative price",
+    "priceOnRequest": "Price on request",
+    "sunHeading": "Sun through the year",
+    "june": "June (sun/day)",
+    "december": "December (sun/day)",
+    "hours": "h",
+    "sunTool": "See sun for all plots",
+    "ctaHeading": "Interested in plot {code}?",
+    "ctaBody": "Register non-binding interest and we will be in touch when there is more to share. We collect nothing without consent.",
+    "ctaButton": "Register interest in plot {code}",
+    "see3d": "See it in the 3D terrain",
+    "disclaimer": "Indicative estimate. Plot boundaries, area, price and position are confirmed after survey and zoning."
   }
 }

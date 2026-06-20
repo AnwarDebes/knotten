@@ -1,9 +1,12 @@
 "use client";
 
+import type { ComponentProps } from "react";
 import { useLocale } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
+
+type LinkHref = ComponentProps<typeof Link>["href"];
 
 /**
  * Switches locale while staying on the same page. Rendered as plain links, so
@@ -20,7 +23,7 @@ function LocaleSwitcher({ labels }: { labels: Record<string, string> }) {
         <span key={locale} className="inline-flex items-center">
           {i > 0 ? <span className="text-muted-foreground px-1">/</span> : null}
           <Link
-            href={pathname}
+            href={pathname as LinkHref}
             locale={locale}
             aria-current={locale === active ? "true" : undefined}
             className={cn(

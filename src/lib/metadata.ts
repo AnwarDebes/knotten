@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { getPathname } from "@/i18n/navigation";
-import { routing, type AppPathname, type Locale } from "@/i18n/routing";
+import { routing, type StaticPathname, type Locale } from "@/i18n/routing";
 
 /**
  * Build per-page metadata (title, description, canonical and hreflang
@@ -12,7 +12,7 @@ import { routing, type AppPathname, type Locale } from "@/i18n/routing";
 export async function buildPageMetadata(
   locale: string,
   namespace: string,
-  href: AppPathname,
+  href: StaticPathname,
 ): Promise<Metadata> {
   const t = await getTranslations({ locale, namespace });
 
