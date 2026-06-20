@@ -10,7 +10,10 @@ import { ArrowRight } from "lucide-react";
 type Props = { params: Promise<{ locale: string }> };
 
 // Tools that are live link to their page; the rest are marked "coming soon".
-const AVAILABLE: Record<string, "/verktoy/energi"> = { energi: "/verktoy/energi" };
+const AVAILABLE: Record<string, "/verktoy/energi" | "/verktoy/strompris"> = {
+  energi: "/verktoy/energi",
+  stromtrygghet: "/verktoy/strompris",
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;

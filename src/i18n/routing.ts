@@ -19,6 +19,7 @@ export const routing = defineRouting({
     "/baerekraft": { no: "/baerekraft", en: "/sustainability" },
     "/verktoy": { no: "/verktoy", en: "/tools" },
     "/verktoy/energi": { no: "/verktoy/energi", en: "/tools/energy" },
+    "/verktoy/strompris": { no: "/verktoy/strompris", en: "/tools/price-security" },
     "/prospekt": { no: "/prospekt", en: "/prospectus" },
     "/meld-interesse": { no: "/meld-interesse", en: "/register-interest" },
     "/aktuelt": { no: "/aktuelt", en: "/news" },

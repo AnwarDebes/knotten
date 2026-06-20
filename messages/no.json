@@ -625,5 +625,51 @@
       "Batteri: 10 kWh, kritisk last om lag 0,7 kW ved strømbrudd."
     ],
     "disclaimer": "Indikativt estimat, ikke en garanti. Endelige tall krever profesjonell energimodellering. Ingen personopplysninger lagres."
+  },
+  "stromtrygghet": {
+    "metaTitle": "Din strømtrygghet | Knotten",
+    "metaDescription": "Se hvordan en energismart bolig reduserer eksponering mot strømpristopper i NO2, mot reelle historiske spotpriser.",
+    "eyebrow": "Verktøy",
+    "title": "Din strømtrygghet",
+    "lead": "Rødberg ligger i prisområde NO2, historisk blant Norges dyreste og mest volatile. Se hvordan en lavenergibolig med solceller og batteri trekker mindre fra nettet og flytter forbruket til billigere timer, mot reelle historiske spotpriser. Dette handler om uavhengighet og redusert eksponering, ikke en garantert besparelse.",
+    "inputsHeading": "Forutsetninger",
+    "period": "Periode (reelle NO2-priser)",
+    "household": "Husstand",
+    "householdOptions": {
+      "small": "Liten (1-2 personer)",
+      "medium": "Middels (3-4 personer)",
+      "large": "Stor (5+ personer)"
+    },
+    "solar": "Andel dekket av egen sol",
+    "battery": "Med batteri (10 kWh)",
+    "resultsHeading": "Resultat",
+    "loading": "Laster prisdata ...",
+    "error": "Kunne ikke laste prisdata akkurat nå.",
+    "selfCovered": "Selvdekket andel av forbruket",
+    "exposureHeading": "Nettkostnad i perioden",
+    "gridDependent": "Nettavhengig bolig",
+    "energySmart": "Energismart bolig",
+    "reduction": "Energismart bolig har om lag {pct} lavere nettkostnad i denne perioden.",
+    "priceStripHeading": "Spotpris time for time",
+    "priceStripNote": "Hver søyle er én time. Grønt er billig, gult middels, rødt dyrt.",
+    "schemeNote": "Rimeligste ordning for den energismarte boligen i denne perioden: {scheme}.",
+    "schemeNorgespris": "Norgespris",
+    "schemeStotte": "ordinær strømstøtte",
+    "tableToggle": "Vis tallene i tabell",
+    "tableCol": "Mål",
+    "rowCost": "Nettkostnad",
+    "rowSpike": "Kostnad i de dyreste timene",
+    "rowGridDraw": "Trukket fra nettet",
+    "assumptionsHeading": "Forutsetninger og kilder",
+    "assumptions": [
+      "Reelle historiske spotpriser for NO2 (NOK/kWh eks. mva.).",
+      "Energismart bolig: passivhus med varmepumpe; nettavhengig bolig: typisk eloppvarmet enebolig. Indikative årsforbruk.",
+      "Selvprodusert og selvforbrukt strøm bak egen måler unngår spotpris, nettleie og avgifter.",
+      "Ordinær strømstøtte dekker 90 prosent av spot over 77 øre/kWh eks. mva.; Norgespris er fast 50 øre/kWh inkl. mva. Husstanden velger den rimeligste.",
+      "Batteriet flytter inntil 10 kWh per døgn fra dyre til billige timer (forenklet modell).",
+      "Nettleie og avgifter er satt til en indikativ sats. Tallene er illustrasjoner, ikke en faktura."
+    ],
+    "source": "Prisdata: hvakosterstrommen.no. Støtteordninger: regjeringen.no og NVE (kontrollert juni 2026).",
+    "disclaimer": "Indikativt estimat, ikke en garanti for besparelse. Krever profesjonell verifikasjon."
   }
 }

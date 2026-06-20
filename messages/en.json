@@ -625,5 +625,51 @@
       "Battery: 10 kWh, critical load about 0.7 kW in an outage."
     ],
     "disclaimer": "Indicative estimate, not a guarantee. Final figures need professional energy modelling. No personal data is stored."
+  },
+  "stromtrygghet": {
+    "metaTitle": "Your power-price security | Knotten",
+    "metaDescription": "See how an energy-smart home reduces exposure to NO2 price spikes, against real historical spot prices.",
+    "eyebrow": "Tools",
+    "title": "Your power-price security",
+    "lead": "Rødberg sits in price zone NO2, historically among Norway's most expensive and volatile. See how a low-energy home with solar and a battery draws less from the grid and shifts use to cheaper hours, against real historical spot prices. This is about independence and reduced exposure, not a guaranteed saving.",
+    "inputsHeading": "Inputs",
+    "period": "Period (real NO2 prices)",
+    "household": "Household",
+    "householdOptions": {
+      "small": "Small (1-2 people)",
+      "medium": "Medium (3-4 people)",
+      "large": "Large (5+ people)"
+    },
+    "solar": "Share covered by own solar",
+    "battery": "With battery (10 kWh)",
+    "resultsHeading": "Result",
+    "loading": "Loading price data ...",
+    "error": "Could not load price data right now.",
+    "selfCovered": "Self-covered share of use",
+    "exposureHeading": "Grid cost over the period",
+    "gridDependent": "Grid-dependent home",
+    "energySmart": "Energy-smart home",
+    "reduction": "The energy-smart home has roughly {pct} lower grid cost in this period.",
+    "priceStripHeading": "Spot price hour by hour",
+    "priceStripNote": "Each bar is one hour. Green is cheap, amber medium, red expensive.",
+    "schemeNote": "Cheaper scheme for the energy-smart home in this period: {scheme}.",
+    "schemeNorgespris": "Norgespris",
+    "schemeStotte": "ordinary electricity support",
+    "tableToggle": "Show the numbers as a table",
+    "tableCol": "Measure",
+    "rowCost": "Grid cost",
+    "rowSpike": "Cost in the most expensive hours",
+    "rowGridDraw": "Drawn from the grid",
+    "assumptionsHeading": "Assumptions and sources",
+    "assumptions": [
+      "Real historical NO2 spot prices (NOK/kWh excl. VAT).",
+      "Energy-smart home: passive house with a heat pump; grid-dependent home: a typical electrically heated detached house. Indicative annual use.",
+      "Self-produced power used behind the meter avoids spot price, grid rent and levies.",
+      "Ordinary support covers 90 percent of spot above 77 øre/kWh excl. VAT; Norgespris is a fixed 50 øre/kWh incl. VAT. The household picks the cheaper one.",
+      "The battery shifts up to 10 kWh per day from expensive to cheap hours (a simplified model).",
+      "Grid rent and levies use an indicative rate. The figures are illustrations, not a bill."
+    ],
+    "source": "Price data: hvakosterstrommen.no. Support schemes: regjeringen.no and NVE (checked June 2026).",
+    "disclaimer": "Indicative estimate, not a guarantee of savings. Requires professional verification."
   }
 }
