@@ -780,5 +780,44 @@
     "showMap": "Vis kart",
     "mapLoading": "Laster kart ...",
     "attribution": "Kartdata © OpenStreetMap-bidragsytere. Eksakt plassering av området er foreløpig."
+  },
+  "strombrudd": {
+    "metaTitle": "Når strømmen går | Knotten",
+    "metaDescription": "Se hvor lenge en energismart bolig holder varme, kjøl og lys gående når strømmen går, ut fra batteri og solceller. Indikativt estimat.",
+    "eyebrow": "Verktøy",
+    "title": "Når strømmen går",
+    "lead": "Robusthet er en av bærebjelkene. Sett batteri og solceller, og se hvor lenge boligen holder det viktigste i gang ved strømbrudd, med og uten sollading om dagen. Tallene er indikative og må verifiseres av fagfolk.",
+    "inputsHeading": "Oppsett",
+    "battery": "Batteri",
+    "solar": "Solceller",
+    "seasonGroup": "Velg sesong",
+    "summer": "Sommer",
+    "winter": "Vinter",
+    "solarRecharge": "Med sollading om dagen",
+    "backupHeadline": "Backup på kritisk last",
+    "hours": "timer",
+    "backupNote": "Samme grunnlag som energikalkulatoren: brukbar batterikapasitet delt på kritisk last.",
+    "timelineHeading": "Time for time",
+    "hourLabel": "Time {hour}",
+    "socAt": "{pct} % batteri igjen",
+    "loadsHeading": "Dette er på nå",
+    "loads": {
+      "varmepumpe": "Varmepumpe",
+      "kjolfrys": "Kjøl/frys",
+      "belysning": "Belysning",
+      "pumpe": "Vannpumpe",
+      "ruter": "Ruter"
+    },
+    "on": "på",
+    "off": "av",
+    "assumptionsHeading": "Forutsetninger og kilder",
+    "assumptions": [
+      "Backup-timer på kritisk last bruker samme forutsetning som energikalkulatoren (brukbar batterikapasitet delt på kritisk last).",
+      "Lastene er typiske, midlede effektuttak (varmepumpe modulert, kjøl/frys syklet); faktiske tall varierer.",
+      "Sollading om dagen er anslått fra PVGIS-utbytte (om lag 1000 til 1020 kWh/kWp i året), justert for sesong.",
+      "Tyngre laster som varmepumpa faller fra først når batteriet tømmes; små laster varer lengst.",
+      "Reelt varmebehov, batteriprodukt og apparatpark er ukjent; verdiene er tydelig merkede plassholdere."
+    ],
+    "disclaimer": "Indikativt estimat, ikke en garanti. Krever profesjonell verifikasjon."
   }
 }

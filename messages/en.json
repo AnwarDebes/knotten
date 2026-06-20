@@ -780,5 +780,44 @@
     "showMap": "Show map",
     "mapLoading": "Loading map ...",
     "attribution": "Map data © OpenStreetMap contributors. The exact position of the area is provisional."
+  },
+  "strombrudd": {
+    "metaTitle": "When the power goes out | Knotten",
+    "metaDescription": "See how long an energy-smart home keeps heat, fridge and light running during an outage, based on battery and solar. Indicative estimate.",
+    "eyebrow": "Tools",
+    "title": "When the power goes out",
+    "lead": "Resilience is one of the pillars. Set the battery and solar, and see how long the home keeps the essentials running during an outage, with and without daytime solar recharge. The figures are indicative and need professional verification.",
+    "inputsHeading": "Setup",
+    "battery": "Battery",
+    "solar": "Solar",
+    "seasonGroup": "Choose season",
+    "summer": "Summer",
+    "winter": "Winter",
+    "solarRecharge": "With daytime solar recharge",
+    "backupHeadline": "Backup on the critical load",
+    "hours": "hours",
+    "backupNote": "Same basis as the energy calculator: usable battery capacity divided by the critical load.",
+    "timelineHeading": "Hour by hour",
+    "hourLabel": "Hour {hour}",
+    "socAt": "{pct} % battery left",
+    "loadsHeading": "On right now",
+    "loads": {
+      "varmepumpe": "Heat pump",
+      "kjolfrys": "Fridge/freezer",
+      "belysning": "Lighting",
+      "pumpe": "Water pump",
+      "ruter": "Router"
+    },
+    "on": "on",
+    "off": "off",
+    "assumptionsHeading": "Assumptions and sources",
+    "assumptions": [
+      "Backup hours on the critical load use the same assumption as the energy calculator (usable battery capacity divided by the critical load).",
+      "Loads are typical averaged draws (heat pump modulating, fridge/freezer cycling); actual figures vary.",
+      "Daytime solar recharge is estimated from PVGIS yield (about 1000 to 1020 kWh/kWp per year), adjusted for season.",
+      "Heavier loads such as the heat pump drop first as the battery empties; small loads last longest.",
+      "Real heating demand, battery product and appliance inventory are unknown; the values are clearly marked placeholders."
+    ],
+    "disclaimer": "Indicative estimate, not a guarantee. Requires professional verification."
   }
 }
