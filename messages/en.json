@@ -312,6 +312,11 @@
         "title": "Configurator",
         "body": "Assemble a house type with solar, battery and EV charging, and watch energy demand, self-sufficiency and cost update in real time. Indicative figures.",
         "slug": "konfigurator"
+      },
+      {
+        "title": "CO2 and environmental gain",
+        "body": "A careful estimate of CO2 saved by living energy-smart versus a standard home, using NS 3720 and the same energy model. Indicative, depends on the emission factor.",
+        "slug": "co2"
       }
     ]
   },
@@ -918,5 +923,42 @@
   "aktueltPost": {
     "back": "Back to news",
     "readMore": "Read more"
+  },
+  "co2": {
+    "metaTitle": "CO2 and environmental gain | Knotten",
+    "metaDescription": "A careful estimate of CO2 saved by living in an energy-smart home versus a standard home, using NS 3720. Indicative estimate.",
+    "eyebrow": "Tools",
+    "title": "CO2 and environmental gain",
+    "lead": "Lower energy demand and self-produced solar mean a lower climate footprint. Here is a careful estimate of the difference against a standard home, tied to NS 3720 and the same energy model as the rest of the site. The result depends strongly on the chosen emission factor, which is shown openly.",
+    "inputsHeading": "Assumptions",
+    "household": "Household",
+    "householdOptions": {
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large"
+    },
+    "factor": "Electricity emission factor",
+    "factorOptions": {
+      "norwayProduction": "Norwegian production (NVE)",
+      "nordicMix": "Nordic mix",
+      "europeanResidual": "European residual mix"
+    },
+    "factorNote": "The result scales directly with the factor. Norwegian physical production is low (hydropower); a European residual mix is much higher. We show the whole range.",
+    "resultsHeading": "Result",
+    "savedLabel": "Saved per year, energy-smart versus standard home",
+    "tonnesPerYear": "tonnes CO2e/year",
+    "sensitivity": "Depending on the factor: from {low} to {high} tonnes/year.",
+    "home": "Home",
+    "gridDraw": "From the grid",
+    "tonnes": "Tonnes CO2e/year",
+    "smart": "Energy-smart home",
+    "reference": "Standard home",
+    "assumptions": [
+      "Method: NS 3720 (greenhouse-gas calculations for buildings), operational phase only in this version.",
+      "Energy demand, solar production and self-sufficiency come from the energy model (passive house, PVGIS, prosumer).",
+      "Standard home: SSB average of about 14,700 kWh/year (2024).",
+      "The emission factor is selectable and shown with its source; the result scales directly with it."
+    ],
+    "disclaimer": "Indicative estimate, not a certification or guaranteed climate effect. Requires professional verification."
   }
 }

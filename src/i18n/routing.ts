@@ -27,6 +27,7 @@ export const routing = defineRouting({
     "/verktoy/naromrade": { no: "/verktoy/naromrade", en: "/tools/neighbourhood" },
     "/verktoy/strombrudd": { no: "/verktoy/strombrudd", en: "/tools/power-outage" },
     "/verktoy/konfigurator": { no: "/verktoy/konfigurator", en: "/tools/configurator" },
+    "/verktoy/co2": { no: "/verktoy/co2", en: "/tools/co2" },
     "/prospekt": { no: "/prospekt", en: "/prospectus" },
     "/meld-interesse": { no: "/meld-interesse", en: "/register-interest" },
     "/aktuelt": { no: "/aktuelt", en: "/news" },

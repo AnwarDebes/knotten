@@ -312,6 +312,11 @@
         "title": "Konfigurator",
         "body": "Sett sammen boligtype, solceller, batteri og elbillading, og se energibehov, selvforsyning og kostnad oppdatere seg i sanntid. Indikative tall.",
         "slug": "konfigurator"
+      },
+      {
+        "title": "CO2 og miljøgevinst",
+        "body": "Et forsiktig anslag på spart CO2 ved å bo energismart kontra en vanlig bolig, etter NS 3720 og samme energimodell. Indikativt, avhenger av utslippsfaktor.",
+        "slug": "co2"
       }
     ]
   },
@@ -918,5 +923,42 @@
   "aktueltPost": {
     "back": "Tilbake til Aktuelt",
     "readMore": "Les mer"
+  },
+  "co2": {
+    "metaTitle": "CO2 og miljøgevinst | Knotten",
+    "metaDescription": "Et forsiktig anslag på spart CO2 ved å bo i en energismart bolig kontra en vanlig bolig, etter NS 3720. Indikativt estimat.",
+    "eyebrow": "Verktøy",
+    "title": "CO2 og miljøgevinst",
+    "lead": "Lavere energibehov og egenprodusert solstrøm gir et lavere klimafotavtrykk. Her er et forsiktig anslag på forskjellen mot en vanlig bolig, knyttet til NS 3720 og samme energimodell som resten av siden. Resultatet avhenger sterkt av valgt utslippsfaktor, som vises åpent.",
+    "inputsHeading": "Forutsetninger",
+    "household": "Husstand",
+    "householdOptions": {
+      "small": "Liten",
+      "medium": "Middels",
+      "large": "Stor"
+    },
+    "factor": "Utslippsfaktor for strøm",
+    "factorOptions": {
+      "norwayProduction": "Norsk produksjon (NVE)",
+      "nordicMix": "Nordisk miks",
+      "europeanResidual": "Europeisk restmiks"
+    },
+    "factorNote": "Resultatet skaleres direkte med faktoren. Norsk fysisk produksjon er lav (vannkraft); en europeisk restmiks er mye høyere. Vi viser hele spennet.",
+    "resultsHeading": "Resultat",
+    "savedLabel": "Spart per år, energismart mot vanlig bolig",
+    "tonnesPerYear": "tonn CO2e/år",
+    "sensitivity": "Avhengig av faktor: fra {low} til {high} tonn/år.",
+    "home": "Bolig",
+    "gridDraw": "Fra nettet",
+    "tonnes": "Tonn CO2e/år",
+    "smart": "Energismart bolig",
+    "reference": "Vanlig bolig",
+    "assumptions": [
+      "Metode: NS 3720 (klimagassberegninger for bygninger), kun driftsfasen i denne versjonen.",
+      "Energibehov, solproduksjon og selvforsyning er hentet fra energimodellen (passivhus, PVGIS, plusskunde).",
+      "Vanlig bolig: SSB-snitt på om lag 14 700 kWh/år (2024).",
+      "Utslippsfaktor er valgbar og vist med kilde; resultatet skaleres direkte med faktoren."
+    ],
+    "disclaimer": "Indikativt estimat, ikke en sertifisering eller garantert klimaeffekt. Krever profesjonell verifikasjon."
   }
 }
