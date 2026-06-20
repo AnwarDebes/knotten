@@ -30,6 +30,7 @@ export const routing = defineRouting({
     "/prospekt": { no: "/prospekt", en: "/prospectus" },
     "/meld-interesse": { no: "/meld-interesse", en: "/register-interest" },
     "/aktuelt": { no: "/aktuelt", en: "/news" },
+    "/aktuelt/[slug]": { no: "/aktuelt/[slug]", en: "/news/[slug]" },
     "/for-kommune-og-partnere": { no: "/for-kommune-og-partnere", en: "/for-partners" },
     "/kontakt": { no: "/kontakt", en: "/contact" },
     "/personvern": { no: "/personvern", en: "/privacy" },

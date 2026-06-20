@@ -3,6 +3,8 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
+import { getPathname } from "@/i18n/navigation";
+import { routing } from "@/i18n/routing";
 import { requireRole } from "@/lib/admin/session-cookie";
 import {
   plotSchema,
@@ -20,6 +22,15 @@ import { saveImage } from "@/lib/content/storage";
 function revalidateBoth(pathname: string): void {
   revalidatePath(`/no${pathname}`);
   revalidatePath(`/en${pathname}`);
+}
+
+/** Refresh a per-post page in both locales, honouring the localized paths. */
+function revalidateNewsPost(slug: string): void {
+  for (const l of routing.locales) {
+    revalidatePath(
+      getPathname({ href: { pathname: "/aktuelt/[slug]", params: { slug } }, locale: l }),
+    );
+  }
 }
 
 function obj(formData: FormData): Record<string, unknown> {
@@ -116,6 +127,7 @@ export async function saveNewsAction(formData: FormData): Promise<void> {
   if (id) await content.updateNews(db, id, parsed.data, auth.admin.email);
   else await content.createNews(db, parsed.data, auth.admin.email);
   revalidateBoth("/aktuelt");
+  revalidateNewsPost(parsed.data.slug);
   redirect("/admin/innhold/aktuelt?saved=1");
 }
 

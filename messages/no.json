@@ -914,5 +914,9 @@
     "ctaButton": "Meld interesse for tomt {code}",
     "see3d": "Se i 3D-terrenget",
     "disclaimer": "Indikativt estimat. Tomtegrenser, areal, pris og posisjon bekreftes etter oppmåling og regulering."
+  },
+  "aktueltPost": {
+    "back": "Tilbake til Aktuelt",
+    "readMore": "Les mer"
   }
 }

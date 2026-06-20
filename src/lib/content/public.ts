@@ -6,6 +6,7 @@ import {
   getBlock,
   getDashboard,
   listTimeline,
+  getNewsBySlug,
 } from "./service";
 import type { Plot, NewsPost, ContentBlock } from "@/db/schema";
 import {
@@ -49,6 +50,17 @@ export async function getPublicNews(): Promise<NewsPost[]> {
     return await listPublishedNews(await getDb());
   } catch {
     return [];
+  }
+}
+
+/** A single published post by slug (null if missing or still a draft). */
+export async function getPublicNewsBySlug(slug: string): Promise<NewsPost | null> {
+  if (isBuildPhase) return null;
+  try {
+    const post = await getNewsBySlug(await getDb(), slug);
+    return post && post.status === "published" ? post : null;
+  } catch {
+    return null;
   }
 }
 

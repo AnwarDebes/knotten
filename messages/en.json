@@ -914,5 +914,9 @@
     "ctaButton": "Register interest in plot {code}",
     "see3d": "See it in the 3D terrain",
     "disclaimer": "Indicative estimate. Plot boundaries, area, price and position are confirmed after survey and zoning."
+  },
+  "aktueltPost": {
+    "back": "Back to news",
+    "readMore": "Read more"
   }
 }

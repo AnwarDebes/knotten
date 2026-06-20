@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { setRequestLocale } from "next-intl/server";
+import { setRequestLocale, getTranslations } from "next-intl/server";
 import { ContentPage } from "@/components/site/content-page";
+import { Link } from "@/i18n/navigation";
 import { buildPageMetadata } from "@/lib/metadata";
 import { getPublicNews } from "@/lib/content/public";
 
@@ -19,30 +20,45 @@ export default async function Page({ params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
   const en = locale === "en";
+  const t = await getTranslations("aktueltPost");
   const posts = await getPublicNews();
 
   return (
     <ContentPage namespace="aktuelt">
       {posts.length > 0 ? (
-        <div className="space-y-10">
-          {posts.map((post) => (
-            <article key={post.id} className="space-y-2">
-              <h2 className="text-foreground text-xl font-semibold tracking-tight">
-                {en ? post.titleEn : post.titleNo}
-              </h2>
-              {post.publishedAt ? (
-                <p className="text-muted-foreground text-sm">
-                  {new Intl.DateTimeFormat(en ? "en-GB" : "nb-NO", { dateStyle: "long" }).format(
-                    post.publishedAt,
-                  )}
+        <ul className="divide-border divide-y">
+          {posts.map((post) => {
+            const body = en ? post.bodyEn : post.bodyNo;
+            return (
+              <li key={post.id} className="py-6">
+                <h2 className="text-foreground text-xl font-semibold tracking-tight">
+                  <Link
+                    href={{ pathname: "/aktuelt/[slug]", params: { slug: post.slug } }}
+                    className="hover:text-sea"
+                  >
+                    {en ? post.titleEn : post.titleNo}
+                  </Link>
+                </h2>
+                {post.publishedAt ? (
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    {new Intl.DateTimeFormat(en ? "en-GB" : "nb-NO", { dateStyle: "long" }).format(
+                      post.publishedAt,
+                    )}
+                  </p>
+                ) : null}
+                <p className="text-foreground mt-2 leading-7">
+                  {body.length > 200 ? `${body.slice(0, 200)}...` : body}
                 </p>
-              ) : null}
-              <p className="text-foreground leading-7 whitespace-pre-line">
-                {en ? post.bodyEn : post.bodyNo}
-              </p>
-            </article>
-          ))}
-        </div>
+                <Link
+                  href={{ pathname: "/aktuelt/[slug]", params: { slug: post.slug } }}
+                  className="text-sea mt-2 inline-block text-sm hover:underline"
+                >
+                  {t("readMore")}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       ) : null}
     </ContentPage>
   );
