@@ -18,6 +18,7 @@ const AVAILABLE: Record<
   | "/verktoy/sol"
   | "/verktoy/naromrade"
   | "/verktoy/strombrudd"
+  | "/verktoy/konfigurator"
 > = {
   energi: "/verktoy/energi",
   stromtrygghet: "/verktoy/strompris",
@@ -25,6 +26,7 @@ const AVAILABLE: Record<
   sol: "/verktoy/sol",
   naromrade: "/verktoy/naromrade",
   strombrudd: "/verktoy/strombrudd",
+  konfigurator: "/verktoy/konfigurator",
 };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

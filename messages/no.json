@@ -307,6 +307,11 @@
         "title": "Når strømmen går",
         "body": "Hva skjer ved strømbrudd? Verktøyet viser hvordan lokal produksjon, lagring og fremvoksende løsninger som V2H kan gi økt robusthet. Teknologien er ny og presenteres ærlig, uten overdrevne løfter.",
         "slug": "strombrudd"
+      },
+      {
+        "title": "Konfigurator",
+        "body": "Sett sammen boligtype, solceller, batteri og elbillading, og se energibehov, selvforsyning og kostnad oppdatere seg i sanntid. Indikative tall.",
+        "slug": "konfigurator"
       }
     ]
   },
@@ -819,5 +824,50 @@
       "Reelt varmebehov, batteriprodukt og apparatpark er ukjent; verdiene er tydelig merkede plassholdere."
     ],
     "disclaimer": "Indikativt estimat, ikke en garanti. Krever profesjonell verifikasjon."
+  },
+  "konfigurator": {
+    "metaTitle": "Konfigurator | Knotten",
+    "metaDescription": "Sett sammen en boligtype med solceller, batteri og elbillading, og se energibehov, selvforsyning og kostnad oppdatere seg. Indikativt.",
+    "eyebrow": "Verktøy",
+    "title": "Bygg din energismarte bolig",
+    "lead": "Velg boligtype, plasser den på en tomt, og still inn solceller, batteri og elbillading. Se energibehov, selvforsyning og kostnad bevege seg i sanntid. Boligtypene er foreløpige plassholdere til reelle typer foreligger.",
+    "empty": "Ingen boligtyper er lagt inn enda.",
+    "buildHeading": "Sett sammen",
+    "houseType": "Boligtype",
+    "plot": "Tomt",
+    "placementNote": "Plasseringen er illustrativ.",
+    "see3d": "Se i 3D-terrenget",
+    "orientation": "Orientering",
+    "orientationOptions": {
+      "soer": "Sør",
+      "oestVest": "Øst/vest",
+      "nord": "Nord"
+    },
+    "household": "Husstand",
+    "householdOptions": {
+      "small": "Liten",
+      "medium": "Middels",
+      "large": "Stor"
+    },
+    "solar": "Solceller",
+    "battery": "Batteri",
+    "ev": "Med elbillading",
+    "resultsHeading": "Resultat",
+    "selfSufficiency": "Selvforsyning",
+    "backup": "Backup ved strømbrudd",
+    "hours": "timer",
+    "demand": "Energibehov i året",
+    "production": "Solproduksjon i året",
+    "energyCost": "Energikostnad",
+    "perYear": "i året",
+    "more": "Vil du se månedskostnaden?",
+    "monthlyLink": "Åpne månedskostnad",
+    "assumptions": [
+      "Energibehov, solproduksjon og selvforsyning bruker samme modell som energikalkulatoren (passivhus, PVGIS-utbytte, plusskunde).",
+      "Energikostnad prises etter den rimeligste av strømstøtte og Norgespris, med en indikativ NO2-snittpris.",
+      "Boligtyper, areal og spenn er foreløpige plassholdere til utbygger leverer reelle typer.",
+      "Plassering og boligvisning er illustrasjoner."
+    ],
+    "disclaimer": "Indikativt, ikke et tilbud. Krever profesjonell energimodellering."
   }
 }

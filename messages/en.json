@@ -307,6 +307,11 @@
         "title": "When the power goes out",
         "body": "What happens during a power outage? The tool shows how local production, storage and emerging solutions such as V2H can add resilience. The technology is new and is presented honestly, without overstated promises.",
         "slug": "strombrudd"
+      },
+      {
+        "title": "Configurator",
+        "body": "Assemble a house type with solar, battery and EV charging, and watch energy demand, self-sufficiency and cost update in real time. Indicative figures.",
+        "slug": "konfigurator"
       }
     ]
   },
@@ -819,5 +824,50 @@
       "Real heating demand, battery product and appliance inventory are unknown; the values are clearly marked placeholders."
     ],
     "disclaimer": "Indicative estimate, not a guarantee. Requires professional verification."
+  },
+  "konfigurator": {
+    "metaTitle": "Configurator | Knotten",
+    "metaDescription": "Assemble a house type with solar, battery and EV charging, and see energy demand, self-sufficiency and cost update. Indicative.",
+    "eyebrow": "Tools",
+    "title": "Build your energy-smart home",
+    "lead": "Pick a house type, place it on a plot, and set the solar, battery and EV charging. Watch energy demand, self-sufficiency and cost move in real time. The house types are provisional placeholders until real types are available.",
+    "empty": "No house types have been added yet.",
+    "buildHeading": "Assemble",
+    "houseType": "House type",
+    "plot": "Plot",
+    "placementNote": "Placement is illustrative.",
+    "see3d": "See it in the 3D terrain",
+    "orientation": "Orientation",
+    "orientationOptions": {
+      "soer": "South",
+      "oestVest": "East/west",
+      "nord": "North"
+    },
+    "household": "Household",
+    "householdOptions": {
+      "small": "Small",
+      "medium": "Medium",
+      "large": "Large"
+    },
+    "solar": "Solar",
+    "battery": "Battery",
+    "ev": "With EV charging",
+    "resultsHeading": "Result",
+    "selfSufficiency": "Self-sufficiency",
+    "backup": "Outage backup",
+    "hours": "hours",
+    "demand": "Annual energy demand",
+    "production": "Annual solar production",
+    "energyCost": "Energy cost",
+    "perYear": "per year",
+    "more": "Want to see the monthly cost?",
+    "monthlyLink": "Open monthly cost",
+    "assumptions": [
+      "Energy demand, solar production and self-sufficiency use the same model as the energy calculator (passive house, PVGIS yield, prosumer).",
+      "Energy cost is priced at the cheaper of the support scheme and Norgespris, with an indicative NO2 average price.",
+      "House types, areas and ranges are provisional placeholders until the developer supplies real types.",
+      "Placement and house views are illustrations."
+    ],
+    "disclaimer": "Indicative, not an offer. Requires professional energy modelling."
   }
 }

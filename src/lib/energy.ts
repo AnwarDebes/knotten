@@ -91,3 +91,51 @@ export function computeEnergy(input: EnergyInput): EnergyResult {
     resilienceHours,
   };
 }
+
+/** Like the input above, but the configurator sizes solar and battery explicitly. */
+export type ConfigInput = {
+  areaM2: number;
+  orientation: Orientation;
+  household: Household;
+  ev: boolean;
+  pvKwp: number;
+  batteryKwh: number;
+};
+
+/**
+ * Compute energy results for an explicit solar and battery size (the
+ * configurator). Reuses the same assumptions as computeEnergy, so the two never
+ * diverge; only the system sizing is supplied by the caller.
+ */
+export function computeEnergyConfig(input: ConfigInput): EnergyResult {
+  const a = ASSUMPTIONS;
+
+  const heating = input.areaM2 * a.heatingElPerM2;
+  const household = a.householdKwh[input.household];
+  const ev = input.ev ? a.evKwh : 0;
+  const annualDemandKwh = round(heating + household + ev, 100);
+
+  const pvKwp = input.pvKwp;
+  const annualProductionKwh = round(
+    pvKwp * a.pvYieldPerKwp * a.orientationFactor[input.orientation],
+    100,
+  );
+
+  const rate =
+    input.batteryKwh > 0 ? a.selfConsumptionRate.battery : a.selfConsumptionRate.noBattery;
+  const selfConsumedKwh = round(Math.min(annualDemandKwh, annualProductionKwh * rate), 100);
+  const selfSufficiency = annualDemandKwh > 0 ? selfConsumedKwh / annualDemandKwh : 0;
+  const annualSavingsNok = round(selfConsumedKwh * a.avoidedCostPerKwh, 100);
+  const resilienceHours =
+    input.batteryKwh > 0 ? round((input.batteryKwh * a.batteryUsable) / a.criticalLoadKw) : 0;
+
+  return {
+    annualDemandKwh,
+    pvKwp,
+    annualProductionKwh,
+    selfConsumedKwh,
+    selfSufficiency,
+    annualSavingsNok,
+    resilienceHours,
+  };
+}
