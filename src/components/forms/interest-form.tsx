@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CONSENT_TEXT, type ConsentLocale } from "@/lib/leads/consent";
+import { trackGoal, GOALS } from "@/lib/analytics";
 
 const TURNSTILE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
@@ -57,6 +58,8 @@ export function InterestForm({ source }: { source?: string }) {
         body: JSON.stringify(payload),
       });
       if (res.ok) {
+        // A privacy-safe goal: a count only, with no personal data attached.
+        trackGoal(GOALS.interestComplete);
         setStatus("success");
         form.reset();
         return;

@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { computeEnergy, type EnergyInput, type Household, type Orientation } from "@/lib/energy";
+import { trackGoal, GOALS } from "@/lib/analytics";
 import { formatKwh, formatNOK, formatNumber, formatPercent } from "@/lib/format";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -34,8 +35,15 @@ export function EnergyCalculator() {
     ev: false,
     battery: false,
   });
-  const set = <K extends keyof EnergyInput>(key: K, value: EnergyInput[K]) =>
+  const tracked = useRef(false);
+  const set = <K extends keyof EnergyInput>(key: K, value: EnergyInput[K]) => {
+    if (!tracked.current) {
+      // Fire a single, non-identifying goal the first time the tool is used.
+      tracked.current = true;
+      trackGoal(GOALS.toolUse, { tool: "energi" });
+    }
     setInput((prev) => ({ ...prev, [key]: value }));
+  };
 
   const r = computeEnergy(input);
   const assumptions = t.raw("assumptions") as string[];
