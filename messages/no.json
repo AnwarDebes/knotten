@@ -671,5 +671,43 @@
     ],
     "source": "Prisdata: hvakosterstrommen.no. Støtteordninger: regjeringen.no og NVE (kontrollert juni 2026).",
     "disclaimer": "Indikativt estimat, ikke en garanti for besparelse. Krever profesjonell verifikasjon."
+  },
+  "manedskostnad": {
+    "metaTitle": "Månedskostnad | Knotten",
+    "metaDescription": "Se hva en energismart bolig kan bety for månedskostnaden, sammenlignet med en vanlig ny bolig. Indikativt estimat, ikke et lånetilbud.",
+    "eyebrow": "Verktøy",
+    "title": "Hva koster det per måned?",
+    "lead": "Nordmenn velger bolig etter månedskostnad, ikke kvadratmeterpris. Her ser du en indikativ månedskostnad for en energismart Knotten-bolig, side om side med en vanlig ny bolig på samme lånevilkår, slik at energiforskjellen kommer tydelig frem. Dette er et estimat, ikke et lånetilbud.",
+    "inputsHeading": "Dine tall",
+    "kjopesum": "Kjøpesum",
+    "egenkapital": "Egenkapital",
+    "rente": "Nominell rente",
+    "lopetid": "Løpetid",
+    "years": "år",
+    "felleskostnader": "Felleskostnader",
+    "enovaHeading": "Enova-tilskudd",
+    "enova_solar": "Solceller",
+    "enova_storage": "Energilagring",
+    "enova_waterHeater": "Smart varmtvannsbereder",
+    "enovaNote": "Tilskuddssatser per juni 2026. Verifiser gjeldende ordninger og beløp hos Enova før publisering.",
+    "resultsHeading": "Månedskostnad",
+    "knotten": "Knotten-bolig",
+    "conventional": "Vanlig ny bolig",
+    "loan": "Lån",
+    "energy": "Energi",
+    "felles": "Felleskostnader",
+    "total": "Sum",
+    "perMonth": "/mnd",
+    "energyDeltaLabel": "Lavere energikostnad per måned",
+    "cumulative": "Over {years} år utgjør det om lag {kr}.",
+    "assumptionsHeading": "Forutsetninger og kilder",
+    "assumptions": [
+      "Lånekostnad er en standard annuitet av kjøpesum minus egenkapital. Renten er indikativ og er ikke et tilbud.",
+      "Energikostnad for Knotten-boligen er hentet fra energimodellen (passivhus, varmepumpe, solceller) med samme prislogikk som strømtrygghet-verktøyet.",
+      "Vanlig bolig: SSB-snitt på om lag 14 700 kWh/år (2024) som referanse inntil en avtalt sammenligning foreligger.",
+      "Begge boligene bruker samme lån og felleskostnader; kun energilinjen er forskjellig.",
+      "Strøm prises etter den rimeligste av ordinær strømstøtte og Norgespris, med en indikativ NO2-snittpris."
+    ],
+    "disclaimer": "Indikativt, ikke et lånetilbud. Snakk med banken eller en rådgiver. Ikke finansiell rådgivning."
   }
 }

@@ -20,6 +20,7 @@ export const routing = defineRouting({
     "/verktoy": { no: "/verktoy", en: "/tools" },
     "/verktoy/energi": { no: "/verktoy/energi", en: "/tools/energy" },
     "/verktoy/strompris": { no: "/verktoy/strompris", en: "/tools/price-security" },
+    "/verktoy/manedskostnad": { no: "/verktoy/manedskostnad", en: "/tools/monthly-cost" },
     "/prospekt": { no: "/prospekt", en: "/prospectus" },
     "/meld-interesse": { no: "/meld-interesse", en: "/register-interest" },
     "/aktuelt": { no: "/aktuelt", en: "/news" },

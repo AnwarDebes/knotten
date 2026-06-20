@@ -671,5 +671,43 @@
     ],
     "source": "Price data: hvakosterstrommen.no. Support schemes: regjeringen.no and NVE (checked June 2026).",
     "disclaimer": "Indicative estimate, not a guarantee of savings. Requires professional verification."
+  },
+  "manedskostnad": {
+    "metaTitle": "Monthly cost | Knotten",
+    "metaDescription": "See what an energy-smart home can mean for the monthly cost, next to a conventional new home. Indicative estimate, not a loan offer.",
+    "eyebrow": "Tools",
+    "title": "What does it cost per month?",
+    "lead": "Norwegians choose a home by monthly cost, not price per square metre. Here is an indicative monthly cost for an energy-smart Knotten home, side by side with a conventional new home on identical loan terms, so the energy difference stands out. This is an estimate, not a loan offer.",
+    "inputsHeading": "Your figures",
+    "kjopesum": "Purchase price",
+    "egenkapital": "Equity",
+    "rente": "Nominal interest rate",
+    "lopetid": "Term",
+    "years": "years",
+    "felleskostnader": "Shared costs",
+    "enovaHeading": "Enova grants",
+    "enova_solar": "Solar panels",
+    "enova_storage": "Energy storage",
+    "enova_waterHeater": "Smart water heater",
+    "enovaNote": "Grant rates as of June 2026. Verify the current schemes and amounts with Enova before publishing.",
+    "resultsHeading": "Monthly cost",
+    "knotten": "Knotten home",
+    "conventional": "Conventional new home",
+    "loan": "Loan",
+    "energy": "Energy",
+    "felles": "Shared costs",
+    "total": "Total",
+    "perMonth": "/mo",
+    "energyDeltaLabel": "Lower energy cost per month",
+    "cumulative": "Over {years} years that is roughly {kr}.",
+    "assumptionsHeading": "Assumptions and sources",
+    "assumptions": [
+      "The loan cost is a standard annuity on the purchase price minus equity. The rate is indicative and is not an offer.",
+      "The Knotten home's energy cost comes from the energy model (passive house, heat pump, solar) using the same pricing logic as the power-price security tool.",
+      "Conventional home: SSB average of about 14,700 kWh/year (2024) as a reference until an agreed comparator is set.",
+      "Both homes use the same loan and shared costs; only the energy line differs.",
+      "Power is priced at the cheaper of ordinary support and Norgespris, with an indicative NO2 average price."
+    ],
+    "disclaimer": "Indicative, not a loan offer. Talk to your bank or an adviser. Not financial advice."
   }
 }
