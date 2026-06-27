@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { PointerLockControls, Sky } from "@react-three/drei";
 import * as THREE from "three";
@@ -64,6 +64,88 @@ function buildTerrainGeometry(h: Heightmap): THREE.BufferGeometry {
 
 function worldXZ(h: Heightmap, u: number, v: number): [number, number] {
   return [(u - 0.5) * h.widthMeters, (v - 0.5) * h.heightMeters];
+}
+
+/**
+ * Real forest, instanced. Each tree is [x, groundY, z, height, kind] derived
+ * from the Kartverket canopy height model (DOM minus DTM). Trunk and foliage are
+ * separate InstancedMeshes per species (four draw calls total) sharing the same
+ * per-tree transform, so thousands of trees stay cheap. Conifer = furu/gran,
+ * deciduous = bjork/eik.
+ */
+function Trees({ list }: { list: number[][] }) {
+  const con = useMemo(() => list.filter((t) => t[4] === 0), [list]);
+  const dec = useMemo(() => list.filter((t) => t[4] === 1), [list]);
+  const conTrunk = useRef<THREE.InstancedMesh | null>(null);
+  const conFol = useRef<THREE.InstancedMesh | null>(null);
+  const decTrunk = useRef<THREE.InstancedMesh | null>(null);
+  const decFol = useRef<THREE.InstancedMesh | null>(null);
+
+  const cyl = useMemo(() => {
+    const g = new THREE.CylinderGeometry(0.04, 0.07, 0.3, 5);
+    g.translate(0, 0.15, 0);
+    return g;
+  }, []);
+  const cone = useMemo(() => {
+    const g = new THREE.ConeGeometry(0.24, 0.78, 7);
+    g.translate(0, 0.61, 0);
+    return g;
+  }, []);
+  const cyl2 = useMemo(() => {
+    const g = new THREE.CylinderGeometry(0.04, 0.07, 0.42, 5);
+    g.translate(0, 0.21, 0);
+    return g;
+  }, []);
+  const ball = useMemo(() => {
+    const g = new THREE.IcosahedronGeometry(0.32, 0);
+    g.translate(0, 0.72, 0);
+    return g;
+  }, []);
+
+  useEffect(() => {
+    const m = new THREE.Matrix4();
+    const q = new THREE.Quaternion();
+    const up = new THREE.Vector3(0, 1, 0);
+    const pos = new THREE.Vector3();
+    const scl = new THREE.Vector3();
+    const fill = (ref: RefObject<THREE.InstancedMesh | null>, arr: number[][]) => {
+      const mesh = ref.current;
+      if (!mesh) return;
+      for (let i = 0; i < arr.length; i++) {
+        const t = arr[i];
+        if (!t) continue;
+        q.setFromAxisAngle(up, (i * 2.3999) % 6.2831853);
+        pos.set(t[0] ?? 0, t[1] ?? 0, t[2] ?? 0);
+        const h = t[3] ?? 6;
+        const w = h * 0.6;
+        scl.set(w, h, w);
+        m.compose(pos, q, scl);
+        mesh.setMatrixAt(i, m);
+      }
+      mesh.instanceMatrix.needsUpdate = true;
+    };
+    fill(conTrunk, con);
+    fill(conFol, con);
+    fill(decTrunk, dec);
+    fill(decFol, dec);
+  }, [con, dec]);
+
+  return (
+    <>
+      <instancedMesh ref={conTrunk} args={[cyl, undefined, con.length]} frustumCulled={false}>
+        <meshStandardMaterial color="#5b4632" roughness={0.95} metalness={0} />
+      </instancedMesh>
+      <instancedMesh ref={conFol} args={[cone, undefined, con.length]} frustumCulled={false}>
+        <meshStandardMaterial color="#2f5236" roughness={0.85} metalness={0} />
+      </instancedMesh>
+      <instancedMesh ref={decTrunk} args={[cyl2, undefined, dec.length]} frustumCulled={false}>
+        <meshStandardMaterial color="#5b4632" roughness={0.95} metalness={0} />
+      </instancedMesh>
+      <instancedMesh ref={decFol} args={[ball, undefined, dec.length]} frustumCulled={false}>
+        <meshStandardMaterial color="#5a7a3c" roughness={0.85} metalness={0} />
+      </instancedMesh>
+    </>
+  );
 }
 
 function Player({ h, onElev }: { h: Heightmap; onElev: (m: number) => void }) {
@@ -146,7 +228,15 @@ function Player({ h, onElev }: { h: Heightmap; onElev: (m: number) => void }) {
   return null;
 }
 
-function Scene({ h, onElev }: { h: Heightmap; onElev: (m: number) => void }) {
+function Scene({
+  h,
+  onElev,
+  trees,
+}: {
+  h: Heightmap;
+  onElev: (m: number) => void;
+  trees: number[][] | null;
+}) {
   const geo = useMemo(() => buildTerrainGeometry(h), [h]);
   const sunPos = useMemo(() => {
     const d = sunDirection("summer", "midday");
@@ -193,6 +283,8 @@ function Scene({ h, onElev }: { h: Heightmap; onElev: (m: number) => void }) {
         );
       })}
 
+      {trees && trees.length ? <Trees list={trees} /> : null}
+
       <PointerLockControls />
       <Player h={h} onElev={onElev} />
     </>
@@ -203,11 +295,26 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
   const t = useTranslations("opplev");
   const [elev, setElev] = useState(0);
   const [locked, setLocked] = useState(false);
+  const [trees, setTrees] = useState<number[][] | null>(null);
 
   useEffect(() => {
     const onChange = () => setLocked(Boolean(document.pointerLockElement));
     document.addEventListener("pointerlockchange", onChange);
     return () => document.removeEventListener("pointerlockchange", onChange);
+  }, []);
+
+  // Stream the real forest in after the terrain (it is the heaviest extra).
+  useEffect(() => {
+    let ok = true;
+    fetch("/experience/trees.json")
+      .then((r) => r.json())
+      .then((d: { trees: number[][] }) => {
+        if (ok) setTrees(d.trees);
+      })
+      .catch(() => {});
+    return () => {
+      ok = false;
+    };
   }, []);
 
   return (
@@ -217,7 +324,7 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
         gl={{ logarithmicDepthBuffer: true, antialias: true }}
         dpr={[1, 2]}
       >
-        <Scene h={heightmap} onElev={setElev} />
+        <Scene h={heightmap} onElev={setElev} trees={trees} />
       </Canvas>
 
       {/* Click-to-look hint, shown while the cursor is free */}
