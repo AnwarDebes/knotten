@@ -20,6 +20,7 @@ export const PRIMARY_NAV: { key: string; href: StaticPathname }[] = [
   { key: "energikonseptet", href: "/energikonseptet" },
   { key: "omradet", href: "/omradet" },
   { key: "verktoy", href: "/verktoy" },
+  { key: "forPartnere", href: "/for-kommune-og-partnere" },
   { key: "kontakt", href: "/kontakt" },
 ];
 
@@ -30,6 +31,7 @@ export const FOOTER_OMRADET: { key: string; href: StaticPathname }[] = [
   { key: "omradet", href: "/omradet" },
   { key: "robusthet", href: "/robusthet" },
   { key: "baerekraft", href: "/baerekraft" },
+  { key: "forPartnere", href: "/for-kommune-og-partnere" },
 ];
 
 export const FOOTER_FORDEG: { key: string; href: StaticPathname }[] = [
