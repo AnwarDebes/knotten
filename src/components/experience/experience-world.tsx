@@ -43,20 +43,37 @@ function buildTerrainGeometry(h: Heightmap): THREE.BufferGeometry {
   geo.rotateX(-Math.PI / 2);
   const pos = geo.getAttribute("position") as THREE.BufferAttribute;
   const colors = new Float32Array(cols * rows * 3);
-  const sand = new THREE.Color("#c7b894");
-  const low = new THREE.Color("#3f6b3a");
-  const mid = new THREE.Color("#6f7d49");
-  const high = new THREE.Color("#9a9384");
+  const z = h.z;
+  const mx = h.widthMeters / (cols - 1);
+  const mz = h.heightMeters / (rows - 1);
+  const shore = new THREE.Color("#b3a981");
+  const grassLow = new THREE.Color("#466a2f");
+  const grassMid = new THREE.Color("#5c7340");
+  const grassHigh = new THREE.Color("#6f7349");
+  const rock = new THREE.Color("#8b8478");
   const c = new THREE.Color();
-  for (let i = 0; i < cols * rows; i++) {
-    const z = h.z[i] ?? 0;
-    pos.setY(i, z);
-    if (z < 1) c.copy(sand);
-    else if (z < 40) c.copy(low).lerp(mid, z / 40);
-    else c.copy(mid).lerp(high, Math.min(1, (z - 40) / 130));
-    colors[i * 3] = c.r;
-    colors[i * 3 + 1] = c.g;
-    colors[i * 3 + 2] = c.b;
+  for (let r = 0; r < rows; r++) {
+    for (let cc = 0; cc < cols; cc++) {
+      const i = r * cols + cc;
+      const e = z[i] ?? 0;
+      pos.setY(i, e);
+      // Local slope from the four neighbours: steeper ground reads as rock.
+      const eL = z[cc > 0 ? i - 1 : i] ?? e;
+      const eR = z[cc < cols - 1 ? i + 1 : i] ?? e;
+      const eU = z[r > 0 ? i - cols : i] ?? e;
+      const eD = z[r < rows - 1 ? i + cols : i] ?? e;
+      const slope = Math.min(1, Math.hypot((eR - eL) / (2 * mx), (eD - eU) / (2 * mz)));
+      if (e < 2) c.copy(shore);
+      else if (e < 35) c.copy(grassLow).lerp(grassMid, e / 35);
+      else c.copy(grassMid).lerp(grassHigh, Math.min(1, (e - 35) / 130));
+      c.lerp(rock, Math.min(0.82, slope * 1.05));
+      // A little deterministic per-cell variation so it is not a flat wash.
+      const hsh = (Math.sin(i * 12.9898) * 43758.5453) % 1;
+      const j = 0.93 + (hsh < 0 ? hsh + 1 : hsh) * 0.14;
+      colors[i * 3] = c.r * j;
+      colors[i * 3 + 1] = c.g * j;
+      colors[i * 3 + 2] = c.b * j;
+    }
   }
   geo.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
   geo.computeVertexNormals();
@@ -318,13 +335,13 @@ function Scene({
       </mesh>
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.05, 0]}>
-        <planeGeometry args={[h.widthMeters * 1.6, h.heightMeters * 1.6]} />
+        <planeGeometry args={[h.widthMeters * 1.8, h.heightMeters * 1.8]} />
         <meshStandardMaterial
-          color="#27607a"
-          roughness={0.22}
-          metalness={0.08}
+          color="#1b4a5d"
+          roughness={0.12}
+          metalness={0.35}
           transparent
-          opacity={0.93}
+          opacity={0.94}
         />
       </mesh>
 
