@@ -1,0 +1,60 @@
+import type { Metadata } from "next";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+import { buildPageMetadata } from "@/lib/metadata";
+import { MeldInteresseCta } from "@/components/site/meld-interesse-cta";
+import { Disclaimer } from "@/components/primitives/disclaimer";
+import { ExperienceLauncher } from "@/components/experience/experience-launcher";
+
+type Props = { params: Promise<{ locale: string }> };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { locale } = await params;
+  return buildPageMetadata(locale, "opplev", "/opplev");
+}
+
+export default async function OpplevPage({ params }: Props) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations("opplev");
+
+  return (
+    <main id="main-content" className="flex-1">
+      {/* The 3D experience fills the viewport and enters automatically; no click. */}
+      <section className="relative h-[92svh] min-h-[520px] w-full overflow-hidden bg-[#0b1722]">
+        <ExperienceLauncher />
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/60 via-black/25 to-transparent p-6 md:p-9">
+          <p className="text-xs font-semibold tracking-[0.18em] text-white/80 uppercase">
+            {t("eyebrow")}
+          </p>
+          <h1 className="font-display mt-1 text-3xl leading-tight text-white md:text-4xl">
+            {t("title")}
+          </h1>
+          <p className="mt-2 max-w-xl text-sm text-white/85 md:text-base">{t("lead")}</p>
+        </div>
+      </section>
+
+      {/* Context, honesty and attribution below the experience (also the SEO and
+          no-WebGL baseline). */}
+      <section className="mx-auto grid w-full max-w-5xl gap-8 px-6 py-12 md:grid-cols-2">
+        <div className="space-y-2">
+          <h2 className="text-foreground text-xl font-semibold tracking-tight">
+            {t("realHeading")}
+          </h2>
+          <p className="text-foreground leading-7">{t("realBody")}</p>
+        </div>
+        <div className="space-y-3">
+          <h2 className="text-foreground text-xl font-semibold tracking-tight">
+            {t("indicativeHeading")}
+          </h2>
+          <Disclaimer>{t("indicativeBody")}</Disclaimer>
+        </div>
+      </section>
+
+      <section className="mx-auto w-full max-w-5xl px-6 pb-10">
+        <p className="text-muted-foreground text-xs">{t("attribution")}</p>
+      </section>
+
+      <MeldInteresseCta />
+    </main>
+  );
+}
