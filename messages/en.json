@@ -3,6 +3,11 @@
     "metaTitle": "Knotten at Rødberg | Sea Views in Lindesnes",
     "metaDescription": "Knotten is an energy-smart residential area in development at Rødberg by Sniksfjorden in Lindesnes. Sea views, robust quality and low energy costs. Register interest.",
     "eyebrow": "A new residential area in Lindesnes",
+    "heroKicker": "58°N · Sniksfjorden, Lindesnes",
+    "heroTitle": "Sea views at Rødberg,",
+    "heroTitleEmphasis": "measured to the metre.",
+    "heroCtaSecondary": "Explore the area",
+    "heroCredit": "Terrain: Høydedata © Kartverket (CC BY 4.0)",
     "title": "Knotten at Rødberg, where nature and energy work together",
     "lead": "At Rødberg by Sniksfjorden, where the Audna river meets the sea, we are planning a residential area with sea views and a considered energy solution from the very first groundwork. The ambition is a national reference project for energy-smart, robust homes.",
     "blocks": [
@@ -43,7 +48,133 @@
     ],
     "ctaSecondary": "See the energy concept",
     "note": "All information is preliminary and indicative (as of June 2026). The project is before zoning and sales launch. The number of plots, prices, sizes and progress will be stated once the zoning is ready.",
-    "highlightsHeading": "Why Knotten"
+    "highlightsHeading": "Why Knotten",
+    "place": {
+      "eyebrow": "The setting",
+      "title": "Where the Audna river meets the open sea",
+      "body": "Knotten sits at Rødberg by Sniksfjorden in Lindesnes, at the outlet of the Audna. The sea view and the open landscape toward the fjord are the first things you notice, with sea, forest and walking terrain just beyond the plot boundary. We describe the setting as it genuinely is, and we do not overstate sightlines or sun.",
+      "factsHeading": "The site, measured",
+      "facts": [
+        { "label": "Latitude", "value": "58°N", "note": "Long summer light" },
+        { "label": "Setting", "value": "Sniksfjorden", "note": "Sheltered Agder coast" },
+        { "label": "Elevation", "value": "0 to 176 m", "note": "Kartverket terrain" },
+        { "label": "Price zone", "value": "NO2", "note": "Where low energy pays" }
+      ],
+      "profileCaption": "A true cross-section of the site, sea level to summit, from the Kartverket elevation model."
+    },
+    "pillars": {
+      "eyebrow": "Why Knotten",
+      "title": "A rare place, built to last",
+      "items": [
+        {
+          "name": "Energy",
+          "body": "Solar on site, a shared energy base and prosumer status keep running costs and price exposure down.",
+          "figure": "1010",
+          "unit": "kWh/kWp · yr",
+          "source": "PVGIS, indicative"
+        },
+        {
+          "name": "Robustness",
+          "body": "Passive house standard with a tight envelope, balanced ventilation and storage that holds through an outage.",
+          "figure": "15",
+          "unit": "kWh/m² · yr",
+          "source": "Net heating, indicative"
+        },
+        {
+          "name": "Location",
+          "body": "Sea views across Sniksfjorden where the Audna meets the sea, with nature and walking terrain at the door.",
+          "figure": "58",
+          "unit": "° north",
+          "source": "Long coastal light"
+        },
+        {
+          "name": "Sustainability",
+          "body": "Low demand, local generation and energy sharing on the property, built for a long life and a low footprint.",
+          "figure": "1 MW",
+          "unit": "shared",
+          "source": "Allowed since 2023"
+        }
+      ]
+    },
+    "measures": {
+      "eyebrow": "The numbers, measured",
+      "title": "Substance behind the view",
+      "intro": "We would rather show the figures than sell them. Each one is indicative, sourced, and settled properly during design.",
+      "items": [
+        {
+          "value": "15",
+          "unit": "kWh/m² · yr",
+          "label": "Net heating demand",
+          "source": "Passive house, NS 3700 and TEK17"
+        },
+        {
+          "value": "0.6",
+          "unit": "n50 per hour",
+          "label": "Airtight envelope",
+          "source": "Passive house target"
+        },
+        {
+          "value": "1010",
+          "unit": "kWh/kWp · yr",
+          "label": "Solar yield on site",
+          "source": "PVGIS, indicative"
+        },
+        {
+          "value": "1 MW",
+          "unit": "on the property",
+          "label": "Energy sharing",
+          "source": "Permitted since 1 October 2023"
+        }
+      ],
+      "note": "All figures are indicative (as of June 2026) and require professional verification. The project is before zoning and before sales launch."
+    },
+    "energyTeaser": {
+      "eyebrow": "The energy concept",
+      "title": "Planned from the first spade in the ground",
+      "body": "Local generation, storage and a shared energy base, designed together with the infrastructure and the zoning rather than added afterwards. As a prosumer you pay neither grid rent nor levies on the power you use yourself.",
+      "elementsHeading": "What it ties together",
+      "cta": "See the energy concept"
+    },
+    "areaTeaser": {
+      "eyebrow": "The ground itself",
+      "title": "You have seen the section. Now walk the ground.",
+      "body": "The same Kartverket elevation model, rebuilt in 3D. Move the light through the seasons, choose a plot, and follow its sightline to the sea. Plot positions are preliminary illustrations.",
+      "cta": "Open the 3D terrain"
+    },
+    "toolsTeaser": {
+      "eyebrow": "Buyer tools",
+      "title": "See the value, do not just take our word for it",
+      "body": "Simple, privacy-friendly tools turn the ambition into numbers you can recognise from your own life. No personal data, indicative figures throughout.",
+      "items": [
+        { "title": "Energy and savings", "href": "/verktoy/energi" },
+        { "title": "Monthly cost", "href": "/verktoy/manedskostnad" },
+        { "title": "Power-price security", "href": "/verktoy/strompris" },
+        { "title": "Sun on your plot", "href": "/verktoy/sol" }
+      ],
+      "cta": "All tools"
+    },
+    "progress": {
+      "eyebrow": "Where we stand",
+      "title": "Early, and honest about it",
+      "body": "Knotten is before zoning and before sales launch. We are developing energy, infrastructure and regulation together, and we publish what is decided, not what is hoped.",
+      "steps": [
+        { "phase": "Now", "label": "Concept and dialogue" },
+        { "phase": "Next", "label": "Zoning plan" },
+        { "phase": "Then", "label": "Infrastructure and build" },
+        { "phase": "Later", "label": "Homes and move-in" }
+      ],
+      "current": "Now",
+      "note": "Dates are provisional and without obligation. The number of plots and prices are stated once the zoning is ready.",
+      "cta": "See progress and questions"
+    },
+    "developer": {
+      "eyebrow": "The developer",
+      "title": "We would rather under-promise",
+      "body": "Knotten is developed by Sigve Simonsen AS. We describe the location as it genuinely is, mark every estimate as indicative, and let the data carry the case. The ambition is a national reference project for energy-smart, robust homes.",
+      "contactName": "Sigve Simonsen",
+      "contactRole": "General manager, Sigve Simonsen AS",
+      "cta": "Talk to the developer"
+    }
   },
   "visjon": {
     "metaTitle": "Vision: Why Knotten - Rødberg, Lindesnes",
@@ -534,6 +665,7 @@
     "kontakt": "Contact",
     "meldInteresse": "Register interest",
     "openMenu": "Open menu",
+    "skipToContent": "Skip to main content",
     "brand": "Knotten"
   },
   "footer": {

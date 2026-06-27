@@ -3,6 +3,11 @@
     "metaTitle": "Knotten på Rødberg | Sjøutsikt i Lindesnes",
     "metaDescription": "Knotten er et energismart boligområde under utvikling på Rødberg ved Sniksfjorden i Lindesnes. Sjøutsikt, robust standard og lave energikostnader. Meld interesse.",
     "eyebrow": "Nytt boligområde i Lindesnes",
+    "heroKicker": "58°N · Sniksfjorden, Lindesnes",
+    "heroTitle": "Sjøutsikt på Rødberg,",
+    "heroTitleEmphasis": "målt til meteren.",
+    "heroCtaSecondary": "Utforsk området",
+    "heroCredit": "Terreng: Høydedata © Kartverket (CC BY 4.0)",
     "title": "Knotten på Rødberg, der naturen og energien spiller på lag",
     "lead": "På Rødberg ved Sniksfjorden, der Audna renner ut i sjøen, planlegger vi et boligområde med sjøutsikt og en gjennomtenkt energiløsning fra første spadetak. Ambisjonen er et nasjonalt referanseprosjekt for energismarte og robuste boliger.",
     "blocks": [
@@ -43,7 +48,133 @@
     ],
     "ctaSecondary": "Se energikonseptet",
     "note": "All informasjon er foreløpig og indikativ (per juni 2026). Prosjektet er før regulering og salgsstart. Antall tomter, priser, størrelser og fremdrift oppgis når reguleringen er klar.",
-    "highlightsHeading": "Derfor Knotten"
+    "highlightsHeading": "Derfor Knotten",
+    "place": {
+      "eyebrow": "Beliggenheten",
+      "title": "Der Audna renner ut i den åpne sjøen",
+      "body": "Knotten ligger på Rødberg ved Sniksfjorden i Lindesnes, ved utløpet av Audna. Sjøutsikten og det åpne landskapet mot fjorden er det første du legger merke til, med sjø, skog og turterreng like utenfor tomtegrensen. Vi beskriver stedet slik det faktisk er, og vi overdriver verken sikt eller sol.",
+      "factsHeading": "Stedet, målt",
+      "facts": [
+        { "label": "Breddegrad", "value": "58°N", "note": "Langt sommerlys" },
+        { "label": "Beliggenhet", "value": "Sniksfjorden", "note": "Skjermet Agder-kyst" },
+        { "label": "Høyde", "value": "0 til 176 m", "note": "Kartverket-terreng" },
+        { "label": "Prisområde", "value": "NO2", "note": "Der lavt forbruk lønner seg" }
+      ],
+      "profileCaption": "Et ekte tverrsnitt av stedet, fra havnivå til topp, fra Kartverkets høydemodell."
+    },
+    "pillars": {
+      "eyebrow": "Derfor Knotten",
+      "title": "Et sjeldent sted, bygget for å vare",
+      "items": [
+        {
+          "name": "Energi",
+          "body": "Sol på stedet, delt energibase og plusskundeordning holder driftskostnad og priseksponering nede.",
+          "figure": "1010",
+          "unit": "kWh/kWp · år",
+          "source": "PVGIS, indikativt"
+        },
+        {
+          "name": "Robusthet",
+          "body": "Passivhusstandard med tett klimaskjerm, balansert ventilasjon og lagring som holder gjennom et strømbrudd.",
+          "figure": "15",
+          "unit": "kWh/m² · år",
+          "source": "Netto oppvarming, indikativt"
+        },
+        {
+          "name": "Beliggenhet",
+          "body": "Sjøutsikt over Sniksfjorden der Audna møter sjøen, med natur og turterreng rett utenfor.",
+          "figure": "58",
+          "unit": "° nord",
+          "source": "Langt kystlys"
+        },
+        {
+          "name": "Bærekraft",
+          "body": "Lavt forbruk, lokal produksjon og energideling på eiendommen, bygget for lang levetid og lavt fotavtrykk.",
+          "figure": "1 MW",
+          "unit": "delt",
+          "source": "Tillatt siden 2023"
+        }
+      ]
+    },
+    "measures": {
+      "eyebrow": "Tallene, målt",
+      "title": "Substans bak utsikten",
+      "intro": "Vi viser heller tallene enn å selge dem. Hvert tall er indikativt, kildebelagt og fastsettes ordentlig i prosjekteringen.",
+      "items": [
+        {
+          "value": "15",
+          "unit": "kWh/m² · år",
+          "label": "Netto oppvarmingsbehov",
+          "source": "Passivhus, NS 3700 og TEK17"
+        },
+        {
+          "value": "0,6",
+          "unit": "n50 per time",
+          "label": "Tett klimaskjerm",
+          "source": "Passivhus-mål"
+        },
+        {
+          "value": "1010",
+          "unit": "kWh/kWp · år",
+          "label": "Solproduksjon på stedet",
+          "source": "PVGIS, indikativt"
+        },
+        {
+          "value": "1 MW",
+          "unit": "på eiendommen",
+          "label": "Energideling",
+          "source": "Tillatt siden 1. oktober 2023"
+        }
+      ],
+      "note": "Alle tall er indikative (per juni 2026) og krever profesjonell verifikasjon. Prosjektet er før regulering og før salgsstart."
+    },
+    "energyTeaser": {
+      "eyebrow": "Energikonseptet",
+      "title": "Planlagt fra første spadetak",
+      "body": "Lokal produksjon, lagring og en delt energibase, utviklet sammen med infrastruktur og regulering i stedet for å legges til etterpå. Som plusskunde betaler du verken nettleie eller avgifter på kraften du bruker selv.",
+      "elementsHeading": "Hva det knytter sammen",
+      "cta": "Se energikonseptet"
+    },
+    "areaTeaser": {
+      "eyebrow": "Selve grunnen",
+      "title": "Du har sett tverrsnittet. Gå nå i terrenget.",
+      "body": "Den samme høydemodellen fra Kartverket, bygget opp i 3D. Flytt lyset gjennom årstidene, velg en tomt, og følg siktlinjen mot sjøen. Tomteplasseringene er foreløpige illustrasjoner.",
+      "cta": "Åpne 3D-terrenget"
+    },
+    "toolsTeaser": {
+      "eyebrow": "Verktøy for kjøper",
+      "title": "Se verdien, ikke bare ta vårt ord for det",
+      "body": "Enkle, personvernvennlige verktøy gjør ambisjonen om til tall du kjenner igjen fra din egen hverdag. Ingen personopplysninger, indikative tall hele veien.",
+      "items": [
+        { "title": "Energi og sparing", "href": "/verktoy/energi" },
+        { "title": "Månedskostnad", "href": "/verktoy/manedskostnad" },
+        { "title": "Strømtrygghet", "href": "/verktoy/strompris" },
+        { "title": "Sol på tomten", "href": "/verktoy/sol" }
+      ],
+      "cta": "Alle verktøy"
+    },
+    "progress": {
+      "eyebrow": "Slik står det",
+      "title": "Tidlig, og ærlig på det",
+      "body": "Knotten er før regulering og før salgsstart. Vi utvikler energi, infrastruktur og regulering sammen, og vi publiserer det som er bestemt, ikke det vi håper.",
+      "steps": [
+        { "phase": "Nå", "label": "Konsept og dialog" },
+        { "phase": "Neste", "label": "Reguleringsplan" },
+        { "phase": "Så", "label": "Infrastruktur og bygging" },
+        { "phase": "Senere", "label": "Boliger og innflytting" }
+      ],
+      "current": "Nå",
+      "note": "Datoene er foreløpige og uforpliktende. Antall tomter og priser oppgis når reguleringen er klar.",
+      "cta": "Se fremdrift og spørsmål"
+    },
+    "developer": {
+      "eyebrow": "Utbyggeren",
+      "title": "Vi lover heller for lite",
+      "body": "Knotten utvikles av Sigve Simonsen AS. Vi beskriver stedet slik det faktisk er, merker hvert estimat som indikativt, og lar tallene bære saken. Ambisjonen er et nasjonalt referanseprosjekt for energismarte, robuste boliger.",
+      "contactName": "Sigve Simonsen",
+      "contactRole": "Daglig leder, Sigve Simonsen AS",
+      "cta": "Snakk med utbyggeren"
+    }
   },
   "visjon": {
     "metaTitle": "Visjon: Hvorfor Knotten - Rødberg, Lindesnes",
@@ -534,6 +665,7 @@
     "kontakt": "Kontakt",
     "meldInteresse": "Meld interesse",
     "openMenu": "Åpne meny",
+    "skipToContent": "Hopp til hovedinnhold",
     "brand": "Knotten"
   },
   "footer": {
