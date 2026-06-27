@@ -1,20 +1,24 @@
 <div align="center">
 
-<img src="docs/assets/banner.svg" alt="Knotten, Sjøutsikt i Rødberg, sea views at Rødberg by Sniksfjorden in Lindesnes" width="100%" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo-dark.svg" />
+  <img src="docs/assets/logo-light.svg" alt="Knotten" height="54" />
+</picture>
 
-<br/>
-<br/>
+<p><em>Sjøutsikt i Rødberg</em></p>
 
-**A new coastal neighbourhood on Norway's south coast, and the digital home that tells its story.**
-
-<br/>
+<p><strong>A new coastal neighbourhood on Norway's south coast, and the digital home that tells its story.</strong></p>
 
 ![Status](https://img.shields.io/badge/Status-Before%20zoning%20%26%20sales-9E4A2C?style=flat-square&labelColor=12333C)
 ![Languages](https://img.shields.io/badge/Languages-Norsk%20%26%20English-0C5560?style=flat-square&labelColor=12333C)
 ![Web](https://img.shields.io/badge/Web-Next.js%20%26%20TypeScript-0C5560?style=flat-square&labelColor=12333C)
-![Performance](https://img.shields.io/badge/Performance-Lighthouse%2095%2B-0C5560?style=flat-square&labelColor=12333C)
+![Performance](https://img.shields.io/badge/Performance-Budget%20enforced%20in%20CI-0C5560?style=flat-square&labelColor=12333C)
 ![Accessibility](https://img.shields.io/badge/Accessibility-WCAG%202.2%20AA-0C5560?style=flat-square&labelColor=12333C)
 ![Privacy](https://img.shields.io/badge/Privacy-GDPR%20%26%20EU%20data-0C5560?style=flat-square&labelColor=12333C)
+
+<br/>
+
+<img src="docs/assets/landing.jpg" alt="The Knotten landing page: a dusk hero reading 'Sea views at Rødberg, measured to the metre', drawn over the real terrain of the site from Kartverket elevation data" width="100%" />
 
 </div>
 
@@ -58,7 +62,7 @@ Unit count, plot sizes, prices, gnr/bnr, floor plans and site photography are no
 
 ```
 docs/
-  assets/       README and brand assets (the banner)
+  assets/       README and brand assets (logo and landing image)
   research/     verified Norwegian regulation, standards and data sources, with citations
   decisions/    architecture decision records
   specs/        feature specifications and per-spec completion notes
