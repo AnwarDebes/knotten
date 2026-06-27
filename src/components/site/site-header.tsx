@@ -17,8 +17,8 @@ async function SiteHeader() {
   const labels = { label: ls("label"), no: ls("no"), en: ls("en") };
 
   return (
-    <header className="bg-background/90 sticky top-0 z-40 border-b backdrop-blur">
-      <div className="relative mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-3">
+    <header className="bg-background/80 border-border/70 supports-[backdrop-filter]:bg-background/70 sticky top-0 z-40 border-b backdrop-blur">
+      <div className="relative mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-6 py-3.5">
         <Link
           href="/"
           className="focus-visible:ring-ring rounded-md focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
@@ -37,7 +37,7 @@ async function SiteHeader() {
             </Link>
           ))}
           <LocaleSwitcher labels={labels} />
-          <Button asChild size="sm">
+          <Button asChild size="sm" variant="rodberg">
             <Link href="/meld-interesse">{t("meldInteresse")}</Link>
           </Button>
         </nav>
@@ -45,20 +45,20 @@ async function SiteHeader() {
         <details className="lg:hidden">
           <summary
             aria-label={t("openMenu")}
-            className="border-input bg-background hover:bg-accent focus-visible:ring-ring inline-flex size-10 cursor-pointer list-none items-center justify-center rounded-md border transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none [&::-webkit-details-marker]:hidden"
+            className="border-input bg-background hover:bg-accent focus-visible:ring-ring inline-flex size-11 cursor-pointer list-none items-center justify-center rounded-md border transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none [&::-webkit-details-marker]:hidden"
           >
             <Menu className="size-5" />
           </summary>
           <div className="bg-background absolute top-full right-0 left-0 border-t shadow-sm">
             <nav
               aria-label={t("brand")}
-              className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-6 py-4"
+              className="mx-auto flex w-full max-w-6xl flex-col gap-1.5 px-6 py-4"
             >
               {NAV_ITEMS.map((item) => (
                 <Link
                   key={item.key}
                   href={item.href}
-                  className="text-foreground hover:bg-accent hover:text-accent-foreground rounded-md px-2 py-2 text-sm font-medium"
+                  className="text-foreground hover:bg-accent hover:text-accent-foreground flex min-h-11 items-center rounded-md px-2 py-2.5 text-sm font-medium"
                 >
                   {t(item.key)}
                 </Link>
@@ -66,7 +66,7 @@ async function SiteHeader() {
               <div className="px-2 py-2">
                 <LocaleSwitcher labels={labels} />
               </div>
-              <Button asChild className="mt-2 w-full">
+              <Button asChild variant="rodberg" className="mt-2 w-full">
                 <Link href="/meld-interesse">{t("meldInteresse")}</Link>
               </Button>
             </nav>

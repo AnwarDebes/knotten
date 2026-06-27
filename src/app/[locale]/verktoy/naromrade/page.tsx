@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { buildPageMetadata } from "@/lib/metadata";
 import { MeldInteresseCta } from "@/components/site/meld-interesse-cta";
 import { NeighbourhoodMap } from "@/components/map/neighbourhood-map";
+import { PageHero } from "@/components/site/page-hero";
 import { Badge } from "@/components/ui/badge";
 import { Disclaimer } from "@/components/primitives/disclaimer";
 import { AMENITIES } from "@/content/amenities";
@@ -22,17 +23,7 @@ export default async function NaromradePage({ params }: Props) {
 
   return (
     <main id="main-content" className="flex-1">
-      <section className="bg-secondary/30 border-b">
-        <div className="mx-auto w-full max-w-3xl px-6 py-16">
-          <p className="text-sea mb-3 text-sm font-medium tracking-wide uppercase">
-            {t("eyebrow")}
-          </p>
-          <h1 className="text-foreground text-3xl font-semibold tracking-tight sm:text-4xl">
-            {t("title")}
-          </h1>
-          <p className="text-foreground mt-4 max-w-prose text-lg leading-8">{t("lead")}</p>
-        </div>
-      </section>
+      <PageHero eyebrow={t("eyebrow")} title={t("title")} lead={t("lead")} />
 
       <section className="mx-auto w-full max-w-5xl space-y-8 px-6 py-12">
         {/* HTML-first amenity list: server-rendered, crawlable, the accessible fallback. */}

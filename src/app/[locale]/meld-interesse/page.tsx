@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { buildPageMetadata } from "@/lib/metadata";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { InterestForm } from "@/components/forms/interest-form";
+import { PageHero } from "@/components/site/page-hero";
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -33,17 +34,7 @@ export default async function MeldInteressePage({ params, searchParams }: Props)
 
   return (
     <main id="main-content" className="flex-1">
-      <section className="bg-secondary/30 border-b">
-        <div className="mx-auto w-full max-w-3xl px-6 py-16">
-          <p className="text-sea mb-3 text-sm font-medium tracking-wide uppercase">
-            {t("eyebrow")}
-          </p>
-          <h1 className="text-foreground text-3xl font-semibold tracking-tight sm:text-4xl">
-            {t("title")}
-          </h1>
-          <p className="text-foreground mt-4 max-w-prose text-lg leading-8">{t("lead")}</p>
-        </div>
-      </section>
+      <PageHero eyebrow={t("eyebrow")} title={t("title")} lead={t("lead")} />
 
       <section className="mx-auto w-full max-w-5xl px-6 py-12">
         {bekreftet === "1" ? (

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { buildPageMetadata } from "@/lib/metadata";
 import { MeldInteresseCta } from "@/components/site/meld-interesse-cta";
+import { PageHero } from "@/components/site/page-hero";
 import { PlotMap } from "@/components/terrain/plot-map";
 import { Badge } from "@/components/ui/badge";
 import { Disclaimer } from "@/components/primitives/disclaimer";
@@ -63,17 +64,7 @@ export default async function OmradetPage({ params }: Props) {
 
   return (
     <main id="main-content" className="flex-1">
-      <section className="bg-secondary/30 border-b">
-        <div className="mx-auto w-full max-w-3xl px-6 py-16">
-          <p className="text-sea mb-3 text-sm font-medium tracking-wide uppercase">
-            {t("eyebrow")}
-          </p>
-          <h1 className="text-foreground text-3xl font-semibold tracking-tight sm:text-4xl">
-            {t("title")}
-          </h1>
-          <p className="text-foreground mt-4 max-w-prose text-lg leading-8">{t("lead")}</p>
-        </div>
-      </section>
+      <PageHero eyebrow={t("eyebrow")} title={t("title")} lead={t("lead")} />
 
       <section className="mx-auto w-full max-w-6xl px-6 py-12">
         <PlotMap />

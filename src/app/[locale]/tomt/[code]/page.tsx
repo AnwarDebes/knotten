@@ -6,6 +6,7 @@ import { routing, type Locale } from "@/i18n/routing";
 import { MeldInteresseCta } from "@/components/site/meld-interesse-cta";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Eyebrow } from "@/components/site/primitives";
 import { Disclaimer } from "@/components/primitives/disclaimer";
 import { PLOTS, type PlotStatus } from "@/content/plots";
 import { plotSunSummary } from "@/lib/site-terrain";
@@ -74,18 +75,16 @@ export default async function PlotPage({ params }: Props) {
 
   return (
     <main id="main-content" className="flex-1">
-      <section className="bg-secondary/30 border-b">
-        <div className="mx-auto w-full max-w-3xl px-6 py-16">
-          <p className="text-sea mb-3 text-sm font-medium tracking-wide uppercase">
-            {t("eyebrow")}
-          </p>
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-foreground text-3xl font-semibold tracking-tight sm:text-4xl">
+      <section className="border-border/70 bg-card/40 border-b">
+        <div className="mx-auto w-full max-w-5xl px-6 pt-16 pb-12 md:pt-20 md:pb-16">
+          <Eyebrow>{t("eyebrow")}</Eyebrow>
+          <div className="mt-5 flex flex-wrap items-center gap-4">
+            <h1 className="font-display text-foreground text-[clamp(2rem,4.4vw,3.3rem)] leading-[1.05] font-normal tracking-[-0.02em]">
               {t("title", { code: plot.code })}
             </h1>
             <Badge variant={STATUS_VARIANT[status]}>{t(`status.${status}`)}</Badge>
           </div>
-          <p className="text-foreground mt-4 max-w-prose text-lg leading-8">{t("lead")}</p>
+          <p className="text-muted-foreground mt-5 max-w-2xl text-lg leading-8">{t("lead")}</p>
         </div>
       </section>
 
@@ -145,7 +144,7 @@ export default async function PlotPage({ params }: Props) {
           </h2>
           <p className="text-muted-foreground mt-1 text-sm">{t("ctaBody")}</p>
           <div className="mt-4 flex flex-wrap gap-3">
-            <Button asChild size="lg">
+            <Button asChild size="lg" variant="rodberg">
               <Link href={{ pathname: "/meld-interesse", query: { tomt: plot.code } }}>
                 {t("ctaButton", { code: plot.code })}
               </Link>

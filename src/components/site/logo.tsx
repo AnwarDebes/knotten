@@ -23,7 +23,7 @@ function Logo({ className, withText = true }: { className?: string; withText?: b
         <path d="M3 27h26" />
       </svg>
       {withText ? (
-        <span className="text-lg font-semibold tracking-tight">
+        <span className="font-display text-xl font-medium tracking-tight">
           Knotten
           <span className="sr-only">, Sjøutsikt i Rødberg</span>
         </span>
