@@ -333,6 +333,54 @@
       }
     ]
   },
+  "opplev": {
+    "metaTitle": "Experience Knotten in 3D",
+    "metaDescription": "Walk the real terrain of Knotten at Rødberg in first person: the real landscape, sea views, sun and energy concept, with indicative homes. Built from Kartverket elevation data.",
+    "eyebrow": "Experience the site",
+    "title": "Walk Knotten before it is built",
+    "lead": "Step onto the real hillside at Rødberg in first person, see the sea views and the southern light, and understand the energy concept, without travelling to Sniksfjorden. The landscape, distances, sun and energy figures are real; the homes are indicative until zoning and design are settled.",
+    "realHeading": "What is real here",
+    "realBody": "The terrain is the actual landform at Rødberg, built from Kartverket elevation data (CC BY 4.0). The sun follows the real position for 58 degrees north, the sea level and the Audna outlet are real, and the distances and energy figures are sourced.",
+    "indicativeHeading": "What is indicative",
+    "indicativeBody": "The buildings are illustrative massing, not an approved design. The project is before zoning and before sales, so the number of homes, their placement, size, height and materials will change. Everything indicative is labelled as such.",
+    "attribution": "Terrain: Høydedata © Kartverket (CC BY 4.0). Imagery and figures are attributed inside the experience.",
+    "enterCta": "Enter the site",
+    "enterHint": "Loads an interactive 3D world. Best on a computer with a mouse and keyboard.",
+    "close": "Close",
+    "loadingTitle": "Building the site",
+    "loading": {
+      "terrain": "Loading the terrain from Kartverket",
+      "imagery": "Draping the aerial imagery",
+      "plots": "Placing the plots",
+      "sun": "Computing the sun for 58 degrees north",
+      "homes": "Raising the indicative homes",
+      "ready": "Ready"
+    },
+    "fallbackTitle": "A still preview of the site",
+    "fallbackNote": "The interactive walk needs a computer with WebGL. Here are stills of the same real terrain; the plot overview and the area page have the full detail.",
+    "controlsTitle": "How to move",
+    "controls": {
+      "walk": "WASD or arrows to walk",
+      "look": "Mouse to look around",
+      "sprint": "Shift to move faster",
+      "map": "M for the map",
+      "exit": "Esc to release the cursor"
+    },
+    "hud": {
+      "elevation": "Elevation",
+      "toSea": "To the sea",
+      "indicative": "Indicative massing, not final"
+    },
+    "modes": {
+      "walk": "Walk",
+      "cinematic": "Cinematic"
+    },
+    "ctaCard": {
+      "title": "Walk the site in 3D",
+      "body": "Step onto the real hillside in first person and see the views for yourself.",
+      "cta": "Open the experience"
+    }
+  },
   "robusthet": {
     "metaTitle": "Resilience at Knotten | Rødberg, Lindesnes",
     "metaDescription": "Knotten by Sniksfjorden is built to keep working when the grid fails: battery storage, local generation and sensible sizing in price zone NO2.",
@@ -653,6 +701,7 @@
     "visjon": "Vision",
     "energikonseptet": "The energy concept",
     "omradet": "The area",
+    "opplev": "Experience",
     "robusthet": "Resilience",
     "baerekraft": "Sustainability",
     "verktoy": "Tools",

@@ -45,3 +45,14 @@ No second heavy 3D scene anywhere on the site. If another candidate for 3D appea
 - Capability detection, the fallback path, and the lazy boundary add code paths to test. This complexity is contained to one feature and does not leak into the rest of the site.
 - One scene is the ceiling, not a starting point. Adding 3D elsewhere requires revisiting this decision, which keeps scope and bundle discipline intact over time.
 - Terrain geometry derives from open Kartverket Høydedata (CC BY 4.0), so the data layer carries no licensing risk for commercial use; attribution is required and will be carried in the scene and its fallback. Note that Norge i bilder orthophotos are Geovekst-licensed and not open, so they are not used as a texture source here.
+
+## Amendment, 2026-06-27: a second, opt-in immersive scene (SPEC-27 and later)
+
+The "no second heavy 3D scene" ceiling is amended, narrowly, to permit one further scene: the opt-in immersive experience at `/opplev` (Opplev Knotten / Experience), an investor-facing first-person walk of the real site. The original reasoning still holds for the rest of the site; this scene is allowed only because it keeps every one of the original guarantees:
+
+- Opt-in and link-only. It is not on any content page's critical path. A visitor reaches it by clicking through from `/omradet` or the footer, and the heavy world loads only after a further explicit "Enter" click.
+- Isolated to its own route and chunk. Three.js and all world code load via a dynamic `ssr:false` import after Enter, so they never enter the initial bundle of `/opplev` or any other route. The `/opplev` shell is measured by the bundle gate like a content page (it sits around 147 KB gzip).
+- Mandatory fallback. The server-rendered shell is a real, indexable page: the real-versus-indicative narrative, attributions, and a still poster of the same terrain. Phones, no-WebGL and low-end clients get that shell, not a broken canvas. First person needs a pointer lock and a keyboard, so it is desktop-first; touch controls are a later increment.
+- Honesty carried into 3D. The terrain, sun, sea, distances and energy figures are real and sourced; the buildings are indicative massing, labelled as such inside the scene.
+
+The orthophoto position is unchanged in principle: Norge i bilder is Geovekst-licensed and not open. The experience is built to drape a real orthophoto once that licence is secured, and uses an openly-licensed interim texture (Sentinel-2, "Contains modified Copernicus Sentinel data") until then, swapped via a manifest with no code change. This remains a deliberate ceiling, not an open door: a third heavy scene would again require amending this record.

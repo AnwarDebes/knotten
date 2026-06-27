@@ -333,6 +333,54 @@
       }
     ]
   },
+  "opplev": {
+    "metaTitle": "Opplev Knotten i 3D",
+    "metaDescription": "Gå rundt i det virkelige terrenget på Knotten ved Rødberg i førsteperson: det ekte landskapet, sjøutsikten, sola og energikonseptet, med indikative hus. Bygd på høydedata fra Kartverket.",
+    "eyebrow": "Opplev området",
+    "title": "Gå rundt på Knotten før det er bygd",
+    "lead": "Sett deg ned i den virkelige åssiden på Rødberg i førsteperson, se sjøutsikten og sørlandslyset, og forstå energikonseptet, uten å reise til Sniksfjorden. Landskapet, avstandene, sola og energitallene er ekte; husene er indikative inntil regulering og prosjektering er avklart.",
+    "realHeading": "Hva er ekte her",
+    "realBody": "Terrenget er den faktiske landformen på Rødberg, bygd på høydedata fra Kartverket (CC BY 4.0). Sola følger den virkelige posisjonen for 58 grader nord, sjønivået og Audna-utløpet er ekte, og avstandene og energitallene er kildebelagt.",
+    "indicativeHeading": "Hva er indikativt",
+    "indicativeBody": "Bygningene er illustrativ massing, ikke et godkjent prosjekt. Prosjektet er før regulering og før salgsstart, så antall hus, plassering, størrelse, høyde og materialer vil endre seg. Alt som er indikativt er merket.",
+    "attribution": "Terreng: Høydedata © Kartverket (CC BY 4.0). Flyfoto og tall er kreditert inne i opplevelsen.",
+    "enterCta": "Gå inn på området",
+    "enterHint": "Laster en interaktiv 3D-verden. Fungerer best på en datamaskin med mus og tastatur.",
+    "close": "Lukk",
+    "loadingTitle": "Bygger området",
+    "loading": {
+      "terrain": "Laster terrenget fra Kartverket",
+      "imagery": "Legger på flyfotoet",
+      "plots": "Plasserer tomtene",
+      "sun": "Beregner sola for 58 grader nord",
+      "homes": "Reiser de indikative husene",
+      "ready": "Klar"
+    },
+    "fallbackTitle": "Et stillbilde av området",
+    "fallbackNote": "Den interaktive vandringen krever en datamaskin med WebGL. Her er stillbilder av det samme ekte terrenget; tomteoversikten og områdesiden har full detalj.",
+    "controlsTitle": "Slik beveger du deg",
+    "controls": {
+      "walk": "WASD eller piltaster for å gå",
+      "look": "Mus for å se deg rundt",
+      "sprint": "Shift for å gå raskere",
+      "map": "M for kartet",
+      "exit": "Esc for å frigjøre pekeren"
+    },
+    "hud": {
+      "elevation": "Høyde",
+      "toSea": "Til sjøen",
+      "indicative": "Indikativ massing, ikke endelig"
+    },
+    "modes": {
+      "walk": "Gå",
+      "cinematic": "Kino"
+    },
+    "ctaCard": {
+      "title": "Gå rundt på området i 3D",
+      "body": "Sett deg ned i den virkelige åssiden i førsteperson og se utsikten selv.",
+      "cta": "Åpne opplevelsen"
+    }
+  },
   "robusthet": {
     "metaTitle": "Robusthet på Knotten | Rødberg, Lindesnes",
     "metaDescription": "Knotten ved Sniksfjorden bygges for å fungere når strømmen svikter: batteri, lokal produksjon og fornuftig dimensjonering i prissone NO2.",
@@ -653,6 +701,7 @@
     "visjon": "Visjon",
     "energikonseptet": "Energikonseptet",
     "omradet": "Området",
+    "opplev": "Opplev Knotten",
     "robusthet": "Robusthet",
     "baerekraft": "Bærekraft",
     "verktoy": "Verktøy",

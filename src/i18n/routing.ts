@@ -15,6 +15,7 @@ export const routing = defineRouting({
     "/visjon": { no: "/visjon", en: "/vision" },
     "/energikonseptet": { no: "/energikonseptet", en: "/energy-concept" },
     "/omradet": { no: "/omradet", en: "/the-area" },
+    "/opplev": { no: "/opplev", en: "/experience" },
     "/tomt/[code]": { no: "/tomt/[code]", en: "/plot/[code]" },
     "/robusthet": { no: "/robusthet", en: "/resilience" },
     "/baerekraft": { no: "/baerekraft", en: "/sustainability" },

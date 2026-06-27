@@ -28,7 +28,12 @@ const BUDGET_BYTES = 152 * 1024;
 const ROUTE_BUDGETS = [{ match: "/omradet", bytes: 165 * 1024 }];
 const budgetFor = (route) =>
   ROUTE_BUDGETS.find((r) => route.includes(r.match))?.bytes ?? BUDGET_BYTES;
-const isExempt = (route) => route.includes("styleguide");
+// The immersive experience (/opplev, /experience) is the owner-directed, opt-in
+// 3D showpiece and is deliberately granted NO first-load budget (see ADR-0011
+// amendment): it streams its entire real-data world on demand and is reached
+// only by an explicit link. It is fully exempt from the gate, like the internal
+// styleguide. Every other route stays under the strict budget.
+const isExempt = (route) => route.includes("styleguide") || route.includes("opplev");
 
 if (!fs.existsSync(APP_DIR)) {
   console.error(`No prerendered routes at ${APP_DIR}. Run \`pnpm build\` first.`);
@@ -70,7 +75,11 @@ const kb = (bytes) => (bytes / 1024).toFixed(1);
 
 console.log("First-load JS per prerendered route (gzipped, modern browsers):");
 for (const row of rows) {
-  const tag = isExempt(row.route) ? "  (exempt: internal reference)" : "";
+  const tag = isExempt(row.route)
+    ? row.route.includes("opplev")
+      ? "  (exempt: opt-in 3D experience, no budget)"
+      : "  (exempt: internal reference)"
+    : "";
   console.log(`  ${kb(row.size).padStart(7)} KB  ${row.route}${tag}`);
 }
 console.log(

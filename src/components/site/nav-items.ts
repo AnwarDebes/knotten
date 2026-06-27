@@ -35,6 +35,7 @@ export const FOOTER_OMRADET: { key: string; href: StaticPathname }[] = [
 ];
 
 export const FOOTER_FORDEG: { key: string; href: StaticPathname }[] = [
+  { key: "opplev", href: "/opplev" },
   { key: "verktoy", href: "/verktoy" },
   { key: "prospekt", href: "/prospekt" },
   { key: "aktuelt", href: "/aktuelt" },
