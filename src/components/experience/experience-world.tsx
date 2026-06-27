@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { type Heightmap, elevationAt, bearingToSea } from "@/components/terrain/types";
 import { sunDirection } from "@/components/terrain/sun";
 import { PLOTS } from "@/content/plots";
+import { HOUSE_TYPES } from "@/content/house-types";
 
 /* eslint-disable react-hooks/immutability -- React Three Fiber drives the scene
    by mutating Three.js objects (camera transform, geometry) imperatively inside
@@ -148,6 +149,61 @@ function Trees({ list }: { list: number[][] }) {
   );
 }
 
+/**
+ * Indicative house massing, generated from the placeholder house-type envelopes
+ * and the real Norwegian small-house rules: about 6 m eaves, a gable saltak kept
+ * under the 9 m ridge limit (pbl 29-4), white Sorlandet timber. Clearly not a
+ * final design; the count, placement and form change with the zoning plan. One
+ * home per placeholder plot for now.
+ */
+function makeRoof(W: number, D: number, rise: number): THREE.ExtrudeGeometry {
+  const ov = 0.35; // eave overhang
+  const s = new THREE.Shape();
+  s.moveTo(-W / 2 - ov, 0);
+  s.lineTo(W / 2 + ov, 0);
+  s.lineTo(0, rise);
+  s.closePath();
+  const g = new THREE.ExtrudeGeometry(s, { depth: D + 2 * ov, bevelEnabled: false });
+  g.translate(0, 0, -(D + 2 * ov) / 2);
+  g.computeVertexNormals();
+  return g;
+}
+
+function Houses({ h }: { h: Heightmap }) {
+  const houses = useMemo(() => {
+    return PLOTS.map((p, i) => {
+      const ht = HOUSE_TYPES[i % HOUSE_TYPES.length];
+      const foot = ht ? ht.footprintM2 : 90;
+      const area = ht ? ht.heatedAreaM2 : 140;
+      const W = Math.sqrt(foot * 1.35);
+      const D = foot / W;
+      const storeys = area / foot > 1.55 ? 2 : 1;
+      const eaveH = storeys === 2 ? 5.8 : 3.2;
+      const rise = Math.min((W / 2) * Math.tan((38 * Math.PI) / 180), 9 - eaveH);
+      const [x, z] = worldXZ(h, p.u, p.v);
+      const y = elevationAt(h, p.u, p.v) - 0.3;
+      const yaw = -bearingToSea(h, p.u, p.v) + Math.PI / 2;
+      return { id: p.id, x, y, z, W, D, eaveH, yaw, roof: makeRoof(W, D, rise) };
+    });
+  }, [h]);
+
+  return (
+    <>
+      {houses.map((ho) => (
+        <group key={ho.id} position={[ho.x, ho.y, ho.z]} rotation={[0, ho.yaw, 0]}>
+          <mesh position={[0, ho.eaveH / 2, 0]}>
+            <boxGeometry args={[ho.W, ho.eaveH, ho.D]} />
+            <meshStandardMaterial color="#edefea" roughness={0.82} metalness={0} />
+          </mesh>
+          <mesh position={[0, ho.eaveH, 0]} geometry={ho.roof}>
+            <meshStandardMaterial color="#3a4047" roughness={0.7} metalness={0} />
+          </mesh>
+        </group>
+      ))}
+    </>
+  );
+}
+
 function Player({ h, onElev }: { h: Heightmap; onElev: (m: number) => void }) {
   const { camera } = useThree();
   const keys = useRef<Record<string, boolean>>({});
@@ -186,11 +242,17 @@ function Player({ h, onElev }: { h: Heightmap; onElev: (m: number) => void }) {
     const start = PLOTS[0];
     const u = start ? start.u : 0.4;
     const v = start ? start.v : 0.55;
-    const [x, z] = worldXZ(h, u, v);
-    const y = elevationAt(h, u, v) + EYE_HEIGHT;
-    camera.position.set(x, y, z);
+    const [px, pz] = worldXZ(h, u, v);
     const b = bearingToSea(h, u, v);
-    camera.lookAt(x + Math.cos(b) * 300, y - 35, z + Math.sin(b) * 300);
+    // Stand back from the plot, uphill away from the sea, so the home and the
+    // view down to the fjord are both ahead of the visitor.
+    const bx = px - Math.cos(b) * 38;
+    const bz = pz - Math.sin(b) * 38;
+    const gu = bx / h.widthMeters + 0.5;
+    const gv = bz / h.heightMeters + 0.5;
+    const y = Math.max(elevationAt(h, gu, gv), 0) + EYE_HEIGHT;
+    camera.position.set(bx, y, bz);
+    camera.lookAt(px, y - 8, pz);
   }, [h, camera]);
 
   useFrame((_, dtRaw) => {
@@ -284,6 +346,7 @@ function Scene({
       })}
 
       {trees && trees.length ? <Trees list={trees} /> : null}
+      <Houses h={h} />
 
       <PointerLockControls />
       <Player h={h} onElev={onElev} />
