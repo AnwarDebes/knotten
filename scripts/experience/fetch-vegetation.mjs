@@ -21,6 +21,17 @@ const OUT_FILE = path.join(OUT_DIR, "trees.json");
 const CANOPY_MIN = 2.5; // m above ground to count as a tree
 const STRIDE = 4; // sample every 4 cells (~11 m) to seed a tree candidate
 const MAX_TREES = 16000;
+const CLEAR = 24; // metres cleared of trees around each plot so the homes show
+// Placeholder plot positions (normalised u east, v south), kept in sync with
+// src/content/plots.ts; used only to keep clearings around the homes.
+const PLOT_UV = [
+  [0.3, 0.62],
+  [0.34, 0.66],
+  [0.385, 0.63],
+  [0.78, 0.4],
+  [0.82, 0.44],
+  [0.75, 0.45],
+];
 
 function exportUrl(size, f) {
   const p = new URLSearchParams({
@@ -115,6 +126,16 @@ async function main() {
       if (rand() > 0.7) continue; // thin out for performance and variation
       const u = c / (W - 1);
       const v = r / (H - 1);
+      let nearPlot = false;
+      for (const pu of PLOT_UV) {
+        const dx = (u - pu[0]) * widthM;
+        const dz = (v - pu[1]) * heightM;
+        if (dx * dx + dz * dz < CLEAR * CLEAR) {
+          nearPlot = true;
+          break;
+        }
+      }
+      if (nearPlot) continue;
       const jx = (rand() - 0.5) * STRIDE * (widthM / W);
       const jz = (rand() - 0.5) * STRIDE * (heightM / H);
       const x = (u - 0.5) * widthM + jx;

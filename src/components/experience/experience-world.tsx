@@ -38,6 +38,18 @@ const EYE_HEIGHT = 1.7; // metres, real eye height
 const WALK = 1.4; // m/s, real walking speed
 const SPRINT = 3.6; // m/s
 
+// Stable Canvas props. Inline object literals here would change identity on
+// every re-render (the HUD updates a few times a second), making R3F re-apply
+// them and reset the camera, which froze the walker in place.
+const CAMERA_PROPS = {
+  fov: 70,
+  near: 0.1,
+  far: 7000,
+  position: [0, 110, 0] as [number, number, number],
+};
+const GL_PROPS = { logarithmicDepthBuffer: true, antialias: true };
+const DPR: [number, number] = [1, 2];
+
 const STATUS_COLOR: Record<string, string> = {
   ledig: "#37a06a",
   reservert: "#c9821f",
@@ -196,7 +208,11 @@ function makeRoof(W: number, D: number, rise: number): THREE.ExtrudeGeometry {
 
 function Houses({ h }: { h: Heightmap }) {
   const houses = useMemo(() => {
-    return PLOTS.map((p, i) => {
+    // Skip the first plot, which is rendered as the enterable show-home.
+    const out = [];
+    for (let i = 1; i < PLOTS.length; i++) {
+      const p = PLOTS[i];
+      if (!p) continue;
       const ht = HOUSE_TYPES[i % HOUSE_TYPES.length];
       const foot = ht ? ht.footprintM2 : 90;
       const area = ht ? ht.heatedAreaM2 : 140;
@@ -208,8 +224,9 @@ function Houses({ h }: { h: Heightmap }) {
       const [x, z] = worldXZ(h, p.u, p.v);
       const y = elevationAt(h, p.u, p.v) - 0.3;
       const yaw = -bearingToSea(h, p.u, p.v) + Math.PI / 2;
-      return { id: p.id, x, y, z, W, D, eaveH, yaw, roof: makeRoof(W, D, rise) };
-    });
+      out.push({ id: p.id, x, y, z, W, D, eaveH, yaw, roof: makeRoof(W, D, rise) });
+    }
+    return out;
   }, [h]);
 
   return (
@@ -325,6 +342,79 @@ function PlotLabels({ h }: { h: Heightmap }) {
         );
       })}
     </>
+  );
+}
+
+/**
+ * One enterable show-home at the start plot: floor, walls, a doorway and a large
+ * sea-facing picture window, so a visitor can step inside and look out to the
+ * fjord. Clearly indicative, like all the massing. Walls are double-sided so the
+ * interior reads; there is no collision, so the visitor simply walks in.
+ */
+function ShowHome({ h }: { h: Heightmap }) {
+  const cfg = useMemo(() => {
+    const p = PLOTS[0];
+    const u = p ? p.u : 0.3;
+    const v = p ? p.v : 0.62;
+    const [x, z] = worldXZ(h, u, v);
+    const y = elevationAt(h, u, v) - 0.3;
+    const yaw = Math.PI / 2 - bearingToSea(h, u, v); // local +Z faces the sea
+    return { x, y, z, yaw };
+  }, [h]);
+  const W = 11;
+  const D = 8.5;
+  const eaveH = 5.6;
+  const t2 = 0.2;
+  const rise = Math.min((W / 2) * Math.tan((38 * Math.PI) / 180), 9 - eaveH);
+  const roof = useMemo(() => makeRoof(W, D, rise), [rise]);
+  const back = W / 2 - 0.6; // back-wall panel width (1.2 m doorway gap)
+
+  return (
+    <group position={[cfg.x, cfg.y, cfg.z]} rotation={[0, cfg.yaw, 0]}>
+      <mesh position={[0, 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[W, D]} />
+        <meshStandardMaterial color="#a9854f" roughness={0.75} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, eaveH, 0]} rotation={[Math.PI / 2, 0, 0]}>
+        <planeGeometry args={[W, D]} />
+        <meshStandardMaterial color="#e7e9e4" roughness={0.9} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[-W / 2, eaveH / 2, 0]}>
+        <boxGeometry args={[t2, eaveH, D]} />
+        <meshStandardMaterial color="#edefea" roughness={0.82} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[W / 2, eaveH / 2, 0]}>
+        <boxGeometry args={[t2, eaveH, D]} />
+        <meshStandardMaterial color="#edefea" roughness={0.82} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[-(W / 4 + 0.3), eaveH / 2, -D / 2]}>
+        <boxGeometry args={[back, eaveH, t2]} />
+        <meshStandardMaterial color="#edefea" roughness={0.82} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[W / 4 + 0.3, eaveH / 2, -D / 2]}>
+        <boxGeometry args={[back, eaveH, t2]} />
+        <meshStandardMaterial color="#edefea" roughness={0.82} side={THREE.DoubleSide} />
+      </mesh>
+      {/* sea-facing wall: a low sill and a glass picture window */}
+      <mesh position={[0, 0.45, D / 2]}>
+        <boxGeometry args={[W, 0.9, t2]} />
+        <meshStandardMaterial color="#edefea" roughness={0.82} side={THREE.DoubleSide} />
+      </mesh>
+      <mesh position={[0, (eaveH + 0.9) / 2, D / 2]}>
+        <boxGeometry args={[W - 0.4, eaveH - 0.9, 0.08]} />
+        <meshStandardMaterial
+          color="#9fd0e0"
+          transparent
+          opacity={0.26}
+          roughness={0.05}
+          metalness={0.1}
+          side={THREE.DoubleSide}
+        />
+      </mesh>
+      <mesh position={[0, eaveH, 0]} geometry={roof}>
+        <meshStandardMaterial color="#3a4047" roughness={0.7} />
+      </mesh>
+    </group>
   );
 }
 
@@ -524,6 +614,7 @@ function Scene({
 
       {trees && trees.length ? <Trees list={trees} /> : null}
       <Houses h={h} />
+      <ShowHome h={h} />
       <EnergyFlows h={h} />
       <PlotLabels h={h} />
       <AmenityMarkers h={h} />
@@ -565,11 +656,7 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
 
   return (
     <div className="relative h-full w-full">
-      <Canvas
-        camera={{ fov: 70, near: 0.1, far: 7000, position: [0, 100, 0] }}
-        gl={{ logarithmicDepthBuffer: true, antialias: true }}
-        dpr={[1, 2]}
-      >
+      <Canvas frameloop="always" camera={CAMERA_PROPS} gl={GL_PROPS} dpr={DPR}>
         <Scene h={heightmap} onElev={setElev} trees={trees} season={season} time={time} />
       </Canvas>
 
