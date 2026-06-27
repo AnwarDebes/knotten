@@ -5,8 +5,15 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { PointerLockControls, Sky, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { useTranslations, useLocale } from "next-intl";
-import { type Heightmap, elevationAt, bearingToSea } from "@/components/terrain/types";
+import {
+  type Heightmap,
+  type SunSeason,
+  type SunTime,
+  elevationAt,
+  bearingToSea,
+} from "@/components/terrain/types";
 import { sunDirection } from "@/components/terrain/sun";
+import { cn } from "@/lib/utils";
 import { PLOTS } from "@/content/plots";
 import { HOUSE_TYPES } from "@/content/house-types";
 import { AMENITIES, SITE } from "@/content/amenities";
@@ -457,23 +464,30 @@ function Scene({
   h,
   onElev,
   trees,
+  season,
+  time,
 }: {
   h: Heightmap;
   onElev: (m: number) => void;
   trees: number[][] | null;
+  season: SunSeason;
+  time: SunTime;
 }) {
   const geo = useMemo(() => buildTerrainGeometry(h), [h]);
   const sunPos = useMemo(() => {
-    const d = sunDirection("summer", "midday");
+    const d = sunDirection(season, time);
     return new THREE.Vector3(d.x, d.y, d.z).multiplyScalar(4000);
-  }, []);
+  }, [season, time]);
+  const warm = time === "morning" || time === "evening";
+  const sunColor = warm ? "#ffd9a8" : "#fff4e0";
+  const sunIntensity = season === "winter" ? 1.5 : time === "midday" ? 2.3 : 1.7;
 
   return (
     <>
       <color attach="background" args={["#cfe0ee"]} />
       <fog attach="fog" args={["#cfe0ee", 500, 3400]} />
       <hemisphereLight args={["#dbe9f5", "#586a48", 0.85]} />
-      <directionalLight position={sunPos} intensity={2.1} color="#fff4e0" />
+      <directionalLight position={sunPos} intensity={sunIntensity} color={sunColor} />
       <Sky sunPosition={sunPos} turbidity={5} rayleigh={1.4} mieCoefficient={0.006} />
 
       <mesh geometry={geo}>
@@ -522,9 +536,12 @@ function Scene({
 
 export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap }) {
   const t = useTranslations("opplev");
+  const tt = useTranslations("terrain");
   const [elev, setElev] = useState(0);
   const [locked, setLocked] = useState(false);
   const [trees, setTrees] = useState<number[][] | null>(null);
+  const [season, setSeason] = useState<SunSeason>("summer");
+  const [time, setTime] = useState<SunTime>("midday");
 
   useEffect(() => {
     const onChange = () => setLocked(Boolean(document.pointerLockElement));
@@ -553,7 +570,7 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
         gl={{ logarithmicDepthBuffer: true, antialias: true }}
         dpr={[1, 2]}
       >
-        <Scene h={heightmap} onElev={setElev} trees={trees} />
+        <Scene h={heightmap} onElev={setElev} trees={trees} season={season} time={time} />
       </Canvas>
 
       {/* Click-to-look hint, shown while the cursor is free */}
@@ -579,6 +596,45 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
       </div>
       <div className="pointer-events-none absolute right-3 bottom-3 rounded-md bg-[#9e4a2c]/90 px-3 py-1 text-xs font-medium text-white">
         {t("hud.indicative")}
+      </div>
+
+      {/* Sun control: real season and time of day for 58 N. Release the cursor
+          (Esc) to click. */}
+      <div className="pointer-events-auto absolute top-20 right-3 flex flex-col items-end gap-1.5">
+        <div className="flex gap-1 rounded-md bg-black/55 p-1">
+          {(["summer", "winter"] as const).map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => setSeason(s)}
+              className={cn(
+                "rounded px-2 py-1 text-xs",
+                season === s
+                  ? "bg-[#16c2d4] font-medium text-[#06222b]"
+                  : "text-white/85 hover:text-white",
+              )}
+            >
+              {tt(`sun.${s}`)}
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-1 rounded-md bg-black/55 p-1">
+          {(["morning", "midday", "evening"] as const).map((tm) => (
+            <button
+              key={tm}
+              type="button"
+              onClick={() => setTime(tm)}
+              className={cn(
+                "rounded px-2 py-1 text-xs",
+                time === tm
+                  ? "bg-[#16c2d4] font-medium text-[#06222b]"
+                  : "text-white/85 hover:text-white",
+              )}
+            >
+              {tt(`sun.${tm}`)}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
