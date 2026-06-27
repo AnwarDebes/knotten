@@ -347,6 +347,7 @@
     "enterCta": "Gå inn på området",
     "enterHint": "Laster en interaktiv 3D-verden. Fungerer best på en datamaskin med mus og tastatur.",
     "close": "Lukk",
+    "energyNote": "Sol omtrent 1010 kWh/kWp på 58 grader nord, delt mellom husene opptil 1 MW per eiendom. Indikativt.",
     "loadingTitle": "Bygger området",
     "loading": {
       "terrain": "Laster terrenget fra Kartverket",

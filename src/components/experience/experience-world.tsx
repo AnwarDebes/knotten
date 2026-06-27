@@ -221,6 +221,74 @@ function Houses({ h }: { h: Heightmap }) {
   );
 }
 
+/**
+ * The energy concept, in motion. Glowing particles flow from each home up to a
+ * shared hub, an indicative picture of the rooftop solar feeding the local
+ * energy sharing (plusskunde up to 1 MW per property). The figures are real
+ * (PVGIS about 1010 kWh/kWp at 58 N); the layout is indicative.
+ */
+function EnergyFlows({ h }: { h: Heightmap }) {
+  const { hub, starts } = useMemo(() => {
+    const pts = PLOTS.map((p) => {
+      const [x, z] = worldXZ(h, p.u, p.v);
+      return new THREE.Vector3(x, elevationAt(h, p.u, p.v) + 7, z);
+    });
+    const hubV = new THREE.Vector3();
+    pts.forEach((p) => hubV.add(p));
+    hubV.multiplyScalar(1 / Math.max(1, pts.length));
+    hubV.y += 12;
+    return { hub: hubV, starts: pts };
+  }, [h]);
+
+  const PER = 10;
+  const count = starts.length * PER;
+  const ref = useRef<THREE.InstancedMesh | null>(null);
+  const m = useMemo(() => new THREE.Matrix4(), []);
+  const v = useMemo(() => new THREE.Vector3(), []);
+
+  useFrame((state) => {
+    const mesh = ref.current;
+    if (!mesh) return;
+    const time = state.clock.elapsedTime;
+    let idx = 0;
+    for (let s = 0; s < starts.length; s++) {
+      const st = starts[s];
+      if (!st) continue;
+      for (let k = 0; k < PER; k++) {
+        const t = (time * 0.22 + k / PER + s * 0.137) % 1;
+        v.lerpVectors(st, hub, t);
+        v.y += Math.sin(t * Math.PI) * 5;
+        m.makeTranslation(v.x, v.y, v.z);
+        mesh.setMatrixAt(idx++, m);
+      }
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+  });
+
+  return (
+    <group>
+      <mesh position={[hub.x, hub.y, hub.z]}>
+        <icosahedronGeometry args={[5, 1]} />
+        <meshStandardMaterial
+          color="#16c2d4"
+          emissive="#16c2d4"
+          emissiveIntensity={1.1}
+          roughness={0.3}
+        />
+      </mesh>
+      <instancedMesh ref={ref} args={[undefined, undefined, count]} frustumCulled={false}>
+        <sphereGeometry args={[1.5, 8, 8]} />
+        <meshStandardMaterial
+          color="#aef4fc"
+          emissive="#7fe3ec"
+          emissiveIntensity={1.6}
+          roughness={0.4}
+        />
+      </instancedMesh>
+    </group>
+  );
+}
+
 function Player({ h, onElev }: { h: Heightmap; onElev: (m: number) => void }) {
   const { camera } = useThree();
   const keys = useRef<Record<string, boolean>>({});
@@ -364,6 +432,7 @@ function Scene({
 
       {trees && trees.length ? <Trees list={trees} /> : null}
       <Houses h={h} />
+      <EnergyFlows h={h} />
 
       <PointerLockControls />
       <Player h={h} onElev={onElev} />
@@ -420,6 +489,9 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
       <div className="pointer-events-none absolute bottom-3 left-3 space-y-1">
         <div className="rounded-md bg-black/55 px-3 py-1.5 text-xs text-white tabular-nums">
           {t("hud.elevation")}: {Math.round(elev)} moh
+        </div>
+        <div className="max-w-sm rounded-md bg-[#0c5560]/75 px-3 py-1 text-[10px] text-white/95">
+          {t("energyNote")}
         </div>
         <div className="max-w-sm rounded-md bg-black/45 px-3 py-1 text-[10px] text-white/85">
           {t("attribution")}

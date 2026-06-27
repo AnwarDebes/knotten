@@ -347,6 +347,7 @@
     "enterCta": "Enter the site",
     "enterHint": "Loads an interactive 3D world. Best on a computer with a mouse and keyboard.",
     "close": "Close",
+    "energyNote": "Solar about 1010 kWh/kWp at 58 degrees north, shared across the homes up to 1 MW per property. Indicative.",
     "loadingTitle": "Building the site",
     "loading": {
       "terrain": "Loading the terrain from Kartverket",
