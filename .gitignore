@@ -47,6 +47,13 @@ Thumbs.db
 # Local scratch files
 _*.mjs
 _*.html
+_*.cjs
+
+# Owner-provided reference images (never commit) and local capture artifacts
+example.jpeg
+logo.png
+nerve-*.png
+.playwright-mcp/
 
 # Local dev database (PGlite)
 .pglite/
