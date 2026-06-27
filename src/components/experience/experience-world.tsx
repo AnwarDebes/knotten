@@ -4,11 +4,12 @@ import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { PointerLockControls, Sky, Html } from "@react-three/drei";
 import * as THREE from "three";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { type Heightmap, elevationAt, bearingToSea } from "@/components/terrain/types";
 import { sunDirection } from "@/components/terrain/sun";
 import { PLOTS } from "@/content/plots";
 import { HOUSE_TYPES } from "@/content/house-types";
+import { AMENITIES, SITE } from "@/content/amenities";
 
 /* eslint-disable react-hooks/immutability -- React Three Fiber drives the scene
    by mutating Three.js objects (camera transform, geometry) imperatively inside
@@ -320,6 +321,52 @@ function PlotLabels({ h }: { h: Heightmap }) {
   );
 }
 
+/** Initial compass bearing from one lat/lng to another, radians clockwise from north. */
+function geoBearing(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const toR = (d: number) => (d * Math.PI) / 180;
+  const p1 = toR(lat1);
+  const p2 = toR(lat2);
+  const dl = toR(lng2 - lng1);
+  const y = Math.sin(dl) * Math.cos(p2);
+  const x = Math.cos(p1) * Math.sin(p2) - Math.sin(p1) * Math.cos(p2) * Math.cos(dl);
+  return Math.atan2(y, x);
+}
+
+/**
+ * Direction markers to the real landmarks (Vigeland, Mandal, Kristiansand,
+ * Lindesnes lighthouse), each placed at its true geographic bearing from the
+ * site so a visitor can orient: that way is the town, that way the lighthouse.
+ * Distances are the real, sourced figures.
+ */
+function AmenityMarkers({ h }: { h: Heightmap }) {
+  const locale = useLocale();
+  const markers = useMemo(() => {
+    const R = h.widthMeters * 0.62;
+    return AMENITIES.filter((a) => a.distanceKm != null && a.distanceKm >= 4).map((a) => {
+      const th = geoBearing(SITE.lat, SITE.lng, a.lat, a.lng);
+      const x = Math.sin(th) * R;
+      const z = -Math.cos(th) * R;
+      const u = Math.min(0.999, Math.max(0.001, x / h.widthMeters + 0.5));
+      const v = Math.min(0.999, Math.max(0.001, z / h.heightMeters + 0.5));
+      const y = elevationAt(h, u, v) + 45;
+      const name = locale === "en" ? a.nameEn : a.nameNo;
+      return { id: a.id, x, y, z, label: `${name} · ${a.distanceKm} km` };
+    });
+  }, [h, locale]);
+
+  return (
+    <>
+      {markers.map((m) => (
+        <Html key={m.id} position={[m.x, m.y, m.z]} center zIndexRange={[15, 0]}>
+          <div className="rounded bg-black/65 px-2 py-0.5 text-[11px] font-medium whitespace-nowrap text-white/90">
+            {m.label}
+          </div>
+        </Html>
+      ))}
+    </>
+  );
+}
+
 function Player({ h, onElev }: { h: Heightmap; onElev: (m: number) => void }) {
   const { camera } = useThree();
   const keys = useRef<Record<string, boolean>>({});
@@ -465,6 +512,7 @@ function Scene({
       <Houses h={h} />
       <EnergyFlows h={h} />
       <PlotLabels h={h} />
+      <AmenityMarkers h={h} />
 
       <PointerLockControls />
       <Player h={h} onElev={onElev} />
