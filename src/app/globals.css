@@ -389,3 +389,44 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* The "Opplev / Experience" call to action: a deliberately bold, cool-toned
+   doorway into the 3D world. The reduced-motion rule above disables the sheen
+   and the pulse. */
+.exp-cta {
+  background:
+    radial-gradient(120% 140% at 12% 8%, #15454f 0%, transparent 55%),
+    radial-gradient(130% 160% at 92% 95%, #0a2b39 0%, transparent 52%),
+    linear-gradient(135deg, #0b2230 0%, #0e3a48 52%, #0b2230 100%);
+  border: 1px solid rgba(127, 214, 223, 0.28);
+  box-shadow: 0 14px 44px -16px rgba(13, 90, 96, 0.65);
+}
+.exp-cta::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    115deg,
+    transparent 32%,
+    rgba(127, 214, 223, 0.16) 50%,
+    transparent 68%
+  );
+  transform: translateX(-110%);
+  transition: transform 0.9s var(--ease-standard);
+  pointer-events: none;
+}
+.exp-cta:hover::before {
+  transform: translateX(110%);
+}
+.exp-cta-btn {
+  animation: exp-pulse 2.6s ease-in-out infinite;
+}
+@keyframes exp-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 18px -2px rgba(22, 194, 212, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 30px 2px rgba(22, 194, 212, 0.9);
+  }
+}

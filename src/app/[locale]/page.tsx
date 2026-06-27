@@ -12,6 +12,7 @@ import { HomeToolsTeaser } from "@/components/site/home-tools";
 import { HomeProgress } from "@/components/site/home-progress";
 import { HomeDeveloper } from "@/components/site/home-developer";
 import { MeldInteresseCta } from "@/components/site/meld-interesse-cta";
+import { ExperienceCta } from "@/components/experience/experience-cta";
 
 type Props = { params: Promise<{ locale: string }> };
 
@@ -37,6 +38,7 @@ export default async function HomePage({ params }: Props) {
       <HomeMeasures />
       <HomeEnergyTeaser />
       <HomeAreaTeaser />
+      <ExperienceCta />
       <HomeToolsTeaser />
       <HomeProgress />
       <HomeDeveloper />

@@ -4,6 +4,7 @@ import { buildPageMetadata } from "@/lib/metadata";
 import { MeldInteresseCta } from "@/components/site/meld-interesse-cta";
 import { PageHero } from "@/components/site/page-hero";
 import { PlotMap } from "@/components/terrain/plot-map";
+import { ExperienceCta } from "@/components/experience/experience-cta";
 import { Badge } from "@/components/ui/badge";
 import { Disclaimer } from "@/components/primitives/disclaimer";
 import { getPublicPlots } from "@/lib/content/public";
@@ -69,6 +70,8 @@ export default async function OmradetPage({ params }: Props) {
       <section className="mx-auto w-full max-w-6xl px-6 py-12">
         <PlotMap />
       </section>
+
+      <ExperienceCta />
 
       {plots.length > 0 ? (
         <section className="mx-auto w-full max-w-3xl px-6 pb-12">
