@@ -17,12 +17,8 @@ const STATUS_VARIANT: Record<PlotStatus, "success" | "warning" | "destructive"> 
   solgt: "destructive",
 };
 
-function detectCapable(): boolean {
+function hasWebgl(): boolean {
   if (typeof window === "undefined") return false;
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
-  const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
-  if (conn?.saveData) return false;
-  if (window.innerWidth < 768) return false;
   try {
     const canvas = document.createElement("canvas");
     return !!(canvas.getContext("webgl2") || canvas.getContext("webgl"));
@@ -31,32 +27,54 @@ function detectCapable(): boolean {
   }
 }
 
+// Whether to load the 3D model automatically. Phones, data-saver and
+// reduced-motion clients instead get the still image plus an explicit button,
+// so the heavy model is fetched only when the visitor asks for it. Everyone
+// with WebGL can still open it; small screens just opt in by tapping.
+function autoLoads(): boolean {
+  if (typeof window === "undefined") return false;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return false;
+  const conn = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection;
+  if (conn?.saveData) return false;
+  if (window.innerWidth < 768) return false;
+  return hasWebgl();
+}
+
 export function PlotMap() {
   const t = useTranslations("terrain");
-  const [capable, setCapable] = useState(false);
+  const [webglOk, setWebglOk] = useState(false);
+  const [wants3D, setWants3D] = useState(false);
   const [heightmap, setHeightmap] = useState<Heightmap | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [season, setSeason] = useState<SunSeason>("summer");
   const [time, setTime] = useState<SunTime>("midday");
 
   useEffect(() => {
-    if (!detectCapable()) return;
+    // Capability checks run after mount, not during render, so the first client
+    // paint matches the server (neither can know WebGL support or the viewport).
+    /* eslint-disable react-hooks/set-state-in-effect */
+    setWebglOk(hasWebgl());
+    if (autoLoads()) setWants3D(true);
+    /* eslint-enable react-hooks/set-state-in-effect */
+  }, []);
+
+  // Fetch the heightmap once the visitor wants the 3D view (automatically on
+  // capable desktops, or on tap elsewhere), never before.
+  useEffect(() => {
+    if (!wants3D || heightmap) return;
     let ok = true;
     fetch("/terrain/heightmap.json")
       .then((r) => r.json())
       .then((data: Heightmap) => {
-        if (ok) {
-          setHeightmap(data);
-          setCapable(true);
-        }
+        if (ok) setHeightmap(data);
       })
       .catch(() => {});
     return () => {
       ok = false;
     };
-  }, []);
+  }, [wants3D, heightmap]);
 
-  const show3D = capable && heightmap;
+  const show3D = wants3D && heightmap;
   const selected = PLOTS.find((p) => p.id === selectedId) ?? null;
 
   return (
@@ -81,17 +99,26 @@ export function PlotMap() {
                 />
               </Suspense>
             ) : (
-              // Pre-baked, already-optimised JPEG; a plain img avoids pulling the
-              // next/image runtime into the shared bundle.
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src="/terrain/fallback.jpg"
-                alt={t("imageAlt")}
-                width={1600}
-                height={1000}
-                loading="lazy"
-                className="h-full w-full object-cover"
-              />
+              <>
+                {/* Pre-baked, already-optimised JPEG; a plain img avoids pulling
+                    the next/image runtime into the shared bundle. */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/terrain/fallback.jpg"
+                  alt={t("imageAlt")}
+                  width={1600}
+                  height={1000}
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
+                {webglOk ? (
+                  <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/55 via-black/10 to-transparent p-4">
+                    <Button variant="rodberg" onClick={() => setWants3D(true)} disabled={wants3D}>
+                      {t(wants3D ? "loading3d" : "load3d")}
+                    </Button>
+                  </div>
+                ) : null}
+              </>
             )}
           </div>
 
@@ -126,9 +153,9 @@ export function PlotMap() {
                 ))}
               </fieldset>
             </div>
-          ) : (
+          ) : !webglOk ? (
             <p className="text-muted-foreground text-xs">{t("fallbackNote")}</p>
-          )}
+          ) : null}
 
           <p className="text-muted-foreground text-xs">{t("attribution")}</p>
         </div>

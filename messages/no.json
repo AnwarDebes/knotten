@@ -47,7 +47,6 @@
       }
     ],
     "ctaSecondary": "Se energikonseptet",
-    "note": "All informasjon er foreløpig og indikativ (per juni 2026). Prosjektet er før regulering og salgsstart. Antall tomter, priser, størrelser og fremdrift oppgis når reguleringen er klar.",
     "highlightsHeading": "Derfor Knotten",
     "place": {
       "eyebrow": "Beliggenheten",
@@ -332,8 +331,7 @@
         "heading": "Tomter, størrelser og priser",
         "body": "Antall tomter, størrelser, plassering og priser fastsettes gjennom reguleringen og oppgis så snart planen er klar. Inntil da deler vi det vi vet, og holder oss til det som faktisk er bestemt. Vil du følge med på fremdriften, kan du melde interesse uforpliktende, så tar vi kontakt når det er nytt å fortelle."
       }
-    ],
-    "note": "Det interaktive tomtekartet kommer. Antall tomter, størrelser og priser oppgis når reguleringen er klar. Vi er i en tidlig fase, før salgsstart og før regulering, og alle opplysninger er foreløpige."
+    ]
   },
   "robusthet": {
     "metaTitle": "Robusthet på Knotten | Rødberg, Lindesnes",
@@ -501,7 +499,6 @@
         "body": "Du kan også ta direkte kontakt med utbygger. Sigve Simonsen, daglig leder i Sigve Simonsen AS, svarer gjerne på spørsmål: sigve.simonsen@hotmail.com eller +47 954 95 152."
       }
     ],
-    "note": "Skjema for å melde interesse kommer. Inntil det er på plass, ta kontakt på sigve.simonsen@hotmail.com eller +47 954 95 152.",
     "skjema": {
       "name": "Navn",
       "email": "E-post",
@@ -725,7 +722,9 @@
     },
     "reset": "Tilbakestill visning",
     "fallbackTitle": "Forenklet terrengvisning",
-    "fallbackNote": "Den interaktive 3D-modellen vises på større skjermer med maskinvare som støtter den. Her er et fast bilde av terrenget med tomtene listet under.",
+    "fallbackNote": "Enheten din kan ikke vise den interaktive 3D-modellen, så her er et fast bilde av terrenget med tomtene listet under.",
+    "load3d": "Utforsk i 3D",
+    "loading3d": "Laster inn 3D-modellen...",
     "imageAlt": "Terrengmodell av Snigsfjorden ved Rødberg, med åssider som faller mot fjorden. Foreløpig illustrasjon.",
     "attribution": "Terrengdata: Høydedata © Kartverket (CC BY 4.0)",
     "forbehold": "Illustrasjon basert på reelle høydedata. Tomtegrenser, antall, priser og utsikt er foreløpige og ikke endelige.",

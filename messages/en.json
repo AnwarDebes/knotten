@@ -47,7 +47,6 @@
       }
     ],
     "ctaSecondary": "See the energy concept",
-    "note": "All information is preliminary and indicative (as of June 2026). The project is before zoning and sales launch. The number of plots, prices, sizes and progress will be stated once the zoning is ready.",
     "highlightsHeading": "Why Knotten",
     "place": {
       "eyebrow": "The setting",
@@ -332,8 +331,7 @@
         "heading": "Plots, sizes and prices",
         "body": "The number of plots, their sizes, layout and prices are set through the regulation process and will be published as soon as the plan is ready. Until then we share what we know and stay with what has actually been decided. To follow the progress, you can register your interest with no obligation, and we will get in touch when there is news to share."
       }
-    ],
-    "note": "The interactive plot map is on its way. The number of plots, sizes and prices will be published once the regulation is ready. We are at an early stage, before sales launch and before regulation, so all information is preliminary."
+    ]
   },
   "robusthet": {
     "metaTitle": "Resilience at Knotten | Rødberg, Lindesnes",
@@ -501,7 +499,6 @@
         "body": "You are also welcome to contact the developer directly. Sigve Simonsen, general manager of Sigve Simonsen AS, is happy to answer questions: sigve.simonsen@hotmail.com or +47 954 95 152."
       }
     ],
-    "note": "A form for registering interest is coming. Until it is in place, please get in touch at sigve.simonsen@hotmail.com or +47 954 95 152.",
     "skjema": {
       "name": "Name",
       "email": "Email",
@@ -725,7 +722,9 @@
     },
     "reset": "Reset view",
     "fallbackTitle": "Simplified terrain view",
-    "fallbackNote": "The interactive 3D model is shown on larger screens with hardware that supports it. Here is a still image of the terrain, with the plots listed below.",
+    "fallbackNote": "This device cannot display the interactive 3D model, so here is a still image of the terrain, with the plots listed below.",
+    "load3d": "Explore in 3D",
+    "loading3d": "Loading the 3D model...",
     "imageAlt": "Terrain model of Snigsfjorden at Rødberg, with hillsides falling toward the fjord. Preliminary illustration.",
     "attribution": "Terrain data: Hoydedata © Kartverket (CC BY 4.0)",
     "forbehold": "Illustration based on real elevation data. Plot boundaries, number, prices and views are preliminary and not final.",
