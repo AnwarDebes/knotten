@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" width="1200" height="360" role="img" aria-label="Knotten, Sjøutsikt i Rødberg, sea views at Rødberg by Sniksfjorden in Lindesnes">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0a1d24"/>
+      <stop offset="0.55" stop-color="#0d2730"/>
+      <stop offset="1" stop-color="#12333c"/>
+    </linearGradient>
+    <radialGradient id="dawn" cx="50%" cy="116%" r="70%">
+      <stop offset="0" stop-color="#1e4b55" stop-opacity="0.6"/>
+      <stop offset="0.55" stop-color="#163a44" stop-opacity="0.25"/>
+      <stop offset="1" stop-color="#0a1d24" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1200" height="360" fill="url(#sky)"/>
+  <rect width="1200" height="360" fill="url(#dawn)"/>
+
+  <!-- The real-terrain motif: cross-sections of the hillside receding to the sea-level datum. -->
+  <path d="M0 256 C 200 240 360 270 520 254 C 680 238 840 272 1000 250 C 1100 240 1160 256 1200 250 L1200 332 L0 332 Z" fill="#091e25" fill-opacity="0.30"/>
+  <path d="M0 280 C 180 266 340 294 520 278 C 700 262 860 298 1040 276 C 1120 266 1170 282 1200 278 L1200 332 L0 332 Z" fill="#091e25" fill-opacity="0.42"/>
+  <path d="M0 304 C 160 294 320 318 520 302 C 720 286 880 320 1060 300 C 1130 292 1175 306 1200 302 L1200 332 L0 332 Z" fill="#091e25" fill-opacity="0.55"/>
+
+  <path d="M0 256 C 200 240 360 270 520 254 C 680 238 840 272 1000 250 C 1100 240 1160 256 1200 250" fill="none" stroke="#bcd7d6" stroke-opacity="0.30" stroke-width="1.1"/>
+  <path d="M0 280 C 180 266 340 294 520 278 C 700 262 860 298 1040 276 C 1120 266 1170 282 1200 278" fill="none" stroke="#bcd7d6" stroke-opacity="0.50" stroke-width="1.25"/>
+  <path d="M0 304 C 160 294 320 318 520 302 C 720 286 880 320 1060 300 C 1130 292 1175 306 1200 302" fill="none" stroke="#cfe7e5" stroke-opacity="0.72" stroke-width="1.5"/>
+
+  <!-- Sea-level datum and the single Rødberg tick. -->
+  <line x1="0" y1="332" x2="1200" y2="332" stroke="#9fc2c4" stroke-opacity="0.8" stroke-width="1.2"/>
+  <line x1="445" y1="324" x2="445" y2="340" stroke="#c2674a" stroke-width="2.5"/>
+  <text x="462" y="349" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="13" letter-spacing="0.5" fill="#cfe0dd">0 m · Sniksfjorden</text>
+
+  <!-- Wordmark and place. -->
+  <line x1="586" y1="58" x2="614" y2="58" stroke="#c2674a" stroke-width="2.5"/>
+  <text x="600" y="86" text-anchor="middle" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-size="14.5" letter-spacing="6.5" fill="#a4c5c6">58°N · SNIKSFJORDEN · LINDESNES</text>
+
+  <text x="600" y="172" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="92" fill="#f1f5f1" letter-spacing="0.5">Knotten</text>
+  <text x="600" y="214" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="29" fill="#bcd3cf">Sjøutsikt i Rødberg</text>
+</svg>
