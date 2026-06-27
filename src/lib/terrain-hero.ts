@@ -33,8 +33,8 @@ export function getTerrainHero(): TerrainHero {
 
   const VB_W = 1000;
   const VB_H = 560;
-  const LINES = 18;
-  const SAMPLES = 48;
+  const LINES = 16;
+  const SAMPLES = 40;
   const topMargin = 104;
   const datumY = 516;
   const span = datumY - topMargin;
@@ -116,7 +116,7 @@ export function getTerrainProfile(): TerrainProfile {
   const VB_H = 260;
   const baseY = 232;
   const amp = 196;
-  const SAMPLES = 84;
+  const SAMPLES = 64;
 
   const raw: number[] = [];
   for (let s = 0; s < SAMPLES; s++) {

@@ -15,16 +15,33 @@ import { SiteJsonLd } from "@/components/site/json-ld";
 // Oslo (for Schibsted's titles, Aftenposten and VG), so its Nordic provenance
 // is real, not decorative. Newsreader is the display serif, used large and
 // light for the emotional register. Both self-hosted via next/font, swap.
+// The body font carries no above-the-fold LCP element, so it stays off the
+// critical path (swaps in) and leaves the bandwidth before first paint to the
+// render-blocking CSS and the one preloaded headline font. Static weights only,
+// not the full variable axes (those were ~169 KB combined and dominated LCP).
 const sans = Schibsted_Grotesk({
   variable: "--font-schibsted",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
   display: "swap",
+  preload: false,
 });
+// Newsreader sets the hero headline, the LCP element, so the roman is the one
+// font preloaded, and a single static weight keeps it small. The italic is used
+// only for the hero emphasis, so it stays off the critical path and swaps in.
 const display = Newsreader({
   variable: "--font-newsreader",
   subsets: ["latin"],
-  style: ["normal", "italic"],
+  weight: ["400"],
   display: "swap",
+});
+const displayItalic = Newsreader({
+  variable: "--font-newsreader-italic",
+  subsets: ["latin"],
+  weight: ["400"],
+  style: ["italic"],
+  display: "swap",
+  preload: false,
 });
 
 export function generateStaticParams() {
@@ -68,7 +85,10 @@ export default async function LocaleLayout({ children, params }: Props) {
   const nav = await getTranslations("nav");
 
   return (
-    <html lang={locale} className={`${sans.variable} ${display.variable} h-full antialiased`}>
+    <html
+      lang={locale}
+      className={`${sans.variable} ${display.variable} ${displayItalic.variable} h-full antialiased`}
+    >
       <body className="flex min-h-full flex-col">
         <NextIntlClientProvider messages={messages}>
           <SkipLink>{nav("skipToContent")}</SkipLink>

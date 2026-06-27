@@ -7,11 +7,13 @@ import "../globals.css";
 const sans = Schibsted_Grotesk({
   variable: "--font-schibsted",
   subsets: ["latin"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 const display = Newsreader({
   variable: "--font-newsreader",
   subsets: ["latin"],
+  weight: ["400"],
   style: ["normal", "italic"],
   display: "swap",
 });

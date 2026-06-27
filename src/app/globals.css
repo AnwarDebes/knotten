@@ -239,7 +239,8 @@
   text-wrap: balance;
 }
 .hero-title-em {
-  font-weight: 300;
+  font-family: var(--font-newsreader-italic), var(--font-newsreader), Georgia, serif;
+  font-weight: 400;
   color: #bcd3cf;
 }
 .hero-lead {
