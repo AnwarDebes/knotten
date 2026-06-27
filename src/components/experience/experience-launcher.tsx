@@ -73,10 +73,19 @@ export function ExperienceLauncher() {
         if (alive) setWorld(() => m.default);
       })
       .catch(() => {});
+    // Progressive: the coarse heightmap renders instantly and is walkable at
+    // once; the high-resolution terrain then streams in and swaps without a
+    // wait. Fast things first, heavy things after.
     fetch("/terrain/heightmap.json")
       .then((r) => r.json())
       .then((d: Heightmap) => {
         if (alive) setHeightmap(d);
+        fetch("/experience/terrain-hi.json")
+          .then((r) => r.json())
+          .then((hi: Heightmap) => {
+            if (alive) setHeightmap(hi);
+          })
+          .catch(() => {});
       })
       .catch(() => {});
     return () => {

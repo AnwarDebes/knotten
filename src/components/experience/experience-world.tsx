@@ -70,6 +70,7 @@ function Player({ h, onElev }: { h: Heightmap; onElev: (m: number) => void }) {
   const { camera } = useThree();
   const keys = useRef<Record<string, boolean>>({});
   const since = useRef(0);
+  const placed = useRef(false);
   const t = useMemo(
     () => ({
       d: new THREE.Vector3(),
@@ -96,6 +97,10 @@ function Player({ h, onElev }: { h: Heightmap; onElev: (m: number) => void }) {
   }, []);
 
   useEffect(() => {
+    // Place the walker once. The heightmap swaps from coarse to high-res under
+    // the same extent, so we keep the player where they are on the swap.
+    if (placed.current) return;
+    placed.current = true;
     const start = PLOTS[0];
     const u = start ? start.u : 0.4;
     const v = start ? start.v : 0.55;
