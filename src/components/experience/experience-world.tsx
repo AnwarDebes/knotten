@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { PointerLockControls, Sky } from "@react-three/drei";
+import { PointerLockControls, Sky, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { useTranslations } from "next-intl";
 import { type Heightmap, elevationAt, bearingToSea } from "@/components/terrain/types";
@@ -289,6 +289,37 @@ function EnergyFlows({ h }: { h: Heightmap }) {
   );
 }
 
+/**
+ * Floating point-of-interest labels at each plot, so a visitor can identify the
+ * homesites while walking. A status dot and the plot code; scaled by distance.
+ * Plot positions are indicative placeholders.
+ */
+function PlotLabels({ h }: { h: Heightmap }) {
+  return (
+    <>
+      {PLOTS.map((p) => {
+        const [x, z] = worldXZ(h, p.u, p.v);
+        const y = elevationAt(h, p.u, p.v);
+        const color = STATUS_COLOR[p.status] ?? "#37a06a";
+        return (
+          <Html
+            key={p.id}
+            position={[x, y + 9, z]}
+            center
+            distanceFactor={150}
+            zIndexRange={[20, 0]}
+          >
+            <div className="flex items-center gap-1.5 rounded-full bg-black/70 px-2.5 py-1 text-xs font-medium whitespace-nowrap text-white">
+              <span className="inline-block h-2 w-2 rounded-full" style={{ background: color }} />
+              {p.code}
+            </div>
+          </Html>
+        );
+      })}
+    </>
+  );
+}
+
 function Player({ h, onElev }: { h: Heightmap; onElev: (m: number) => void }) {
   const { camera } = useThree();
   const keys = useRef<Record<string, boolean>>({});
@@ -433,6 +464,7 @@ function Scene({
       {trees && trees.length ? <Trees list={trees} /> : null}
       <Houses h={h} />
       <EnergyFlows h={h} />
+      <PlotLabels h={h} />
 
       <PointerLockControls />
       <Player h={h} onElev={onElev} />
