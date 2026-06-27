@@ -1,9 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Newsreader, Schibsted_Grotesk } from "next/font/google";
 import "../globals.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+// Mirror the public site's type so the admin inherits the same identity and no
+// unused webfonts ship. globals.css maps --font-sans to --font-schibsted.
+const sans = Schibsted_Grotesk({
+  variable: "--font-schibsted",
+  subsets: ["latin"],
+  display: "swap",
+});
+const display = Newsreader({
+  variable: "--font-newsreader",
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Knotten admin",
@@ -21,7 +32,7 @@ export const dynamic = "force-dynamic";
  */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="no" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="no" className={`${sans.variable} ${display.variable} h-full antialiased`}>
       <body className="bg-secondary/20 text-foreground min-h-full">{children}</body>
     </html>
   );

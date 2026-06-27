@@ -1,10 +1,11 @@
 @import "tailwindcss";
 
 /*
-  Knotten design tokens. The palette is built from the brand: a deep navy
-  wordmark and the sea/teal of Sniksfjorden. Semantic tokens (background,
-  foreground, primary, and so on) are what components consume, so the brand can
-  shift in one place. All foreground/background pairs meet WCAG 2.2 AA contrast.
+  Knotten design tokens, "a measured coast". A cool overcast 58N light, the deep
+  cold water of Sniksfjorden as the ink, and a single warm note: Rodberg, the
+  iron-oxide rock the place is named after. Semantic tokens (background,
+  foreground, primary, and so on) are what components consume, so the identity
+  shifts in one place. All foreground/background pairs meet WCAG 2.2 AA contrast.
 */
 
 :root {
@@ -31,34 +32,43 @@
   --sea-800: #0c4f59;
   --sea-900: #0d404a;
 
-  /* Semantic tokens */
-  --background: #ffffff;
-  --foreground: #0b2236;
-  --card: #ffffff;
-  --card-foreground: #0b2236;
-  --popover: #ffffff;
-  --popover-foreground: #0b2236;
-  --primary: #123a5e;
-  --primary-foreground: #ffffff;
-  --secondary: #eef4f9;
-  --secondary-foreground: #123a5e;
-  --muted: #eef2f6;
-  --muted-foreground: #47586a;
-  --accent: #eef8fa;
-  --accent-foreground: #0b6470;
-  --sea: #0b6470;
+  /*
+    "A measured coast." The light is cool overcast 58N, not warm cream; the ink
+    is the deep cold water of Sniksfjorden; the one warm note is Rodberg, the
+    iron-oxide red rock the place is named after, used with restraint. All
+    foreground/background pairs are checked for WCAG 2.2 AA.
+  */
+  --background: #eceeeb; /* coastal mist */
+  --foreground: #0f2930; /* fjord ink */
+  --card: #f4f5f2;
+  --card-foreground: #0f2930;
+  --popover: #f6f7f4;
+  --popover-foreground: #0f2930;
+  --primary: #12333c; /* deep fjord */
+  --primary-foreground: #f4f6f3;
+  --secondary: #dde4e1; /* sea glass */
+  --secondary-foreground: #12333c;
+  --muted: #e2e6e2;
+  --muted-foreground: #4d6066; /* cool stone slate, AA on mist */
+  --accent: #dce8e7;
+  --accent-foreground: #0c4a52;
+  --sea: #0c5560; /* deep tide teal, links and eyebrows */
   --sea-foreground: #ffffff;
-  --destructive: #b3261e;
+  --rodberg: #9e4a2c; /* the red rock; AA white text on light */
+  --rodberg-deep: #843c22;
+  --rodberg-on-dark: #c2674a; /* same hue, lifted only enough to read on dusk */
+  --rodberg-foreground: #ffffff;
+  --destructive: #a32c20;
   --destructive-foreground: #ffffff;
   --success: #1f6f43;
   --success-foreground: #ffffff;
-  --warning: #8a5a00;
+  --warning: #855600;
   --warning-foreground: #ffffff;
-  --border: #cbd5e1;
-  --input: #cbd5e1;
-  --ring: #0e7c8b;
+  --border: #cdd6d2;
+  --input: #c4cec9;
+  --ring: #0c5560;
 
-  --radius: 0.625rem;
+  --radius: 0.1875rem;
 
   /* Motion signature */
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
@@ -87,6 +97,10 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-sea: var(--sea);
   --color-sea-foreground: var(--sea-foreground);
+  --color-rodberg: var(--rodberg);
+  --color-rodberg-deep: var(--rodberg-deep);
+  --color-rodberg-on-dark: var(--rodberg-on-dark);
+  --color-rodberg-foreground: var(--rodberg-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-success: var(--success);
@@ -118,13 +132,16 @@
   --color-sea-800: var(--sea-800);
   --color-sea-900: var(--sea-900);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: 0.125rem;
+  --radius-md: calc(var(--radius) - 1px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans:
+    var(--font-schibsted), ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  --font-display: var(--font-newsreader), Georgia, "Times New Roman", serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 @layer base {
@@ -134,15 +151,23 @@
   body {
     background-color: var(--background);
     color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
   }
   ::selection {
-    background-color: var(--sea-100);
-    color: var(--navy-900);
+    background-color: #cfe0dd;
+    color: var(--foreground);
   }
   /* Visible, consistent focus indicator for keyboard users. */
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
+  }
+  /* On dusk grounds the sea-teal ring drops below 3:1; use a light ring there. */
+  .section-dark :focus-visible,
+  footer :focus-visible {
+    outline-color: #a4c5c6;
   }
 }
 
@@ -158,6 +183,198 @@
 }
 .energy-pulse {
   animation: energy-pulse 2.4s var(--ease-standard) infinite;
+}
+
+/* ----------------------------------------------------------------------------
+   Home hero: "a measured coast". A dark dusk ground, the real landform drawn
+   from Kartverket elevation data, anchored by the sea-level datum line. Inline
+   SVG plus CSS only, no client JS. Motion is one orchestrated arrival.
+---------------------------------------------------------------------------- */
+.hero {
+  background:
+    radial-gradient(120% 80% at 50% 100%, #14333c 0%, #0d2730 48%, #0a1f27 100%),
+    linear-gradient(180deg, #0a1d24 0%, #0c242c 100%);
+  color: #eef3f0;
+}
+.hero-art {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.hero-grad {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  /* One restrained wash, just enough to seat the headline over the terrain. */
+  background: radial-gradient(85% 65% at 24% 40%, rgba(8, 24, 30, 0.5) 0%, rgba(8, 24, 30, 0) 62%);
+}
+
+.hero-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #a4c5c6;
+  font-variant-numeric: tabular-nums;
+}
+.hero-kicker-mark {
+  display: inline-block;
+  width: 30px;
+  height: 2px;
+  background: #c2674a;
+}
+.hero-title {
+  margin-top: 1.5rem;
+  max-width: 18ch;
+  font-weight: 400;
+  font-size: clamp(2.55rem, 6vw, 4.7rem);
+  line-height: 1.03;
+  letter-spacing: -0.018em;
+  color: #f1f5f1;
+  text-wrap: balance;
+}
+.hero-title-em {
+  font-weight: 300;
+  color: #bcd3cf;
+}
+.hero-lead {
+  margin-top: 1.55rem;
+  max-width: 40rem;
+  font-size: clamp(1.03rem, 1.5vw, 1.2rem);
+  line-height: 1.62;
+  color: rgba(225, 234, 230, 0.82);
+}
+.hero-actions {
+  margin-top: 2.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.6rem;
+}
+.hero-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.4rem 0.2rem;
+  font-size: 0.98rem;
+  font-weight: 500;
+  color: #d7e4e1;
+  border-bottom: 1px solid rgba(192, 107, 76, 0);
+  transition:
+    color var(--duration-base) var(--ease-standard),
+    gap var(--duration-base) var(--ease-standard),
+    border-color var(--duration-base) var(--ease-standard);
+}
+.hero-secondary:hover {
+  color: #fff;
+  gap: 0.8rem;
+  border-bottom-color: #c2674a;
+}
+.hero-secondary:focus-visible {
+  outline: 2px solid #a4c5c6;
+  outline-offset: 4px;
+  border-radius: 2px;
+}
+.hero-base {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1.5rem;
+  margin-top: 2.75rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid rgba(190, 209, 205, 0.16);
+}
+@media (min-width: 768px) {
+  .hero-base {
+    margin-top: auto;
+  }
+}
+.hero-datum {
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: #cfe0dd;
+}
+.hero-datum-sep {
+  color: #c2674a;
+  padding: 0 0.15rem;
+}
+.hero-credit {
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: rgba(201, 216, 212, 0.82);
+}
+
+/* Dark bands (the measured-numbers section and the closing CTA) echo the hero
+   and break the light expanse. Light text defaults are set on the container. */
+.section-dark {
+  background:
+    radial-gradient(120% 90% at 50% 0%, #14333c 0%, #0d2730 55%, #0a1f27 100%),
+    linear-gradient(180deg, #0b2129 0%, #0a1d24 100%);
+  color: #eef3f0;
+}
+
+/* One orchestrated arrival: the ridgelines draw in, the copy settles. */
+@keyframes hero-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.hero-crest {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: hero-draw 1500ms var(--ease-emphasis) forwards;
+}
+@keyframes hero-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.hero-rise {
+  opacity: 0;
+  animation: hero-rise 760ms var(--ease-emphasis) forwards;
+}
+.hero-copy > .hero-rise:nth-child(1) {
+  animation-delay: 120ms;
+}
+.hero-copy > .hero-rise:nth-child(2) {
+  animation-delay: 240ms;
+}
+.hero-copy > .hero-rise:nth-child(3) {
+  animation-delay: 360ms;
+}
+.hero-copy > .hero-rise:nth-child(4) {
+  animation-delay: 480ms;
+}
+.hero-base.hero-rise {
+  animation-delay: 760ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-crest {
+    stroke-dashoffset: 0;
+    animation: none;
+  }
+  .hero-rise {
+    opacity: 1;
+    transform: none;
+    animation: none;
+  }
 }
 
 /* Honour reduced-motion: near-instant, no large transitions or animations. */

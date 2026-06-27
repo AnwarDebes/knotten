@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Newsreader, Schibsted_Grotesk } from "next/font/google";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { getMessages, getTranslations, setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
@@ -11,8 +11,21 @@ import { SiteFooter } from "@/components/site/site-footer";
 import { Analytics } from "@/components/analytics/plausible";
 import { SiteJsonLd } from "@/components/site/json-ld";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+// Schibsted Grotesk carries body, UI and data: a grotesque commissioned in
+// Oslo (for Schibsted's titles, Aftenposten and VG), so its Nordic provenance
+// is real, not decorative. Newsreader is the display serif, used large and
+// light for the emotional register. Both self-hosted via next/font, swap.
+const sans = Schibsted_Grotesk({
+  variable: "--font-schibsted",
+  subsets: ["latin"],
+  display: "swap",
+});
+const display = Newsreader({
+  variable: "--font-newsreader",
+  subsets: ["latin"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -52,15 +65,13 @@ export default async function LocaleLayout({ children, params }: Props) {
   }
   setRequestLocale(locale);
   const messages = await getMessages();
+  const nav = await getTranslations("nav");
 
   return (
-    <html
-      lang={locale}
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang={locale} className={`${sans.variable} ${display.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <NextIntlClientProvider messages={messages}>
-          <SkipLink />
+          <SkipLink>{nav("skipToContent")}</SkipLink>
           <SiteHeader />
           {children}
           <SiteFooter />

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
  * Keyboard skip link. Hidden until focused, then jumps to the main content.
  * The target element must carry id="main-content".
  */
-function SkipLink({ className, ...props }: React.ComponentProps<"a">) {
+function SkipLink({ className, children, ...props }: React.ComponentProps<"a">) {
   return (
     <a
       href="#main-content"
@@ -15,7 +15,7 @@ function SkipLink({ className, ...props }: React.ComponentProps<"a">) {
       )}
       {...props}
     >
-      Hopp til hovedinnhold
+      {children}
     </a>
   );
 }

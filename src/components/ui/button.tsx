@@ -8,8 +8,9 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-navy-800",
+        default: "bg-primary text-primary-foreground hover:bg-[#0c242c]",
         sea: "bg-sea text-sea-foreground hover:bg-sea-800",
+        rodberg: "bg-rodberg text-rodberg-foreground hover:bg-rodberg-deep",
         secondary: "bg-secondary text-secondary-foreground hover:bg-navy-100",
         outline: "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
         ghost: "hover:bg-accent hover:text-accent-foreground",
