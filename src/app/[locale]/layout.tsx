@@ -8,6 +8,7 @@ import "../globals.css";
 import { SkipLink } from "@/components/ui/skip-link";
 import { SiteHeader } from "@/components/site/site-header";
 import { SiteFooter } from "@/components/site/site-footer";
+import { AssistantWidget } from "@/components/site/assistant-widget";
 import { Analytics } from "@/components/analytics/plausible";
 import { SiteJsonLd } from "@/components/site/json-ld";
 
@@ -95,6 +96,7 @@ export default async function LocaleLayout({ children, params }: Props) {
           <SiteHeader />
           {children}
           <SiteFooter />
+          <AssistantWidget />
         </NextIntlClientProvider>
         <SiteJsonLd />
         <Analytics />

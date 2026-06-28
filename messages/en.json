@@ -1,4 +1,20 @@
 {
+  "assistant": {
+    "openLabel": "Open the Knotten assistant",
+    "closeLabel": "Close",
+    "fab": "Ask Knotten",
+    "title": "Knotten assistant",
+    "badge": "Preview",
+    "intro": "Hei. I will be the Knotten assistant, here to answer your questions about the energy concept, the area, the homes and the buying process, day or night.",
+    "suggestionsLabel": "I will be able to help with",
+    "s1": "How does the shared solar work?",
+    "s2": "What will a plot cost?",
+    "s3": "When could I move in?",
+    "status": "Preview only. I am not answering yet and use no live data; for now, register your interest or contact the team.",
+    "placeholder": "Ask about Knotten…",
+    "comingSoon": "Coming soon",
+    "cta": "Register interest"
+  },
   "home": {
     "metaTitle": "Knotten at Rødberg | Sea Views in Lindesnes",
     "metaDescription": "Knotten is an energy-smart residential area in development at Rødberg by Sniksfjorden in Lindesnes. Sea views, robust quality and low energy costs. Register interest.",

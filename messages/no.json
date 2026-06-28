@@ -1,4 +1,20 @@
 {
+  "assistant": {
+    "openLabel": "Åpne Knotten-assistenten",
+    "closeLabel": "Lukk",
+    "fab": "Spør Knotten",
+    "title": "Knotten-assistent",
+    "badge": "Forhåndsvisning",
+    "intro": "Hei. Jeg blir Knotten-assistenten, her for å svare på spørsmålene dine om energikonseptet, området, boligene og kjøpsprosessen, dag som natt.",
+    "suggestionsLabel": "Jeg vil kunne hjelpe med",
+    "s1": "Hvordan fungerer den delte solenergien?",
+    "s2": "Hva vil en tomt koste?",
+    "s3": "Når kan jeg flytte inn?",
+    "status": "Kun forhåndsvisning. Jeg svarer ikke ennå og bruker ingen sanntidsdata; meld interesse eller kontakt teamet i mellomtiden.",
+    "placeholder": "Spør om Knotten…",
+    "comingSoon": "Kommer snart",
+    "cta": "Meld interesse"
+  },
   "home": {
     "metaTitle": "Knotten på Rødberg | Sjøutsikt i Lindesnes",
     "metaDescription": "Knotten er et energismart boligområde under utvikling på Rødberg ved Sniksfjorden i Lindesnes. Sjøutsikt, robust standard og lave energikostnader. Meld interesse.",
