@@ -628,10 +628,12 @@ function InvestorModel({
 function Investor({
   h,
   onElev,
+  onPose,
   speedMul,
 }: {
   h: Heightmap;
   onElev: (m: number) => void;
+  onPose: (p: { u: number; v: number }) => void;
   speedMul: number;
 }) {
   const { camera, gl } = useThree();
@@ -812,6 +814,7 @@ function Investor({
     if (since.current > 0.2) {
       since.current = 0;
       onElev(ground + alt.current);
+      onPose({ u, v });
     }
   });
 
@@ -825,6 +828,7 @@ function Investor({
 function Scene({
   h,
   onElev,
+  onPose,
   trees,
   season,
   time,
@@ -832,6 +836,7 @@ function Scene({
 }: {
   h: Heightmap;
   onElev: (m: number) => void;
+  onPose: (p: { u: number; v: number }) => void;
   trees: number[][] | null;
   season: SunSeason;
   time: SunTime;
@@ -898,8 +903,36 @@ function Scene({
       <PlotLabels h={h} />
       <AmenityMarkers h={h} />
 
-      <Investor h={h} onElev={onElev} speedMul={speedMul} />
+      <Investor h={h} onElev={onElev} onPose={onPose} speedMul={speedMul} />
     </>
+  );
+}
+
+/**
+ * A small orientation minimap, north up: the site bounds with each plot as a
+ * status dot and the investor's live position.
+ */
+function Minimap({ pose }: { pose: { u: number; v: number } | null }) {
+  const S = 130;
+  return (
+    <div className="pointer-events-none absolute right-3 bottom-12 rounded-md bg-black/55 p-1.5">
+      <div className="relative overflow-hidden rounded" style={{ width: S, height: S }}>
+        <div className="absolute inset-0 bg-gradient-to-b from-[#41603a] via-[#3a5740] to-[#28506a]" />
+        {PLOTS.map((p) => (
+          <span
+            key={p.id}
+            className="absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-1 ring-black/40"
+            style={{ left: p.u * S, top: p.v * S, background: STATUS_COLOR[p.status] ?? "#37a06a" }}
+          />
+        ))}
+        {pose ? (
+          <span
+            className="absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white bg-[#16c2d4]"
+            style={{ left: pose.u * S, top: pose.v * S }}
+          />
+        ) : null}
+      </div>
+    </div>
   );
 }
 
@@ -912,6 +945,7 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
   const [season, setSeason] = useState<SunSeason>("summer");
   const [time, setTime] = useState<SunTime>("midday");
   const [speedMul, setSpeedMul] = useState(1);
+  const [pose, setPose] = useState<{ u: number; v: number } | null>(null);
 
   useEffect(() => {
     const onChange = () => setLocked(Boolean(document.pointerLockElement));
@@ -939,6 +973,7 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
         <Scene
           h={heightmap}
           onElev={setElev}
+          onPose={setPose}
           trees={trees}
           season={season}
           time={time}
@@ -971,6 +1006,8 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
       <div className="pointer-events-none absolute right-3 bottom-3 rounded-md bg-[#9e4a2c]/90 px-3 py-1 text-xs font-medium text-white">
         {t("hud.indicative")}
       </div>
+
+      <Minimap pose={pose} />
 
       {/* Sun control: real season and time of day for 58 N. Release the cursor
           (Esc) to click. */}
