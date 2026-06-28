@@ -15,7 +15,6 @@ import {
 import { sunDirection } from "@/components/terrain/sun";
 import { cn } from "@/lib/utils";
 import { PLOTS } from "@/content/plots";
-import { HOUSE_TYPES } from "@/content/house-types";
 import { AMENITIES, SITE } from "@/content/amenities";
 
 /* eslint-disable react-hooks/immutability -- React Three Fiber drives the scene
@@ -186,98 +185,110 @@ function Trees({ list }: { list: number[][] }) {
   );
 }
 
-/**
- * Indicative house massing, generated from the placeholder house-type envelopes
- * and the real Norwegian small-house rules: about 6 m eaves, a gable saltak kept
- * under the 9 m ridge limit (pbl 29-4), white Sorlandet timber. Clearly not a
- * final design; the count, placement and form change with the zoning plan. One
- * home per placeholder plot for now.
- */
-function makeRoof(W: number, D: number, rise: number): THREE.ExtrudeGeometry {
-  const ov = 0.35; // eave overhang
-  const s = new THREE.Shape();
-  s.moveTo(-W / 2 - ov, 0);
-  s.lineTo(W / 2 + ov, 0);
-  s.lineTo(0, rise);
-  s.closePath();
-  const g = new THREE.ExtrudeGeometry(s, { depth: D + 2 * ov, bevelEnabled: false });
-  g.translate(0, 0, -(D + 2 * ov) / 2);
-  g.computeVertexNormals();
-  return g;
-}
+const FLOOR_H = 3; // metres per storey
 
 /**
- * Indicative rooftop solar, a dark-glass panel array laid on one roof slope at
- * the real pitch. The PV concept is real (about 1010 kWh/kWp at 58 N); the panel
- * placement is indicative, like the massing.
+ * Indicative multi-storey residential building: a clean white massing with
+ * ribbon windows on each floor, a flat roof and a rooftop solar array. These are
+ * the larger blocks a denser coastal plan would allow, not single houses. The
+ * form, height and count are indicative and follow the zoning plan; the solar
+ * yield is real (about 1010 kWh/kWp at 58 N).
  */
-function RoofPanels({ W, D, eaveH, rise }: { W: number; D: number; eaveH: number; rise: number }) {
-  const a = Math.atan2(rise, W / 2);
-  const len = Math.hypot(W / 2, rise) * 0.78;
-  const dep = D * 0.62;
-  const cy = eaveH + rise / 2 + Math.cos(a) * 0.12;
-  const dx = W / 4 + Math.sin(a) * 0.12;
+function BigBuilding({ W, D, storeys }: { W: number; D: number; storeys: number }) {
+  const H = storeys * FLOOR_H;
+  const mass = useMemo(
+    () => new THREE.MeshStandardMaterial({ color: "#e9ebe6", roughness: 0.85 }),
+    [],
+  );
+  const glass = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: "#2b4763",
+        metalness: 0.45,
+        roughness: 0.18,
+        emissive: new THREE.Color("#16293f"),
+        emissiveIntensity: 0.22,
+      }),
+    [],
+  );
+  const roofMat = useMemo(
+    () => new THREE.MeshStandardMaterial({ color: "#565b62", roughness: 0.8 }),
+    [],
+  );
+  const pv = useMemo(
+    () =>
+      new THREE.MeshStandardMaterial({
+        color: "#1f5aa8",
+        metalness: 0.6,
+        roughness: 0.16,
+        emissive: new THREE.Color("#1b3f73"),
+        emissiveIntensity: 0.3,
+        side: THREE.DoubleSide,
+      }),
+    [],
+  );
+  const floors = useMemo(() => {
+    const out: number[] = [];
+    for (let f = 0; f < storeys; f++) out.push(f * FLOOR_H + FLOOR_H * 0.55);
+    return out;
+  }, [storeys]);
+  const bw = W * 0.86;
+  const bd = D * 0.86;
+  const bh = FLOOR_H * 0.42;
   return (
-    <>
-      <mesh position={[dx, cy, 0]} rotation={[0, 0, -a]}>
-        <boxGeometry args={[len, 0.14, dep]} />
-        <meshStandardMaterial
-          color="#1f5aa8"
-          metalness={0.6}
-          roughness={0.16}
-          emissive="#1b3f73"
-          emissiveIntensity={0.35}
-        />
+    <group>
+      <mesh position={[0, H / 2, 0]} material={mass}>
+        <boxGeometry args={[W, H, D]} />
       </mesh>
-      <mesh position={[-dx, cy, 0]} rotation={[0, 0, a]}>
-        <boxGeometry args={[len, 0.14, dep]} />
-        <meshStandardMaterial
-          color="#1f5aa8"
-          metalness={0.6}
-          roughness={0.16}
-          emissive="#1b3f73"
-          emissiveIntensity={0.35}
-        />
+      {floors.map((wy, f) => (
+        <group key={f}>
+          <mesh position={[0, wy, D / 2 + 0.03]} material={glass}>
+            <boxGeometry args={[bw, bh, 0.06]} />
+          </mesh>
+          <mesh position={[0, wy, -D / 2 - 0.03]} material={glass}>
+            <boxGeometry args={[bw, bh, 0.06]} />
+          </mesh>
+          <mesh position={[W / 2 + 0.03, wy, 0]} material={glass}>
+            <boxGeometry args={[0.06, bh, bd]} />
+          </mesh>
+          <mesh position={[-W / 2 - 0.03, wy, 0]} material={glass}>
+            <boxGeometry args={[0.06, bh, bd]} />
+          </mesh>
+        </group>
+      ))}
+      <mesh position={[0, H + 0.2, 0]} material={roofMat}>
+        <boxGeometry args={[W + 0.3, 0.4, D + 0.3]} />
       </mesh>
-    </>
+      <mesh position={[0, H + 0.46, 0]} rotation={[-Math.PI / 2, 0, 0]} material={pv}>
+        <planeGeometry args={[W * 0.8, D * 0.66]} />
+      </mesh>
+    </group>
   );
 }
 
 function Houses({ h }: { h: Heightmap }) {
-  const houses = useMemo(() => {
-    // Skip the first plot, which is rendered as the enterable show-home.
+  const blocks = useMemo(() => {
+    // Skip the first plot, which is the enterable show-home building.
     const out = [];
     for (let i = 1; i < PLOTS.length; i++) {
       const p = PLOTS[i];
       if (!p) continue;
-      const ht = HOUSE_TYPES[i % HOUSE_TYPES.length];
-      const foot = ht ? ht.footprintM2 : 90;
-      const area = ht ? ht.heatedAreaM2 : 140;
-      const W = Math.sqrt(foot * 1.35);
-      const D = foot / W;
-      const storeys = area / foot > 1.55 ? 2 : 1;
-      const eaveH = storeys === 2 ? 5.8 : 3.2;
-      const rise = Math.min((W / 2) * Math.tan((38 * Math.PI) / 180), 9 - eaveH);
+      const storeys = 3 + (i % 2); // three or four storeys
+      const W = 15 + (i % 3) * 3;
+      const D = 11 + (i % 2) * 2;
       const [x, z] = worldXZ(h, p.u, p.v);
       const y = elevationAt(h, p.u, p.v) - 0.3;
       const yaw = -bearingToSea(h, p.u, p.v) + Math.PI / 2;
-      out.push({ id: p.id, x, y, z, W, D, eaveH, rise, yaw, roof: makeRoof(W, D, rise) });
+      out.push({ id: p.id, x, y, z, W, D, storeys, yaw });
     }
     return out;
   }, [h]);
 
   return (
     <>
-      {houses.map((ho) => (
-        <group key={ho.id} position={[ho.x, ho.y, ho.z]} rotation={[0, ho.yaw, 0]}>
-          <mesh position={[0, ho.eaveH / 2, 0]}>
-            <boxGeometry args={[ho.W, ho.eaveH, ho.D]} />
-            <meshStandardMaterial color="#edefea" roughness={0.82} metalness={0} />
-          </mesh>
-          <mesh position={[0, ho.eaveH, 0]} geometry={ho.roof}>
-            <meshStandardMaterial color="#3a4047" roughness={0.7} metalness={0} />
-          </mesh>
-          <RoofPanels W={ho.W} D={ho.D} eaveH={ho.eaveH} rise={ho.rise} />
+      {blocks.map((b) => (
+        <group key={b.id} position={[b.x, b.y, b.z]} rotation={[0, b.yaw, 0]}>
+          <BigBuilding W={b.W} D={b.D} storeys={b.storeys} />
         </group>
       ))}
     </>
@@ -407,10 +418,11 @@ function PlotLabels({ h }: { h: Heightmap }) {
 }
 
 /**
- * One enterable show-home at the start plot: floor, walls, a doorway and a large
+ * The enterable show-home building at the start plot: a multi-storey block like
+ * its neighbours, but with an open, enterable ground floor behind a large
  * sea-facing picture window, so a visitor can step inside and look out to the
- * fjord. Clearly indicative, like all the massing. Walls are double-sided so the
- * interior reads; there is no collision, so the visitor simply walks in.
+ * fjord. Walls are double-sided so the interior reads; there is no collision, so
+ * the visitor simply walks in. Indicative, like all the massing.
  */
 function ShowHome({ h }: { h: Heightmap }) {
   const cfg = useMemo(() => {
@@ -422,38 +434,33 @@ function ShowHome({ h }: { h: Heightmap }) {
     const yaw = Math.PI / 2 - bearingToSea(h, u, v); // local +Z faces the sea
     return { x, y, z, yaw };
   }, [h]);
-  const W = 11;
-  const D = 8.5;
-  const eaveH = 5.6;
+  const W = 14;
+  const D = 10;
+  const gH = 3.2; // enterable ground-floor height
   const t2 = 0.2;
-  const rise = Math.min((W / 2) * Math.tan((38 * Math.PI) / 180), 9 - eaveH);
-  const roof = useMemo(() => makeRoof(W, D, rise), [rise]);
-  const back = W / 2 - 0.6; // back-wall panel width (1.2 m doorway gap)
+  const back = W / 2 - 0.7; // back-wall panel width (1.4 m doorway gap)
 
   return (
     <group position={[cfg.x, cfg.y, cfg.z]} rotation={[0, cfg.yaw, 0]}>
+      {/* enterable ground floor */}
       <mesh position={[0, 0.06, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[W, D]} />
         <meshStandardMaterial color="#a9854f" roughness={0.75} side={THREE.DoubleSide} />
       </mesh>
-      <mesh position={[0, eaveH, 0]} rotation={[Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[W, D]} />
-        <meshStandardMaterial color="#e7e9e4" roughness={0.9} side={THREE.DoubleSide} />
-      </mesh>
-      <mesh position={[-W / 2, eaveH / 2, 0]}>
-        <boxGeometry args={[t2, eaveH, D]} />
+      <mesh position={[-W / 2, gH / 2, 0]}>
+        <boxGeometry args={[t2, gH, D]} />
         <meshStandardMaterial color="#edefea" roughness={0.82} side={THREE.DoubleSide} />
       </mesh>
-      <mesh position={[W / 2, eaveH / 2, 0]}>
-        <boxGeometry args={[t2, eaveH, D]} />
+      <mesh position={[W / 2, gH / 2, 0]}>
+        <boxGeometry args={[t2, gH, D]} />
         <meshStandardMaterial color="#edefea" roughness={0.82} side={THREE.DoubleSide} />
       </mesh>
-      <mesh position={[-(W / 4 + 0.3), eaveH / 2, -D / 2]}>
-        <boxGeometry args={[back, eaveH, t2]} />
+      <mesh position={[-(W / 4 + 0.35), gH / 2, -D / 2]}>
+        <boxGeometry args={[back, gH, t2]} />
         <meshStandardMaterial color="#edefea" roughness={0.82} side={THREE.DoubleSide} />
       </mesh>
-      <mesh position={[W / 4 + 0.3, eaveH / 2, -D / 2]}>
-        <boxGeometry args={[back, eaveH, t2]} />
+      <mesh position={[W / 4 + 0.35, gH / 2, -D / 2]}>
+        <boxGeometry args={[back, gH, t2]} />
         <meshStandardMaterial color="#edefea" roughness={0.82} side={THREE.DoubleSide} />
       </mesh>
       {/* sea-facing wall: a low sill and a glass picture window */}
@@ -461,8 +468,8 @@ function ShowHome({ h }: { h: Heightmap }) {
         <boxGeometry args={[W, 0.9, t2]} />
         <meshStandardMaterial color="#edefea" roughness={0.82} side={THREE.DoubleSide} />
       </mesh>
-      <mesh position={[0, (eaveH + 0.9) / 2, D / 2]}>
-        <boxGeometry args={[W - 0.4, eaveH - 0.9, 0.08]} />
+      <mesh position={[0, (gH + 0.9) / 2, D / 2]}>
+        <boxGeometry args={[W - 0.4, gH - 0.9, 0.08]} />
         <meshStandardMaterial
           color="#9fd0e0"
           transparent
@@ -472,10 +479,10 @@ function ShowHome({ h }: { h: Heightmap }) {
           side={THREE.DoubleSide}
         />
       </mesh>
-      <mesh position={[0, eaveH, 0]} geometry={roof}>
-        <meshStandardMaterial color="#3a4047" roughness={0.7} />
-      </mesh>
-      <RoofPanels W={W} D={D} eaveH={eaveH} rise={rise} />
+      {/* the storeys above, the same block form as the neighbours */}
+      <group position={[0, gH, 0]}>
+        <BigBuilding W={W} D={D} storeys={3} />
+      </group>
     </group>
   );
 }
