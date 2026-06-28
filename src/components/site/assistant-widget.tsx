@@ -32,11 +32,16 @@ function Mark({ className }: { className?: string }) {
   );
 }
 
+type Msg = { role: "user" | "assistant"; text: string };
+
 export function AssistantWidget() {
   const t = useTranslations("assistant");
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [messages, setMessages] = useState<Msg[]>(() => [{ role: "assistant", text: t("intro") }]);
   const fabRef = useRef<HTMLButtonElement | null>(null);
+  const scrollRef = useRef<HTMLDivElement | null>(null);
   const titleId = useId();
 
   useEffect(() => {
@@ -51,10 +56,26 @@ export function AssistantWidget() {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
 
+  // Keep the latest message in view.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages, open]);
+
+  const send = () => {
+    const text = draft.trim();
+    if (!text) return;
+    setDraft("");
+    setMessages((m) => [...m, { role: "user", text }]);
+    // The preview always replies with the same honest note; a short pause reads
+    // as a reply, with no blinking indicator.
+    window.setTimeout(() => {
+      setMessages((m) => [...m, { role: "assistant", text: t("status") }]);
+    }, 500);
+  };
+
   // The immersive 3D route has its own controls; keep the assistant off it.
   if (/\/(opplev|experience)\/?$/.test(pathname ?? "")) return null;
-
-  const suggestions = [t("s1"), t("s2"), t("s3")];
 
   return (
     <div className="fixed right-4 bottom-4 z-50 flex flex-col items-end sm:right-6 sm:bottom-6">
@@ -97,56 +118,59 @@ export function AssistantWidget() {
             </button>
           </header>
 
-          <div className="flex-1 space-y-4 overflow-y-auto px-4 py-4">
-            <div className="flex gap-2.5">
-              <span className="assistant-mark mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full">
-                <Mark className="h-3.5 w-3.5" />
-              </span>
-              <p className="rounded-lg rounded-tl-sm bg-white/[0.07] px-3 py-2 text-[13px] leading-relaxed text-white/90">
-                {t("intro")}
-              </p>
-            </div>
-
-            <div>
-              <p className="mb-2 text-[11px] font-medium tracking-wide text-white/45 uppercase">
-                {t("suggestionsLabel")}
-              </p>
-              <ul className="flex flex-col gap-1.5">
-                {suggestions.map((s) => (
-                  <li
-                    key={s}
-                    className="cursor-default rounded-md border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[12.5px] text-white/65"
-                  >
-                    {s}
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <p className="rounded-md border border-[#c2674a]/30 bg-[#c2674a]/12 px-3 py-2 text-[12px] leading-relaxed text-[#f0c5b0]">
-              {t("status")}
-            </p>
+          <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+            {messages.map((m, i) =>
+              m.role === "assistant" ? (
+                <div key={i} className="flex gap-2.5">
+                  <span className="assistant-mark mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full">
+                    <Mark className="h-3.5 w-3.5" />
+                  </span>
+                  <p className="max-w-[85%] rounded-lg rounded-tl-sm bg-white/[0.07] px-3 py-2 text-[13px] leading-relaxed text-white/90">
+                    {m.text}
+                  </p>
+                </div>
+              ) : (
+                <div key={i} className="flex justify-end">
+                  <p className="max-w-[85%] rounded-lg rounded-tr-sm bg-[#16c2d4]/20 px-3 py-2 text-[13px] leading-relaxed text-white">
+                    {m.text}
+                  </p>
+                </div>
+              ),
+            )}
           </div>
 
           <footer className="border-t border-white/10 p-3">
-            <div className="flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.04] px-3 py-2 opacity-60">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                send();
+              }}
+              className="flex items-center gap-2 rounded-md border border-white/10 bg-white/[0.05] px-3 py-2 focus-within:border-[#7fd6df]/50"
+            >
               <input
-                disabled
+                value={draft}
+                onChange={(e) => setDraft(e.target.value)}
                 placeholder={t("placeholder")}
                 aria-label={t("placeholder")}
+                autoComplete="off"
                 className="min-w-0 flex-1 bg-transparent text-[13px] text-white outline-none placeholder:text-white/40"
               />
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-[#16c2d4]/30 text-[#9fe9f1]">
+              <button
+                type="submit"
+                aria-label="Send"
+                disabled={!draft.trim()}
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-[#16c2d4] text-[#06222b] transition-opacity disabled:opacity-40"
+              >
                 <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" aria-hidden="true">
                   <path
                     d="M4 12 20 4l-4 16-4.5-6L4 12Z"
                     stroke="currentColor"
-                    strokeWidth="1.5"
+                    strokeWidth="1.6"
                     strokeLinejoin="round"
                   />
                 </svg>
-              </span>
-            </div>
+              </button>
+            </form>
             <p className="mt-2 flex items-center justify-between px-0.5 text-[11px] text-white/45">
               <span>{t("comingSoon")}</span>
               <Link
