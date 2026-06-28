@@ -479,6 +479,36 @@ function ShowHome({ h }: { h: Heightmap }) {
           side={THREE.DoubleSide}
         />
       </mesh>
+      {/* a lightly furnished living space, so stepping inside has a payoff */}
+      <mesh position={[0, 0.08, 0.5]}>
+        <boxGeometry args={[5, 0.04, 4]} />
+        <meshStandardMaterial color="#8a7d63" roughness={0.95} />
+      </mesh>
+      <mesh position={[0, 0.42, -0.3]}>
+        <boxGeometry args={[3.2, 0.45, 1.1]} />
+        <meshStandardMaterial color="#566270" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 0.8, -0.85]}>
+        <boxGeometry args={[3.2, 0.7, 0.22]} />
+        <meshStandardMaterial color="#566270" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 0.28, 0.95]}>
+        <boxGeometry args={[1.5, 0.42, 0.8]} />
+        <meshStandardMaterial color="#6b4f34" roughness={0.6} />
+      </mesh>
+      <mesh position={[W / 2 - 0.6, 0.45, -1]}>
+        <boxGeometry args={[0.8, 0.9, 4]} />
+        <meshStandardMaterial color="#d8dad5" roughness={0.7} />
+      </mesh>
+      <mesh position={[W / 2 - 0.6, 0.92, -1]}>
+        <boxGeometry args={[0.95, 0.08, 4.1]} />
+        <meshStandardMaterial color="#2e3033" roughness={0.5} metalness={0.1} />
+      </mesh>
+      <mesh position={[-W / 2 + 1.5, 0.37, 1.2]}>
+        <boxGeometry args={[1.5, 0.74, 2.2]} />
+        <meshStandardMaterial color="#6b4f34" roughness={0.6} />
+      </mesh>
+
       {/* the storeys above, the same block form as the neighbours */}
       <group position={[0, gH, 0]}>
         <BigBuilding W={W} D={D} storeys={3} />
