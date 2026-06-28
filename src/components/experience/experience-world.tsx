@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { PointerLockControls, Sky, Html } from "@react-three/drei";
+import { Sky, Html } from "@react-three/drei";
 import * as THREE from "three";
 import { useTranslations, useLocale } from "next-intl";
 import {
@@ -305,9 +305,11 @@ function usePrefersReducedMotion(): boolean {
  * shared hub, an indicative picture of the rooftop solar feeding the local
  * energy sharing (plusskunde up to 1 MW per property). The figures are real
  * (PVGIS about 1010 kWh/kWp at 58 N); the layout is indicative. Under reduced
- * motion the particles are placed once and held still.
+ * motion the particles are placed once and held still. The flow speeds up and
+ * brightens with the sun (gen, from the real solar altitude), so the energy
+ * visibly tracks generation as the season and time of day change.
  */
-function EnergyFlows({ h }: { h: Heightmap }) {
+function EnergyFlows({ h, gen }: { h: Heightmap; gen: number }) {
   const { hub, starts } = useMemo(() => {
     const pts = PLOTS.map((p) => {
       const [x, z] = worldXZ(h, p.u, p.v);
@@ -338,7 +340,7 @@ function EnergyFlows({ h }: { h: Heightmap }) {
       const st = starts[s];
       if (!st) continue;
       for (let k = 0; k < PER; k++) {
-        const t = (time * 0.22 + k / PER + s * 0.137) % 1;
+        const t = (time * (0.07 + gen * 0.26) + k / PER + s * 0.137) % 1;
         v.lerpVectors(st, hub, t);
         v.y += Math.sin(t * Math.PI) * 5;
         m.makeTranslation(v.x, v.y, v.z);
@@ -356,7 +358,7 @@ function EnergyFlows({ h }: { h: Heightmap }) {
         <meshStandardMaterial
           color="#16c2d4"
           emissive="#16c2d4"
-          emissiveIntensity={1.1}
+          emissiveIntensity={0.5 + gen * 0.9}
           roughness={0.3}
         />
       </mesh>
@@ -365,7 +367,7 @@ function EnergyFlows({ h }: { h: Heightmap }) {
         <meshStandardMaterial
           color="#aef4fc"
           emissive="#7fe3ec"
-          emissiveIntensity={1.6}
+          emissiveIntensity={0.7 + gen * 1.2}
           roughness={0.4}
         />
       </instancedMesh>
@@ -524,91 +526,268 @@ function AmenityMarkers({ h }: { h: Heightmap }) {
   );
 }
 
-function Player({ h, onElev }: { h: Heightmap; onElev: (m: number) => void }) {
-  const { camera } = useThree();
-  const keys = useRef<Record<string, boolean>>({});
-  const since = useRef(0);
-  const placed = useRef(false);
-  const t = useMemo(
-    () => ({
-      d: new THREE.Vector3(),
-      f: new THREE.Vector3(),
-      r: new THREE.Vector3(),
-      m: new THREE.Vector3(),
-    }),
-    [],
+/**
+ * The investor: a low-poly figure in a dark suit with a white shirt, a tie and a
+ * briefcase, built from primitives (no external asset). Modelled facing +Z; the
+ * controller rotates the whole group to face the walking direction.
+ */
+function InvestorModel() {
+  const suit = "#2a3346";
+  const suitDark = "#232b3b";
+  const skin = "#d8a878";
+  return (
+    <group>
+      <mesh position={[-0.12, 0.46, 0]}>
+        <boxGeometry args={[0.2, 0.92, 0.24]} />
+        <meshStandardMaterial color={suitDark} roughness={0.85} />
+      </mesh>
+      <mesh position={[0.12, 0.46, 0]}>
+        <boxGeometry args={[0.2, 0.92, 0.24]} />
+        <meshStandardMaterial color={suitDark} roughness={0.85} />
+      </mesh>
+      <mesh position={[-0.12, 0.05, 0.06]}>
+        <boxGeometry args={[0.22, 0.12, 0.36]} />
+        <meshStandardMaterial color="#141619" roughness={0.5} />
+      </mesh>
+      <mesh position={[0.12, 0.05, 0.06]}>
+        <boxGeometry args={[0.22, 0.12, 0.36]} />
+        <meshStandardMaterial color="#141619" roughness={0.5} />
+      </mesh>
+      <mesh position={[0, 1.22, 0]}>
+        <boxGeometry args={[0.56, 0.68, 0.32]} />
+        <meshStandardMaterial color={suit} roughness={0.78} />
+      </mesh>
+      <mesh position={[0, 1.28, 0.17]}>
+        <boxGeometry args={[0.16, 0.5, 0.02]} />
+        <meshStandardMaterial color="#eef1f4" roughness={0.6} />
+      </mesh>
+      <mesh position={[0, 1.2, 0.185]}>
+        <boxGeometry args={[0.05, 0.34, 0.02]} />
+        <meshStandardMaterial color="#8a2433" roughness={0.5} />
+      </mesh>
+      <mesh position={[-0.37, 1.22, 0]}>
+        <boxGeometry args={[0.16, 0.66, 0.22]} />
+        <meshStandardMaterial color={suit} roughness={0.78} />
+      </mesh>
+      <mesh position={[0.37, 1.2, 0.05]}>
+        <boxGeometry args={[0.16, 0.66, 0.22]} />
+        <meshStandardMaterial color={suit} roughness={0.78} />
+      </mesh>
+      <mesh position={[0.37, 0.84, 0.05]}>
+        <boxGeometry args={[0.11, 0.12, 0.13]} />
+        <meshStandardMaterial color={skin} roughness={0.7} />
+      </mesh>
+      <mesh position={[0, 1.68, 0]}>
+        <sphereGeometry args={[0.14, 16, 16]} />
+        <meshStandardMaterial color={skin} roughness={0.7} />
+      </mesh>
+      <mesh position={[0, 1.74, -0.02]}>
+        <sphereGeometry args={[0.145, 16, 12, 0, Math.PI * 2, 0, Math.PI * 0.55]} />
+        <meshStandardMaterial color="#33291f" roughness={0.85} />
+      </mesh>
+      <mesh position={[0.53, 0.62, 0.05]}>
+        <boxGeometry args={[0.12, 0.34, 0.44]} />
+        <meshStandardMaterial color="#4a3320" roughness={0.45} metalness={0.1} />
+      </mesh>
+    </group>
   );
+}
+
+/**
+ * Third-person investor controller, GTA-style. WASD or arrows walk in the
+ * camera's frame and the figure turns to face the way it moves; Shift sprints;
+ * Space rises and C descends for an overhead survey. The camera orbits the
+ * investor with the mouse (after a click for pointer lock): the yaw is unbounded
+ * so it spins a full, smooth 360 with no snap, and the pitch sweeps from the sky
+ * down to nearly overhead. Terrain-follow keeps the figure on the real ground.
+ */
+function Investor({
+  h,
+  onElev,
+  speedMul,
+}: {
+  h: Heightmap;
+  onElev: (m: number) => void;
+  speedMul: number;
+}) {
+  const { camera, gl } = useThree();
+  const group = useRef<THREE.Group | null>(null);
+  const keys = useRef<Record<string, boolean>>({});
+  const locked = useRef(false);
+  const dragging = useRef(false);
+  const last = useRef({ x: 0, y: 0 });
+  const placed = useRef(false);
+  const since = useRef(0);
+  const bob = useRef(0);
+  const pos = useRef(new THREE.Vector3());
+  const alt = useRef(0); // metres above the terrain (fly-up survey)
+  const face = useRef(0); // figure heading
+  const orbit = useRef({ yaw: Math.PI, pitch: 0.22 });
 
   useEffect(() => {
+    if (placed.current) return;
+    placed.current = true;
+    const start = PLOTS[0];
+    const u = start ? start.u : 0.3;
+    const v = start ? start.v : 0.62;
+    const [px, pz] = worldXZ(h, u, v);
+    const b = bearingToSea(h, u, v);
+    const bx = px - Math.cos(b) * 24 - Math.sin(b) * 15;
+    const bz = pz - Math.sin(b) * 24 + Math.cos(b) * 15;
+    const gy = Math.max(elevationAt(h, bx / h.widthMeters + 0.5, bz / h.heightMeters + 0.5), 0);
+    pos.current.set(bx, gy, bz);
+    const toPlot = Math.atan2(px - bx, pz - bz);
+    face.current = toPlot;
+    orbit.current.yaw = toPlot;
+  }, [h]);
+
+  useEffect(() => {
+    const dom = gl.domElement;
+    // Two ways to look, both smooth and unbounded (a full 360 with no snap):
+    // press and drag, or click once to capture the mouse (pointer lock).
+    const onPointerDown = (e: PointerEvent) => {
+      dragging.current = true;
+      last.current = { x: e.clientX, y: e.clientY };
+      if (document.pointerLockElement !== dom) {
+        try {
+          const ret = dom.requestPointerLock?.() as unknown;
+          if (ret && typeof (ret as { catch?: unknown }).catch === "function") {
+            (ret as Promise<void>).catch(() => {});
+          }
+        } catch {
+          // Pointer lock can be unavailable (embedded contexts); drag-look covers it.
+        }
+      }
+    };
+    const onPointerUp = () => {
+      dragging.current = false;
+    };
+    const onLockChange = () => {
+      locked.current = document.pointerLockElement === dom;
+    };
+    const onMouseMove = (e: PointerEvent) => {
+      let dx: number;
+      let dy: number;
+      if (locked.current) {
+        // Pointer-lock: relative movement deltas.
+        dx = e.movementX;
+        dy = e.movementY;
+      } else if (dragging.current) {
+        // Press-and-drag: absolute cursor deltas, so a full 360 stays smooth.
+        dx = e.clientX - last.current.x;
+        dy = e.clientY - last.current.y;
+        last.current = { x: e.clientX, y: e.clientY };
+      } else {
+        return;
+      }
+      orbit.current.yaw -= dx * 0.0026;
+      orbit.current.pitch += dy * 0.0026;
+      // From looking up at the sky to almost straight down for an overhead view.
+      orbit.current.pitch = Math.max(-1.15, Math.min(1.45, orbit.current.pitch));
+    };
     const down = (e: KeyboardEvent) => {
       keys.current[e.code] = true;
+      if (e.code === "Space") e.preventDefault();
     };
     const up = (e: KeyboardEvent) => {
       keys.current[e.code] = false;
     };
+    dom.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointerup", onPointerUp);
+    document.addEventListener("pointerlockchange", onLockChange);
+    document.addEventListener("pointermove", onMouseMove);
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     return () => {
+      dom.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointerup", onPointerUp);
+      document.removeEventListener("pointerlockchange", onLockChange);
+      document.removeEventListener("pointermove", onMouseMove);
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
     };
-  }, []);
-
-  useEffect(() => {
-    // Place the walker once. The heightmap swaps from coarse to high-res under
-    // the same extent, so we keep the player where they are on the swap.
-    if (placed.current) return;
-    placed.current = true;
-    const start = PLOTS[0];
-    const u = start ? start.u : 0.4;
-    const v = start ? start.v : 0.55;
-    const [px, pz] = worldXZ(h, u, v);
-    const b = bearingToSea(h, u, v);
-    // Stand back from the plot, uphill away from the sea and a little to one
-    // side, so the visitor opens on a three-quarter view of the show-home (its
-    // roof and solar slope) with the home and the fjord both ahead.
-    const bx = px - Math.cos(b) * 30 - Math.sin(b) * 22;
-    const bz = pz - Math.sin(b) * 30 + Math.cos(b) * 22;
-    const gu = bx / h.widthMeters + 0.5;
-    const gv = bz / h.heightMeters + 0.5;
-    const y = Math.max(elevationAt(h, gu, gv), 0) + EYE_HEIGHT;
-    camera.position.set(bx, y, bz);
-    camera.lookAt(px, y - 8, pz);
-  }, [h, camera]);
+  }, [gl]);
 
   useFrame((_, dtRaw) => {
     const dt = Math.min(dtRaw, 0.05);
     const k = keys.current;
-    camera.getWorldDirection(t.d);
-    t.f.set(t.d.x, 0, t.d.z).normalize();
-    t.r.set(-t.f.z, 0, t.f.x);
-    t.m.set(0, 0, 0);
-    if (k["KeyW"] || k["ArrowUp"]) t.m.add(t.f);
-    if (k["KeyS"] || k["ArrowDown"]) t.m.addScaledVector(t.f, -1);
-    if (k["KeyD"] || k["ArrowRight"]) t.m.add(t.r);
-    if (k["KeyA"] || k["ArrowLeft"]) t.m.addScaledVector(t.r, -1);
-    const speed = k["ShiftLeft"] || k["ShiftRight"] ? SPRINT : WALK;
-    if (t.m.lengthSq() > 0) {
-      t.m.normalize().multiplyScalar(speed * dt);
-      camera.position.x += t.m.x;
-      camera.position.z += t.m.z;
+    const yaw = orbit.current.yaw;
+    const fX = Math.sin(yaw);
+    const fZ = Math.cos(yaw);
+    const rX = Math.cos(yaw);
+    const rZ = -Math.sin(yaw);
+    let mX = 0;
+    let mZ = 0;
+    if (k["KeyW"] || k["ArrowUp"]) {
+      mX += fX;
+      mZ += fZ;
     }
+    if (k["KeyS"] || k["ArrowDown"]) {
+      mX -= fX;
+      mZ -= fZ;
+    }
+    if (k["KeyD"] || k["ArrowRight"]) {
+      mX += rX;
+      mZ += rZ;
+    }
+    if (k["KeyA"] || k["ArrowLeft"]) {
+      mX -= rX;
+      mZ -= rZ;
+    }
+    const len = Math.hypot(mX, mZ);
+    const sprint = k["ShiftLeft"] || k["ShiftRight"];
+    const speed = (sprint ? SPRINT : WALK) * speedMul;
+    if (len > 0) {
+      mX /= len;
+      mZ /= len;
+      pos.current.x += mX * speed * dt;
+      pos.current.z += mZ * speed * dt;
+      face.current = Math.atan2(mX, mZ);
+      bob.current += dt * speed * 1.7;
+    }
+    const climb = 9 * speedMul;
+    if (k["Space"]) alt.current += climb * dt;
+    if (k["KeyC"] || k["ControlLeft"]) alt.current -= climb * dt;
+    alt.current = Math.max(0, Math.min(150, alt.current));
+
     const hw = h.widthMeters / 2 - 3;
     const hh = h.heightMeters / 2 - 3;
-    camera.position.x = Math.max(-hw, Math.min(hw, camera.position.x));
-    camera.position.z = Math.max(-hh, Math.min(hh, camera.position.z));
-    const u = camera.position.x / h.widthMeters + 0.5;
-    const v = camera.position.z / h.heightMeters + 0.5;
+    pos.current.x = Math.max(-hw, Math.min(hw, pos.current.x));
+    pos.current.z = Math.max(-hh, Math.min(hh, pos.current.z));
+    const u = pos.current.x / h.widthMeters + 0.5;
+    const v = pos.current.z / h.heightMeters + 0.5;
     const ground = Math.max(elevationAt(h, u, v), 0);
-    camera.position.y = ground + EYE_HEIGHT;
+    const baseY = ground + alt.current;
+    pos.current.y = baseY;
+
+    const g = group.current;
+    const bobY = len > 0 && alt.current < 0.5 ? Math.abs(Math.sin(bob.current)) * 0.06 : 0;
+    if (g) {
+      g.position.set(pos.current.x, baseY + bobY, pos.current.z);
+      g.rotation.y = face.current;
+    }
+
+    const dist = 6.5;
+    const cp = Math.cos(orbit.current.pitch);
+    const camX = pos.current.x - Math.sin(yaw) * dist * cp;
+    const camZ = pos.current.z - Math.cos(yaw) * dist * cp;
+    let camY = baseY + 2.1 + Math.sin(orbit.current.pitch) * dist;
+    camY = Math.max(ground + 0.8, camY);
+    camera.position.set(camX, camY, camZ);
+    camera.lookAt(pos.current.x, baseY + EYE_HEIGHT, pos.current.z);
+
     since.current += dt;
     if (since.current > 0.2) {
       since.current = 0;
-      onElev(ground);
+      onElev(ground + alt.current);
     }
   });
 
-  return null;
+  return (
+    <group ref={group}>
+      <InvestorModel />
+    </group>
+  );
 }
 
 function Scene({
@@ -617,17 +796,24 @@ function Scene({
   trees,
   season,
   time,
+  speedMul,
 }: {
   h: Heightmap;
   onElev: (m: number) => void;
   trees: number[][] | null;
   season: SunSeason;
   time: SunTime;
+  speedMul: number;
 }) {
   const geo = useMemo(() => buildTerrainGeometry(h), [h]);
-  const sunPos = useMemo(() => {
+  const { sunPos, gen } = useMemo(() => {
     const d = sunDirection(season, time);
-    return new THREE.Vector3(d.x, d.y, d.z).multiplyScalar(4000);
+    return {
+      sunPos: new THREE.Vector3(d.x, d.y, d.z).multiplyScalar(4000),
+      // Generation factor from the real solar altitude: about 1 at summer
+      // midday, low under the winter and morning/evening sun, 0 below horizon.
+      gen: Math.max(0, Math.min(1, d.y / 0.7)),
+    };
   }, [season, time]);
   const warm = time === "morning" || time === "evening";
   const sunColor = warm ? "#ffd9a8" : "#fff4e0";
@@ -676,12 +862,11 @@ function Scene({
       {trees && trees.length ? <Trees list={trees} /> : null}
       <Houses h={h} />
       <ShowHome h={h} />
-      <EnergyFlows h={h} />
+      <EnergyFlows h={h} gen={gen} />
       <PlotLabels h={h} />
       <AmenityMarkers h={h} />
 
-      <PointerLockControls />
-      <Player h={h} onElev={onElev} />
+      <Investor h={h} onElev={onElev} speedMul={speedMul} />
     </>
   );
 }
@@ -694,6 +879,7 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
   const [trees, setTrees] = useState<number[][] | null>(null);
   const [season, setSeason] = useState<SunSeason>("summer");
   const [time, setTime] = useState<SunTime>("midday");
+  const [speedMul, setSpeedMul] = useState(1);
 
   useEffect(() => {
     const onChange = () => setLocked(Boolean(document.pointerLockElement));
@@ -718,14 +904,22 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
   return (
     <div className="relative h-full w-full">
       <Canvas frameloop="always" camera={CAMERA_PROPS} gl={GL_PROPS} dpr={DPR}>
-        <Scene h={heightmap} onElev={setElev} trees={trees} season={season} time={time} />
+        <Scene
+          h={heightmap}
+          onElev={setElev}
+          trees={trees}
+          season={season}
+          time={time}
+          speedMul={speedMul}
+        />
       </Canvas>
 
       {/* Click-to-look hint, shown while the cursor is free */}
       {!locked ? (
         <div className="pointer-events-none absolute inset-x-0 bottom-24 flex justify-center px-4">
           <div className="rounded-md bg-black/55 px-4 py-2 text-center text-sm text-white">
-            {t("controls.walk")} &middot; {t("controls.look")} &middot; {t("controls.sprint")}
+            {t("controls.walk")} &middot; {t("controls.look")} &middot; {t("controls.sprint")}{" "}
+            &middot; {t("controls.fly")}
           </div>
         </div>
       ) : null}
@@ -780,6 +974,26 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
               )}
             >
               {tt(`sun.${tm}`)}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-1 rounded-md bg-black/55 p-1">
+          <span className="px-1 text-[10px] tracking-wide text-white/70 uppercase">
+            {t("controls.speedLabel")}
+          </span>
+          {([1, 2, 3] as const).map((mul) => (
+            <button
+              key={mul}
+              type="button"
+              onClick={() => setSpeedMul(mul)}
+              className={cn(
+                "rounded px-2 py-1 text-xs tabular-nums",
+                speedMul === mul
+                  ? "bg-[#16c2d4] font-medium text-[#06222b]"
+                  : "text-white/85 hover:text-white",
+              )}
+            >
+              {mul}&times;
             </button>
           ))}
         </div>

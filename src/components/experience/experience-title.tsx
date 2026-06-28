@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * The title card over the experience. It is server-rendered for SEO, then fades
- * out once the visitor is in the 3D world (the launcher fires `experience:ready`)
- * or as soon as they interact, so the walk is clean and uncluttered. The same
- * context lives in the narrative below the canvas and in the persistent badge.
+ * The title card over the experience. It is server-rendered for SEO and stays
+ * fully visible so the visitor can read it, then fades out the moment they enter
+ * the world: a click (to look around) or a movement key. The same context lives
+ * in the narrative below the canvas and in the persistent badge.
  */
 export function ExperienceTitle({
   eyebrow,
@@ -21,23 +21,29 @@ export function ExperienceTitle({
   const [hidden, setHidden] = useState(false);
 
   useEffect(() => {
-    let linger: ReturnType<typeof setTimeout> | undefined;
+    // Stay until the visitor enters: hide on the first click or movement key.
     const hideNow = () => setHidden(true);
-    const onReady = () => {
-      // Linger briefly after the world appears, then clear for a clean view.
-      linger = setTimeout(hideNow, 2000);
+    const onKey = (e: KeyboardEvent) => {
+      if (
+        [
+          "KeyW",
+          "KeyA",
+          "KeyS",
+          "KeyD",
+          "ArrowUp",
+          "ArrowDown",
+          "ArrowLeft",
+          "ArrowRight",
+        ].includes(e.code)
+      ) {
+        hideNow();
+      }
     };
-    window.addEventListener("experience:ready", onReady);
-    window.addEventListener("keydown", hideNow);
     window.addEventListener("pointerdown", hideNow);
-    // Fallback so the card never overstays if the ready event is missed.
-    const fallback = setTimeout(hideNow, 11000);
+    window.addEventListener("keydown", onKey);
     return () => {
-      window.removeEventListener("experience:ready", onReady);
-      window.removeEventListener("keydown", hideNow);
       window.removeEventListener("pointerdown", hideNow);
-      if (linger) clearTimeout(linger);
-      clearTimeout(fallback);
+      window.removeEventListener("keydown", onKey);
     };
   }, []);
 

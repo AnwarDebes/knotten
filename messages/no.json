@@ -362,8 +362,10 @@
     "controlsTitle": "Slik beveger du deg",
     "controls": {
       "walk": "WASD eller piltaster for å gå",
-      "look": "Mus for å se deg rundt",
+      "look": "Dra, eller klikk, for å se deg rundt",
       "sprint": "Shift for å gå raskere",
+      "fly": "Space / C for opp og ned",
+      "speedLabel": "Fart",
       "map": "M for kartet",
       "exit": "Esc for å frigjøre pekeren"
     },
