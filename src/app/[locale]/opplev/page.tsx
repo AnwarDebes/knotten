@@ -9,7 +9,14 @@ type Props = { params: Promise<{ locale: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
-  return buildPageMetadata(locale, "opplev", "/opplev");
+  const meta = await buildPageMetadata(locale, "opplev", "/opplev");
+  // A baked still of the experience, so a shared link previews the 3D walk.
+  const poster = { url: "/experience/poster.jpg", width: 1200, height: 630 };
+  return {
+    ...meta,
+    openGraph: { ...meta.openGraph, images: [poster] },
+    twitter: { card: "summary_large_image", images: [poster.url] },
+  };
 }
 
 export default async function OpplevPage({ params }: Props) {
