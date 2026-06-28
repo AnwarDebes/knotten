@@ -206,6 +206,43 @@ function makeRoof(W: number, D: number, rise: number): THREE.ExtrudeGeometry {
   return g;
 }
 
+/**
+ * Indicative rooftop solar, a dark-glass panel array laid on one roof slope at
+ * the real pitch. The PV concept is real (about 1010 kWh/kWp at 58 N); the panel
+ * placement is indicative, like the massing.
+ */
+function RoofPanels({ W, D, eaveH, rise }: { W: number; D: number; eaveH: number; rise: number }) {
+  const a = Math.atan2(rise, W / 2);
+  const len = Math.hypot(W / 2, rise) * 0.78;
+  const dep = D * 0.62;
+  const cy = eaveH + rise / 2 + Math.cos(a) * 0.12;
+  const dx = W / 4 + Math.sin(a) * 0.12;
+  return (
+    <>
+      <mesh position={[dx, cy, 0]} rotation={[0, 0, -a]}>
+        <boxGeometry args={[len, 0.14, dep]} />
+        <meshStandardMaterial
+          color="#1f5aa8"
+          metalness={0.6}
+          roughness={0.16}
+          emissive="#1b3f73"
+          emissiveIntensity={0.35}
+        />
+      </mesh>
+      <mesh position={[-dx, cy, 0]} rotation={[0, 0, a]}>
+        <boxGeometry args={[len, 0.14, dep]} />
+        <meshStandardMaterial
+          color="#1f5aa8"
+          metalness={0.6}
+          roughness={0.16}
+          emissive="#1b3f73"
+          emissiveIntensity={0.35}
+        />
+      </mesh>
+    </>
+  );
+}
+
 function Houses({ h }: { h: Heightmap }) {
   const houses = useMemo(() => {
     // Skip the first plot, which is rendered as the enterable show-home.
@@ -224,7 +261,7 @@ function Houses({ h }: { h: Heightmap }) {
       const [x, z] = worldXZ(h, p.u, p.v);
       const y = elevationAt(h, p.u, p.v) - 0.3;
       const yaw = -bearingToSea(h, p.u, p.v) + Math.PI / 2;
-      out.push({ id: p.id, x, y, z, W, D, eaveH, yaw, roof: makeRoof(W, D, rise) });
+      out.push({ id: p.id, x, y, z, W, D, eaveH, rise, yaw, roof: makeRoof(W, D, rise) });
     }
     return out;
   }, [h]);
@@ -240,6 +277,7 @@ function Houses({ h }: { h: Heightmap }) {
           <mesh position={[0, ho.eaveH, 0]} geometry={ho.roof}>
             <meshStandardMaterial color="#3a4047" roughness={0.7} metalness={0} />
           </mesh>
+          <RoofPanels W={ho.W} D={ho.D} eaveH={ho.eaveH} rise={ho.rise} />
         </group>
       ))}
     </>
@@ -414,6 +452,7 @@ function ShowHome({ h }: { h: Heightmap }) {
       <mesh position={[0, eaveH, 0]} geometry={roof}>
         <meshStandardMaterial color="#3a4047" roughness={0.7} />
       </mesh>
+      <RoofPanels W={W} D={D} eaveH={eaveH} rise={rise} />
     </group>
   );
 }
@@ -504,10 +543,11 @@ function Player({ h, onElev }: { h: Heightmap; onElev: (m: number) => void }) {
     const v = start ? start.v : 0.55;
     const [px, pz] = worldXZ(h, u, v);
     const b = bearingToSea(h, u, v);
-    // Stand back from the plot, uphill away from the sea, so the home and the
-    // view down to the fjord are both ahead of the visitor.
-    const bx = px - Math.cos(b) * 38;
-    const bz = pz - Math.sin(b) * 38;
+    // Stand back from the plot, uphill away from the sea and a little to one
+    // side, so the visitor opens on a three-quarter view of the show-home (its
+    // roof and solar slope) with the home and the fjord both ahead.
+    const bx = px - Math.cos(b) * 30 - Math.sin(b) * 22;
+    const bz = pz - Math.sin(b) * 30 + Math.cos(b) * 22;
     const gu = bx / h.widthMeters + 0.5;
     const gv = bz / h.heightMeters + 0.5;
     const y = Math.max(elevationAt(h, gu, gv), 0) + EYE_HEIGHT;
