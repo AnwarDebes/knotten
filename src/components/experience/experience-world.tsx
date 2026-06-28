@@ -538,28 +538,41 @@ function AmenityMarkers({ h }: { h: Heightmap }) {
  * briefcase, built from primitives (no external asset). Modelled facing +Z; the
  * controller rotates the whole group to face the walking direction.
  */
-function InvestorModel() {
+function InvestorModel({
+  legL,
+  legR,
+  armL,
+}: {
+  legL: RefObject<THREE.Group | null>;
+  legR: RefObject<THREE.Group | null>;
+  armL: RefObject<THREE.Group | null>;
+}) {
   const suit = "#2a3346";
   const suitDark = "#232b3b";
   const skin = "#d8a878";
   return (
     <group>
-      <mesh position={[-0.12, 0.46, 0]}>
-        <boxGeometry args={[0.2, 0.92, 0.24]} />
-        <meshStandardMaterial color={suitDark} roughness={0.85} />
-      </mesh>
-      <mesh position={[0.12, 0.46, 0]}>
-        <boxGeometry args={[0.2, 0.92, 0.24]} />
-        <meshStandardMaterial color={suitDark} roughness={0.85} />
-      </mesh>
-      <mesh position={[-0.12, 0.05, 0.06]}>
-        <boxGeometry args={[0.22, 0.12, 0.36]} />
-        <meshStandardMaterial color="#141619" roughness={0.5} />
-      </mesh>
-      <mesh position={[0.12, 0.05, 0.06]}>
-        <boxGeometry args={[0.22, 0.12, 0.36]} />
-        <meshStandardMaterial color="#141619" roughness={0.5} />
-      </mesh>
+      {/* legs pivot at the hips so they swing; left leg */}
+      <group ref={legL} position={[-0.12, 0.92, 0]}>
+        <mesh position={[0, -0.46, 0]}>
+          <boxGeometry args={[0.2, 0.92, 0.24]} />
+          <meshStandardMaterial color={suitDark} roughness={0.85} />
+        </mesh>
+        <mesh position={[0, -0.87, 0.06]}>
+          <boxGeometry args={[0.22, 0.12, 0.36]} />
+          <meshStandardMaterial color="#141619" roughness={0.5} />
+        </mesh>
+      </group>
+      <group ref={legR} position={[0.12, 0.92, 0]}>
+        <mesh position={[0, -0.46, 0]}>
+          <boxGeometry args={[0.2, 0.92, 0.24]} />
+          <meshStandardMaterial color={suitDark} roughness={0.85} />
+        </mesh>
+        <mesh position={[0, -0.87, 0.06]}>
+          <boxGeometry args={[0.22, 0.12, 0.36]} />
+          <meshStandardMaterial color="#141619" roughness={0.5} />
+        </mesh>
+      </group>
       <mesh position={[0, 1.22, 0]}>
         <boxGeometry args={[0.56, 0.68, 0.32]} />
         <meshStandardMaterial color={suit} roughness={0.78} />
@@ -572,10 +585,14 @@ function InvestorModel() {
         <boxGeometry args={[0.05, 0.34, 0.02]} />
         <meshStandardMaterial color="#8a2433" roughness={0.5} />
       </mesh>
-      <mesh position={[-0.37, 1.22, 0]}>
-        <boxGeometry args={[0.16, 0.66, 0.22]} />
-        <meshStandardMaterial color={suit} roughness={0.78} />
-      </mesh>
+      {/* the free arm pivots at the shoulder and swings */}
+      <group ref={armL} position={[-0.37, 1.55, 0]}>
+        <mesh position={[0, -0.33, 0]}>
+          <boxGeometry args={[0.16, 0.66, 0.22]} />
+          <meshStandardMaterial color={suit} roughness={0.78} />
+        </mesh>
+      </group>
+      {/* the other arm carries the briefcase and stays still */}
       <mesh position={[0.37, 1.2, 0.05]}>
         <boxGeometry args={[0.16, 0.66, 0.22]} />
         <meshStandardMaterial color={suit} roughness={0.78} />
@@ -630,6 +647,9 @@ function Investor({
   const alt = useRef(0); // metres above the terrain (fly-up survey)
   const face = useRef(0); // figure heading
   const orbit = useRef({ yaw: Math.PI, pitch: 0.22 });
+  const legL = useRef<THREE.Group | null>(null);
+  const legR = useRef<THREE.Group | null>(null);
+  const armL = useRef<THREE.Group | null>(null);
 
   useEffect(() => {
     if (placed.current) return;
@@ -750,7 +770,7 @@ function Investor({
       pos.current.x += mX * speed * dt;
       pos.current.z += mZ * speed * dt;
       face.current = Math.atan2(mX, mZ);
-      bob.current += dt * speed * 1.7;
+      bob.current += dt * speed * 3.2;
     }
     const climb = 9 * speedMul;
     if (k["Space"]) alt.current += climb * dt;
@@ -773,6 +793,11 @@ function Investor({
       g.position.set(pos.current.x, baseY + bobY, pos.current.z);
       g.rotation.y = face.current;
     }
+    // Walk cycle: legs swing opposite each other, the free arm counter-swings.
+    const swing = len > 0 ? Math.sin(bob.current) * 0.55 : 0;
+    if (legL.current) legL.current.rotation.x = swing;
+    if (legR.current) legR.current.rotation.x = -swing;
+    if (armL.current) armL.current.rotation.x = -swing * 0.9;
 
     const dist = 6.5;
     const cp = Math.cos(orbit.current.pitch);
@@ -792,7 +817,7 @@ function Investor({
 
   return (
     <group ref={group}>
-      <InvestorModel />
+      <InvestorModel legL={legL} legR={legR} armL={armL} />
     </group>
   );
 }
