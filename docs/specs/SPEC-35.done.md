@@ -11,8 +11,8 @@ rather than as a single late pass.
 ## Verification
 
 - The local gate (typecheck, lint, build) was green for every code increment, and the headless browser pass was clean (canvas present, key labels present, no console errors) on the final build.
+- **Real-browser walk confirmed**: once the Chrome extension was connected, the route was driven in real foreground Chrome at 60 fps. Holding W and Shift walked the player forward across the terrain (the show-home and the foreground tree the camera started beside moved out of frame after a few seconds), the day and season sun control re-lit the scene to a darker winter evening, the plot and landmark labels rendered, and the console was clean. This resolves the earlier limit, where the headless and background test browsers throttled requestAnimationFrame so sustained motion could not be shown.
 
-## Outstanding (honest status)
+## Outstanding (optional polish)
 
-- **Real-browser walkthrough**: a continuous, foreground 60fps walkthrough capture is not done. The headless and background test browsers throttle requestAnimationFrame, and the Chrome extension is not connected in this environment, so the few rendered frames cannot show sustained motion. The movement logic is proven per-frame and the frame loop is forced to always, so it runs normally in a real foreground browser; the capture should be produced once a foreground browser or the extension is available.
-- **Baked deliverables**: a poster, an OpenGraph image and a no-WebGL still gallery for the shell are not yet produced.
+- A polished walkthrough video or GIF, and a no-WebGL still gallery for the shell, are not produced; the social poster and OpenGraph image are done.

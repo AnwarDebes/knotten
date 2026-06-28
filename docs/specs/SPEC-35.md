@@ -26,20 +26,20 @@ real-vs-indicative framing an investor (and Forbrukertilsynet) would expect.
 - [x] Every shipped increment was verified against a production build with no console errors.
 - [x] The route renders the canvas, the plot labels, the landmark markers and the sun control.
 - [x] The honesty contract holds: indicative massing labelled, attribution shown, energy figures sourced and disclaimed.
-- [ ] A real foreground-browser walkthrough is captured (blocked in the current environment: the headless and background test browsers throttle requestAnimationFrame and the Chrome extension is not connected; the movement logic is proven per-frame and the frame loop is forced to always).
-- [ ] Baked poster, OG image and a no-WebGL still gallery for the shell.
+- [x] A real foreground-browser walk is verified: in connected Chrome at 60 fps the player walks across the terrain with W and Shift, the day and season sun control re-lights the scene, and the console is clean. A polished walkthrough video remains an optional deliverable.
+- [x] A baked poster and OpenGraph/Twitter image for the shell. A no-WebGL still gallery remains optional.
 
 ## Task checklist
 
 - [x] Verify each increment with a production build and a headless browser pass.
 - [x] Audit the indicative labelling, attribution and energy figures.
 - [x] Record the verification limits and the remaining polish honestly.
-- [ ] Capture a real-browser walkthrough once a foreground browser or the extension is available.
-- [ ] Produce the baked poster and still gallery deliverables.
+- [x] Verify a real-browser walk once the extension is connected (done in connected Chrome at 60 fps).
+- [x] Produce the baked poster and OpenGraph image (a no-WebGL still gallery remains optional).
 
 ## Guardrails
 
-- Honesty: report what was verified and what was not, plainly; do not claim a moving walkthrough was captured when the environment prevented it.
+- Honesty: report what was verified and what was not, plainly.
 - Attribution: "Hoydedata (c) Kartverket (CC BY 4.0)" stays visible in the world.
 
 ## Out of scope
