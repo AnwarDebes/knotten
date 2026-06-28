@@ -100,6 +100,10 @@ export function ExperienceLauncher() {
       clearInterval(timer.current);
       timer.current = null;
     }
+    // Tell the title card the world is in view so it can fade out for a clean walk.
+    if (ready && typeof window !== "undefined") {
+      window.dispatchEvent(new CustomEvent("experience:ready"));
+    }
   }, [ready]);
 
   // Before the capability check resolves (and during SSR): show the poster, so
