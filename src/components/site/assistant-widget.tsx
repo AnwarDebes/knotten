@@ -190,10 +190,9 @@ export function AssistantWidget() {
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
         aria-label={t("openLabel")}
-        className="assistant-fab relative flex items-center justify-center gap-2 rounded-full p-4 text-sm font-medium text-[#9fe9f1] sm:px-4 sm:py-3"
+        className="assistant-fab relative flex h-14 w-14 items-center justify-center rounded-full text-[#9fe9f1]"
       >
-        <Mark className="h-6 w-6 sm:h-5 sm:w-5" />
-        <span className="hidden text-white sm:inline">{t("fab")}</span>
+        <Mark className="h-6 w-6" />
       </button>
     </div>
   );
