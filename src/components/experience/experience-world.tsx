@@ -637,6 +637,7 @@ function Investor({
   speedMul: number;
 }) {
   const { camera, gl } = useThree();
+  const reduced = usePrefersReducedMotion();
   const group = useRef<THREE.Group | null>(null);
   const keys = useRef<Record<string, boolean>>({});
   const locked = useRef(false);
@@ -652,6 +653,7 @@ function Investor({
   const legL = useRef<THREE.Group | null>(null);
   const legR = useRef<THREE.Group | null>(null);
   const armL = useRef<THREE.Group | null>(null);
+  const intro = useRef({ active: false, t: 0 });
 
   useEffect(() => {
     if (placed.current) return;
@@ -668,7 +670,10 @@ function Investor({
     const toPlot = Math.atan2(px - bx, pz - bz);
     face.current = toPlot;
     orbit.current.yaw = toPlot;
-  }, [h]);
+    // Cinematic intro: ease from a high overview down to the investor, unless the
+    // visitor prefers reduced motion.
+    intro.current = { active: !reduced, t: 0 };
+  }, [h, reduced]);
 
   useEffect(() => {
     const dom = gl.domElement;
@@ -676,6 +681,7 @@ function Investor({
     // press and drag, or click once to capture the mouse (pointer lock).
     const onPointerDown = (e: PointerEvent) => {
       dragging.current = true;
+      intro.current.active = false; // skip the intro the moment the visitor acts
       last.current = { x: e.clientX, y: e.clientY };
       if (document.pointerLockElement !== dom) {
         try {
@@ -716,6 +722,7 @@ function Investor({
     };
     const down = (e: KeyboardEvent) => {
       keys.current[e.code] = true;
+      intro.current.active = false;
       if (e.code === "Space") e.preventDefault();
     };
     const up = (e: KeyboardEvent) => {
@@ -807,7 +814,19 @@ function Investor({
     const camZ = pos.current.z - Math.cos(yaw) * dist * cp;
     let camY = baseY + 2.1 + Math.sin(orbit.current.pitch) * dist;
     camY = Math.max(ground + 0.8, camY);
-    camera.position.set(camX, camY, camZ);
+    if (intro.current.active) {
+      // Establishing shot: start high and far behind, ease down to the follow
+      // view over about four seconds (smoothstep), looking at the investor.
+      intro.current.t = Math.min(1, intro.current.t + dt / 4);
+      const e = intro.current.t * intro.current.t * (3 - 2 * intro.current.t);
+      const ovX = pos.current.x - Math.sin(yaw) * 42;
+      const ovZ = pos.current.z - Math.cos(yaw) * 42;
+      const ovY = ground + 95;
+      camera.position.set(ovX + (camX - ovX) * e, ovY + (camY - ovY) * e, ovZ + (camZ - ovZ) * e);
+      if (intro.current.t >= 1) intro.current.active = false;
+    } else {
+      camera.position.set(camX, camY, camZ);
+    }
     camera.lookAt(pos.current.x, baseY + EYE_HEIGHT, pos.current.z);
 
     since.current += dt;
