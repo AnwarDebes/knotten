@@ -15,6 +15,17 @@ Honest indicative homes, generated from real rules, set in a real forest.
 - Local gate green: typecheck, lint, build.
 - Production build driven headlessly: white-timber gable homes render on the terrain in forest clearings; the indicative badge is present; no console errors.
 
+## Update: larger blocks
+
+At the owner's direction the massing was later changed from single Sorlandshus to
+indicative multi-storey residential blocks (three to four storeys, ribbon windows
+per floor, flat roof, rooftop solar; the show-home is a block of the same form
+with an enterable, sea-facing ground floor). This is taller than the pbl 29-4
+default and presupposes a denser zoning plan; it stays explicitly indicative,
+with the badge and narrative saying form, height and count follow the plan, and
+the 100-metre sea belt still respected. Verified in a real browser: the blocks
+render as multi-storey buildings with no console errors.
+
 ## Deferred (documented)
 
 Final architecture, real footprints, detailed cut-and-fill grading and per-home material variation are out of scope until the design and zoning exist.

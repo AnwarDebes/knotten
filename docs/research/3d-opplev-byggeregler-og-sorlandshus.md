@@ -76,3 +76,15 @@ confirmed negative). The governing higher-level plan for an unregulated parcel i
 Lindesnes kommuneplanens arealdel 2019 to 2030. The absence of a site plan
 supports the pre-zoning, indicative framing. Verify in the municipal plan
 register and Kartverket "Se eiendom" before stating anything as fact.
+
+## Note: the 3D experience shows larger blocks
+
+At the owner's direction the immersive experience shows indicative multi-storey
+residential blocks (about three to four storeys, 9 to 12 m) rather than single
+Sorlandshus, so it reads as a real development. That exceeds the pbl 29-4 default
+ceiling (8 m eave / 9 m ridge without a plan), so it presupposes a denser
+reguleringsplan that allows it. The rules above remain the baseline for the
+lower-density alternative. The experience keeps this honest: the buildings are
+explicitly indicative, labelled as following the future zoning plan, and the
+100-metre sea belt is still respected. Re-confirm any density or height figure
+against an adopted plan before presenting it as fact.

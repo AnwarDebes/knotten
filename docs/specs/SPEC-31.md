@@ -9,7 +9,12 @@ keeps the world plausible and credible without ever presenting a design as fact.
 
 ## Scope
 
-- Parametric house massing from `src/content/house-types.ts` envelopes: footprint to width and depth, one or two storeys from heated area, about 6 m eaves, a gable saltak kept under the 9 m ridge limit (pbl 29-4), white Sorlandet timber walls, dark roof.
+- Indicative building massing at each plot. At the owner's direction the
+  experience shows larger multi-storey residential blocks (three to four
+  storeys, ribbon windows per floor, a flat roof and a rooftop solar array)
+  rather than single Sorlandshus, so it reads as a real development. The
+  small-house rules and vernacular stay the documented baseline in the research
+  note; see the update below on what the larger scale implies.
 - Placement at each `src/content/plots.ts` position, snapped to terrain and oriented toward the sea and sun.
 - A real instanced forest (from SPEC-28's canopy data) in four draw calls, conifer and deciduous, kept clear of the plots.
 - A persistent indicative badge and the real-vs-indicative narrative so the massing is never read as a design.
@@ -44,3 +49,15 @@ keeps the world plausible and credible without ever presenting a design as fact.
 ## Out of scope
 
 - Final architecture, real footprints, cut-and-fill grading detail, and per-home material variation.
+
+## Update: larger blocks (owner direction)
+
+The owner asked for bigger buildings, not small houses, so the indicative massing
+is now multi-storey residential blocks of about three to four storeys (roughly 9
+to 12 m). This is taller than the pbl 29-4 default ceiling (8 m eave / 9 m ridge
+without a plan), so it presupposes a denser zoning plan that allows it. That is
+consistent with the honesty contract: the buildings are explicitly indicative,
+the persistent badge and narrative say the form, height and count follow the
+zoning plan, and nothing is presented as approved. The 100-metre sea belt
+(pbl 1-8) is still respected. The small-house rules in the research note remain
+the baseline reference for the lower-density alternative.
