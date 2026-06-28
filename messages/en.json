@@ -366,6 +366,7 @@
       "sprint": "Shift to move faster",
       "fly": "Space / C to rise and descend",
       "speedLabel": "Speed",
+      "touchHint": "Left stick to walk. Drag to look. Buttons to rise, sprint, descend.",
       "map": "M for the map",
       "exit": "Esc to release the cursor"
     },

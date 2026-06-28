@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as RPointerEvent,
+  type RefObject,
+} from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Sky, Html } from "@react-three/drei";
 import * as THREE from "three";
@@ -16,6 +23,16 @@ import { sunDirection } from "@/components/terrain/sun";
 import { cn } from "@/lib/utils";
 import { PLOTS } from "@/content/plots";
 import { AMENITIES, SITE } from "@/content/amenities";
+import type { Quality } from "./experience-launcher";
+
+/** Touch input, written by the on-screen controls and read in the frame loop. */
+type TouchInput = {
+  moveX: number;
+  moveY: number;
+  sprint: boolean;
+  rise: boolean;
+  descend: boolean;
+};
 
 /* eslint-disable react-hooks/immutability -- React Three Fiber drives the scene
    by mutating Three.js objects (camera transform, geometry) imperatively inside
@@ -46,8 +63,6 @@ const CAMERA_PROPS = {
   far: 7000,
   position: [0, 110, 0] as [number, number, number],
 };
-const GL_PROPS = { logarithmicDepthBuffer: true, antialias: true };
-const DPR: [number, number] = [1, 2];
 
 const STATUS_COLOR: Record<string, string> = {
   ledig: "#37a06a",
@@ -311,6 +326,21 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
+/** True on touch / coarse-pointer devices; drives the on-screen controls and hint. */
+function usePointerCoarse(): boolean {
+  const [coarse, setCoarse] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(pointer: coarse)");
+    /* eslint-disable-next-line react-hooks/set-state-in-effect -- sync the media
+       query after mount; hydration-safe (server matches the false default). */
+    setCoarse(mq.matches);
+    const on = () => setCoarse(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return coarse;
+}
+
 /**
  * The energy concept, in motion. Glowing particles flow from each home up to a
  * shared hub, an indicative picture of the rooftop solar feeding the local
@@ -320,7 +350,7 @@ function usePrefersReducedMotion(): boolean {
  * brightens with the sun (gen, from the real solar altitude), so the energy
  * visibly tracks generation as the season and time of day change.
  */
-function EnergyFlows({ h, gen }: { h: Heightmap; gen: number }) {
+function EnergyFlows({ h, gen, per }: { h: Heightmap; gen: number; per: number }) {
   const { hub, starts } = useMemo(() => {
     const pts = PLOTS.map((p) => {
       const [x, z] = worldXZ(h, p.u, p.v);
@@ -333,7 +363,7 @@ function EnergyFlows({ h, gen }: { h: Heightmap; gen: number }) {
     return { hub: hubV, starts: pts };
   }, [h]);
 
-  const PER = 10;
+  const PER = per;
   const count = starts.length * PER;
   const ref = useRef<THREE.InstancedMesh | null>(null);
   const m = useMemo(() => new THREE.Matrix4(), []);
@@ -660,11 +690,13 @@ function Investor({
   onElev,
   onPose,
   speedMul,
+  input,
 }: {
   h: Heightmap;
   onElev: (m: number) => void;
   onPose: (p: { u: number; v: number }) => void;
   speedMul: number;
+  input: RefObject<TouchInput>;
 }) {
   const { camera, gl } = useThree();
   const reduced = usePrefersReducedMotion();
@@ -672,6 +704,7 @@ function Investor({
   const keys = useRef<Record<string, boolean>>({});
   const locked = useRef(false);
   const dragging = useRef(false);
+  const lookId = useRef<number | null>(null);
   const last = useRef({ x: 0, y: 0 });
   const placed = useRef(false);
   const since = useRef(0);
@@ -710,10 +743,15 @@ function Investor({
     // Two ways to look, both smooth and unbounded (a full 360 with no snap):
     // press and drag, or click once to capture the mouse (pointer lock).
     const onPointerDown = (e: PointerEvent) => {
+      // Claim a single finger/cursor for looking; a second touch stays free for
+      // the joystick and buttons without hijacking the camera.
+      if (lookId.current !== null) return;
+      lookId.current = e.pointerId;
       dragging.current = true;
       intro.current.active = false; // skip the intro the moment the visitor acts
       last.current = { x: e.clientX, y: e.clientY };
-      if (document.pointerLockElement !== dom) {
+      // Pointer lock only makes sense for a mouse, never a finger.
+      if (e.pointerType === "mouse" && document.pointerLockElement !== dom) {
         try {
           const ret = dom.requestPointerLock?.() as unknown;
           if (ret && typeof (ret as { catch?: unknown }).catch === "function") {
@@ -724,8 +762,11 @@ function Investor({
         }
       }
     };
-    const onPointerUp = () => {
-      dragging.current = false;
+    const onPointerEnd = (e: PointerEvent) => {
+      if (e.pointerId === lookId.current) {
+        dragging.current = false;
+        lookId.current = null;
+      }
     };
     const onLockChange = () => {
       locked.current = document.pointerLockElement === dom;
@@ -737,8 +778,8 @@ function Investor({
         // Pointer-lock: relative movement deltas.
         dx = e.movementX;
         dy = e.movementY;
-      } else if (dragging.current) {
-        // Press-and-drag: absolute cursor deltas, so a full 360 stays smooth.
+      } else if (dragging.current && e.pointerId === lookId.current) {
+        // Press-and-drag (mouse or the look finger): absolute deltas, smooth 360.
         dx = e.clientX - last.current.x;
         dy = e.clientY - last.current.y;
         last.current = { x: e.clientX, y: e.clientY };
@@ -759,14 +800,16 @@ function Investor({
       keys.current[e.code] = false;
     };
     dom.addEventListener("pointerdown", onPointerDown);
-    window.addEventListener("pointerup", onPointerUp);
+    window.addEventListener("pointerup", onPointerEnd);
+    window.addEventListener("pointercancel", onPointerEnd);
     document.addEventListener("pointerlockchange", onLockChange);
     document.addEventListener("pointermove", onMouseMove);
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
     return () => {
       dom.removeEventListener("pointerdown", onPointerDown);
-      window.removeEventListener("pointerup", onPointerUp);
+      window.removeEventListener("pointerup", onPointerEnd);
+      window.removeEventListener("pointercancel", onPointerEnd);
       document.removeEventListener("pointerlockchange", onLockChange);
       document.removeEventListener("pointermove", onMouseMove);
       window.removeEventListener("keydown", down);
@@ -800,20 +843,27 @@ function Investor({
       mX -= rX;
       mZ -= rZ;
     }
+    // Fold in the touch joystick on the same basis (moveY forward, moveX strafe).
+    // A single key gives length >= 1, so mag = 1 and the desktop numbers are
+    // unchanged; a partial joystick walks proportionally slower.
+    const j = input.current;
+    mX += fX * j.moveY + rX * j.moveX;
+    mZ += fZ * j.moveY + rZ * j.moveX;
     const len = Math.hypot(mX, mZ);
-    const sprint = k["ShiftLeft"] || k["ShiftRight"];
+    const mag = Math.min(1, len);
+    const sprint = k["ShiftLeft"] || k["ShiftRight"] || j.sprint;
     const speed = (sprint ? SPRINT : WALK) * speedMul;
     if (len > 0) {
       mX /= len;
       mZ /= len;
-      pos.current.x += mX * speed * dt;
-      pos.current.z += mZ * speed * dt;
+      pos.current.x += mX * speed * mag * dt;
+      pos.current.z += mZ * speed * mag * dt;
       face.current = Math.atan2(mX, mZ);
-      bob.current += dt * speed * 3.2;
+      bob.current += dt * speed * mag * 3.2;
     }
     const climb = 9 * speedMul;
-    if (k["Space"]) alt.current += climb * dt;
-    if (k["KeyC"] || k["ControlLeft"]) alt.current -= climb * dt;
+    if (k["Space"] || j.rise) alt.current += climb * dt;
+    if (k["KeyC"] || k["ControlLeft"] || j.descend) alt.current -= climb * dt;
     alt.current = Math.max(0, Math.min(150, alt.current));
 
     const hw = h.widthMeters / 2 - 3;
@@ -882,6 +932,9 @@ function Scene({
   season,
   time,
   speedMul,
+  input,
+  per,
+  labels,
 }: {
   h: Heightmap;
   onElev: (m: number) => void;
@@ -890,6 +943,9 @@ function Scene({
   season: SunSeason;
   time: SunTime;
   speedMul: number;
+  input: RefObject<TouchInput>;
+  per: number;
+  labels: "all" | "plots";
 }) {
   const geo = useMemo(() => buildTerrainGeometry(h), [h]);
   const { sunPos, gen } = useMemo(() => {
@@ -948,11 +1004,11 @@ function Scene({
       {trees && trees.length ? <Trees list={trees} /> : null}
       <Houses h={h} />
       <ShowHome h={h} />
-      <EnergyFlows h={h} gen={gen} />
+      <EnergyFlows h={h} gen={gen} per={per} />
       <PlotLabels h={h} />
-      <AmenityMarkers h={h} />
+      {labels === "all" ? <AmenityMarkers h={h} /> : null}
 
-      <Investor h={h} onElev={onElev} onPose={onPose} speedMul={speedMul} />
+      <Investor h={h} onElev={onElev} onPose={onPose} speedMul={speedMul} input={input} />
     </>
   );
 }
@@ -962,22 +1018,25 @@ function Scene({
  * status dot and the investor's live position.
  */
 function Minimap({ pose }: { pose: { u: number; v: number } | null }) {
-  const S = 130;
   return (
-    <div className="pointer-events-none absolute right-3 bottom-12 rounded-md bg-black/55 p-1.5">
-      <div className="relative overflow-hidden rounded" style={{ width: S, height: S }}>
+    <div className="pointer-events-none absolute right-2 bottom-12 rounded-md bg-black/55 p-1 sm:right-3 sm:p-1.5">
+      <div className="relative h-20 w-20 overflow-hidden rounded sm:h-[130px] sm:w-[130px]">
         <div className="absolute inset-0 bg-gradient-to-b from-[#41603a] via-[#3a5740] to-[#28506a]" />
         {PLOTS.map((p) => (
           <span
             key={p.id}
             className="absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full ring-1 ring-black/40"
-            style={{ left: p.u * S, top: p.v * S, background: STATUS_COLOR[p.status] ?? "#37a06a" }}
+            style={{
+              left: `${p.u * 100}%`,
+              top: `${p.v * 100}%`,
+              background: STATUS_COLOR[p.status] ?? "#37a06a",
+            }}
           />
         ))}
         {pose ? (
           <span
             className="absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white bg-[#16c2d4]"
-            style={{ left: pose.u * S, top: pose.v * S }}
+            style={{ left: `${pose.u * 100}%`, top: `${pose.v * 100}%` }}
           />
         ) : null}
       </div>
@@ -985,7 +1044,109 @@ function Minimap({ pose }: { pose: { u: number; v: number } | null }) {
   );
 }
 
-export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap }) {
+/**
+ * On-screen controls for touch devices: a left thumb joystick to walk and a
+ * cluster of hold-buttons to rise, sprint and descend. Looking is a drag
+ * anywhere else on the canvas. Rendered only on coarse-pointer devices.
+ */
+function TouchControls({ input }: { input: RefObject<TouchInput> }) {
+  const knob = useRef<HTMLDivElement | null>(null);
+  const origin = useRef<{ x: number; y: number } | null>(null);
+  const R = 42;
+
+  const start = (e: RPointerEvent<HTMLElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const r = e.currentTarget.getBoundingClientRect();
+    origin.current = { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  };
+  const move = (e: RPointerEvent<HTMLElement>) => {
+    if (!origin.current) return;
+    let dx = e.clientX - origin.current.x;
+    let dy = e.clientY - origin.current.y;
+    const d = Math.hypot(dx, dy);
+    if (d > R) {
+      dx = (dx / d) * R;
+      dy = (dy / d) * R;
+    }
+    input.current.moveX = dx / R;
+    input.current.moveY = -dy / R; // up the screen is forward
+    if (knob.current) knob.current.style.transform = `translate(${dx}px, ${dy}px)`;
+  };
+  const end = () => {
+    origin.current = null;
+    input.current.moveX = 0;
+    input.current.moveY = 0;
+    if (knob.current) knob.current.style.transform = "translate(0px, 0px)";
+  };
+  const hold =
+    (key: "sprint" | "rise" | "descend", on: boolean) => (e: RPointerEvent<HTMLElement>) => {
+      if (on) e.currentTarget.setPointerCapture(e.pointerId);
+      input.current[key] = on;
+    };
+  const noMenu = (e: { preventDefault: () => void }) => e.preventDefault();
+  const btn =
+    "pointer-events-auto flex h-12 w-12 touch-none items-center justify-center rounded-full bg-black/45 text-lg text-white/90 select-none active:bg-[#16c2d4] active:text-[#06222b]";
+
+  return (
+    <div className="pointer-events-none absolute inset-0 z-20 select-none">
+      <div
+        className="pointer-events-auto absolute bottom-5 left-4 h-24 w-24 touch-none rounded-full bg-black/30 ring-1 ring-white/15"
+        onPointerDown={start}
+        onPointerMove={move}
+        onPointerUp={end}
+        onPointerCancel={end}
+        onContextMenu={noMenu}
+      >
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div ref={knob} className="h-10 w-10 rounded-full bg-white/75" />
+        </div>
+      </div>
+      <div className="absolute right-4 bottom-5 flex flex-col items-center gap-2">
+        <button
+          type="button"
+          className={btn}
+          onPointerDown={hold("rise", true)}
+          onPointerUp={hold("rise", false)}
+          onPointerCancel={hold("rise", false)}
+          onContextMenu={noMenu}
+          aria-label="Rise"
+        >
+          ↑
+        </button>
+        <button
+          type="button"
+          className={btn}
+          onPointerDown={hold("sprint", true)}
+          onPointerUp={hold("sprint", false)}
+          onPointerCancel={hold("sprint", false)}
+          onContextMenu={noMenu}
+          aria-label="Sprint"
+        >
+          ⚡
+        </button>
+        <button
+          type="button"
+          className={btn}
+          onPointerDown={hold("descend", true)}
+          onPointerUp={hold("descend", false)}
+          onPointerCancel={hold("descend", false)}
+          onContextMenu={noMenu}
+          aria-label="Descend"
+        >
+          ↓
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function ExperienceWorld({
+  heightmap,
+  quality,
+}: {
+  heightmap: Heightmap;
+  quality: Quality;
+}) {
   const t = useTranslations("opplev");
   const tt = useTranslations("terrain");
   const [elev, setElev] = useState(0);
@@ -995,6 +1156,20 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
   const [time, setTime] = useState<SunTime>("midday");
   const [speedMul, setSpeedMul] = useState(1);
   const [pose, setPose] = useState<{ u: number; v: number } | null>(null);
+  const coarse = usePointerCoarse();
+  const input = useRef<TouchInput>({
+    moveX: 0,
+    moveY: 0,
+    sprint: false,
+    rise: false,
+    descend: false,
+  });
+  // Stable, quality-driven Canvas props (memoised so R3F never resets the camera).
+  const dpr = useMemo<[number, number]>(() => [1, quality.dpr], [quality.dpr]);
+  const gl = useMemo(
+    () => ({ logarithmicDepthBuffer: true, antialias: quality.antialias }),
+    [quality.antialias],
+  );
 
   useEffect(() => {
     const onChange = () => setLocked(Boolean(document.pointerLockElement));
@@ -1008,17 +1183,26 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
     fetch("/experience/trees.json")
       .then((r) => r.json())
       .then((d: { trees: number[][] }) => {
-        if (ok) setTrees(d.trees);
+        // Thin the forest on low-tier devices to keep phones smooth.
+        const list =
+          quality.treeStride > 1 ? d.trees.filter((_, i) => i % quality.treeStride === 0) : d.trees;
+        if (ok) setTrees(list);
       })
       .catch(() => {});
     return () => {
       ok = false;
     };
-  }, []);
+  }, [quality.treeStride]);
 
   return (
     <div className="relative h-full w-full">
-      <Canvas frameloop="always" camera={CAMERA_PROPS} gl={GL_PROPS} dpr={DPR}>
+      <Canvas
+        frameloop="always"
+        camera={CAMERA_PROPS}
+        gl={gl}
+        dpr={dpr}
+        style={{ touchAction: "none" }}
+      >
         <Scene
           h={heightmap}
           onElev={setElev}
@@ -1027,48 +1211,82 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
           season={season}
           time={time}
           speedMul={speedMul}
+          input={input}
+          per={quality.energyPer}
+          labels={quality.labels}
         />
       </Canvas>
 
-      {/* Click-to-look hint, shown while the cursor is free */}
+      {coarse ? <TouchControls input={input} /> : null}
+
+      {/* Controls hint, shown until the visitor is in pointer lock (mouse) */}
       {!locked ? (
-        <div className="pointer-events-none absolute inset-x-0 bottom-24 flex justify-center px-4">
-          <div className="rounded-md bg-black/55 px-4 py-2 text-center text-sm text-white">
-            {t("controls.walk")} &middot; {t("controls.look")} &middot; {t("controls.sprint")}{" "}
-            &middot; {t("controls.fly")}
+        <div className="pointer-events-none absolute inset-x-0 bottom-20 flex justify-center px-4 sm:bottom-24">
+          <div className="max-w-[90%] rounded-md bg-black/55 px-3 py-1.5 text-center text-[11px] text-white sm:px-4 sm:py-2 sm:text-sm">
+            {coarse ? (
+              t("controls.touchHint")
+            ) : (
+              <>
+                {t("controls.walk")} &middot; {t("controls.look")} &middot; {t("controls.sprint")}{" "}
+                &middot; {t("controls.fly")}
+              </>
+            )}
           </div>
         </div>
       ) : null}
 
-      {/* Bottom HUD: live elevation + attribution (left), indicative badge (right) */}
-      <div className="pointer-events-none absolute bottom-3 left-3 space-y-1">
-        <div className="rounded-md bg-black/55 px-3 py-1.5 text-xs text-white tabular-nums">
+      {/* Live elevation, energy note and attribution. On touch screens these move
+          to the top so the bottom corners are free for the joystick and buttons. */}
+      <div
+        className={cn(
+          "pointer-events-none absolute space-y-1",
+          coarse ? "top-14 left-2 max-w-[58%]" : "bottom-3 left-3",
+        )}
+      >
+        <div className="rounded-md bg-black/55 px-2.5 py-1 text-[11px] text-white tabular-nums sm:px-3 sm:py-1.5 sm:text-xs">
           {t("hud.elevation")}: {Math.round(elev)} moh
         </div>
-        <div className="max-w-sm rounded-md bg-[#0c5560]/75 px-3 py-1 text-[10px] text-white/95">
+        <div
+          className={cn(
+            "max-w-sm rounded-md bg-[#0c5560]/75 px-3 py-1 text-[10px] text-white/95",
+            coarse && "line-clamp-3",
+          )}
+        >
           {t("energyNote")}
         </div>
-        <div className="max-w-sm rounded-md bg-black/45 px-3 py-1 text-[10px] text-white/85">
+        <div
+          className={cn(
+            "max-w-sm rounded-md bg-black/45 px-3 py-1 text-[10px] text-white/85",
+            coarse && "hidden",
+          )}
+        >
           {t("attribution")}
         </div>
       </div>
-      <div className="pointer-events-none absolute right-3 bottom-3 rounded-md bg-[#9e4a2c]/90 px-3 py-1 text-xs font-medium text-white">
+      <div
+        className={cn(
+          "pointer-events-none absolute rounded-md bg-[#9e4a2c]/90 font-medium text-white",
+          coarse
+            ? "top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 text-[10px]"
+            : "right-3 bottom-3 px-3 py-1 text-xs",
+        )}
+      >
         {t("hud.indicative")}
       </div>
 
-      <Minimap pose={pose} />
+      {!coarse ? <Minimap pose={pose} /> : null}
 
       {/* Sun control: real season and time of day for 58 N. Release the cursor
           (Esc) to click. */}
-      <div className="pointer-events-auto absolute top-20 right-3 flex flex-col items-end gap-1.5">
-        <div className="flex gap-1 rounded-md bg-black/55 p-1">
+      <div className="pointer-events-auto absolute top-14 right-2 flex max-w-[calc(100%-1rem)] flex-col items-end gap-1 sm:top-20 sm:right-3 sm:gap-1.5">
+        <div className="flex flex-wrap justify-end gap-0.5 rounded-md bg-black/55 p-0.5 sm:gap-1 sm:p-1">
           {(["summer", "winter"] as const).map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => setSeason(s)}
               className={cn(
-                "rounded px-2 py-1 text-xs",
+                "rounded px-1.5 py-0.5 text-[11px] sm:px-2 sm:py-1 sm:text-xs",
                 season === s
                   ? "bg-[#16c2d4] font-medium text-[#06222b]"
                   : "text-white/85 hover:text-white",
@@ -1078,14 +1296,14 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
             </button>
           ))}
         </div>
-        <div className="flex gap-1 rounded-md bg-black/55 p-1">
+        <div className="flex flex-wrap justify-end gap-0.5 rounded-md bg-black/55 p-0.5 sm:gap-1 sm:p-1">
           {(["morning", "midday", "evening"] as const).map((tm) => (
             <button
               key={tm}
               type="button"
               onClick={() => setTime(tm)}
               className={cn(
-                "rounded px-2 py-1 text-xs",
+                "rounded px-1.5 py-0.5 text-[11px] sm:px-2 sm:py-1 sm:text-xs",
                 time === tm
                   ? "bg-[#16c2d4] font-medium text-[#06222b]"
                   : "text-white/85 hover:text-white",
@@ -1095,17 +1313,17 @@ export default function ExperienceWorld({ heightmap }: { heightmap: Heightmap })
             </button>
           ))}
         </div>
-        <div className="flex items-center gap-1 rounded-md bg-black/55 p-1">
-          <span className="px-1 text-[10px] tracking-wide text-white/70 uppercase">
+        <div className="flex flex-wrap items-center justify-end gap-0.5 rounded-md bg-black/55 p-0.5 sm:gap-1 sm:p-1">
+          <span className="hidden px-1 text-[10px] tracking-wide text-white/70 uppercase sm:inline">
             {t("controls.speedLabel")}
           </span>
-          {([1, 2, 3] as const).map((mul) => (
+          {([1, 3, 5, 10, 20] as const).map((mul) => (
             <button
               key={mul}
               type="button"
               onClick={() => setSpeedMul(mul)}
               className={cn(
-                "rounded px-2 py-1 text-xs tabular-nums",
+                "rounded px-1.5 py-0.5 text-[11px] tabular-nums sm:py-1 sm:text-xs",
                 speedMul === mul
                   ? "bg-[#16c2d4] font-medium text-[#06222b]"
                   : "text-white/85 hover:text-white",

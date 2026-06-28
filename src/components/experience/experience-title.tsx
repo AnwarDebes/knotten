@@ -51,13 +51,17 @@ export function ExperienceTitle({
     <div
       aria-hidden={hidden}
       className={cn(
-        "pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/60 via-black/25 to-transparent p-6 transition-opacity duration-1000 md:p-9",
+        "pointer-events-none absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-black/60 via-black/25 to-transparent p-4 transition-opacity duration-1000 sm:p-6 md:p-9",
         hidden ? "opacity-0" : "opacity-100",
       )}
     >
       <p className="text-xs font-semibold tracking-[0.18em] text-white/80 uppercase">{eyebrow}</p>
-      <h1 className="font-display mt-1 text-3xl leading-tight text-white md:text-4xl">{title}</h1>
-      <p className="mt-2 max-w-xl text-sm text-white/85 md:text-base">{lead}</p>
+      <h1 className="font-display mt-1 text-2xl leading-tight text-white sm:text-3xl md:text-4xl">
+        {title}
+      </h1>
+      <p className="mt-2 max-w-[70vw] text-[13px] text-white/85 sm:max-w-xl sm:text-sm md:text-base">
+        {lead}
+      </p>
     </div>
   );
 }

@@ -10,20 +10,71 @@ import type { Heightmap } from "@/components/terrain/types";
  * heightmap load in parallel behind a staged loading screen, and the walk
  * begins as soon as they resolve. The server-rendered shell stays free of
  * Three.js (the world is a dynamic ssr:false import), so the page is fast and
- * indexable, and phones / no-WebGL clients get the still fallback instead of a
- * broken canvas. Touch controls for small screens arrive in a later spec.
+ * indexable. Phones enter too, with on-screen touch controls and a lighter
+ * quality profile; only devices with no real WebGL (or a software renderer) get
+ * the still fallback instead of a broken canvas.
  */
 
-type WorldComponent = ComponentType<{ heightmap: Heightmap }>;
+export type Quality = {
+  tier: "high" | "low";
+  dpr: number;
+  hiTerrain: boolean;
+  treeStride: number;
+  energyPer: number;
+  labels: "all" | "plots";
+  antialias: boolean;
+};
 
-function hasWebgl(): boolean {
-  if (typeof window === "undefined") return false;
+type WorldComponent = ComponentType<{ heightmap: Heightmap; quality: Quality }>;
+
+type GlProbe = { ok: boolean; webgl2: boolean; software: boolean };
+
+function probeGl(): GlProbe {
+  if (typeof window === "undefined") return { ok: false, webgl2: false, software: false };
   try {
     const c = document.createElement("canvas");
-    return Boolean(c.getContext("webgl2") || c.getContext("webgl"));
+    const gl2 = c.getContext("webgl2");
+    const gl = (gl2 || c.getContext("webgl")) as WebGLRenderingContext | null;
+    if (!gl) return { ok: false, webgl2: false, software: false };
+    let renderer = "";
+    const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+    if (dbg) renderer = String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) || "");
+    const software = /swiftshader|llvmpipe|software|basic render/i.test(renderer);
+    return { ok: true, webgl2: Boolean(gl2), software };
   } catch {
-    return false;
+    return { ok: false, webgl2: false, software: false };
   }
+}
+
+/** A per-device quality profile, computed once, so phones run a lighter scene. */
+function detectQuality(probe: GlProbe): Quality {
+  const nav = typeof navigator !== "undefined" ? navigator : undefined;
+  const coarse = typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches;
+  const lowEnd =
+    (coarse && window.innerWidth < 900) ||
+    ((nav as (Navigator & { deviceMemory?: number }) | undefined)?.deviceMemory ?? 8) <= 4 ||
+    (nav?.hardwareConcurrency ?? 8) <= 4 ||
+    !probe.webgl2;
+  if (lowEnd) {
+    return {
+      tier: "low",
+      dpr: Math.min(typeof window !== "undefined" ? window.devicePixelRatio : 1, 1.5),
+      hiTerrain: false,
+      treeStride: 4,
+      energyPer: 4,
+      labels: "plots",
+      antialias: false,
+    };
+  }
+  return {
+    tier: "high",
+    dpr: 2,
+    hiTerrain: true,
+    treeStride: 1,
+    energyPer: 10,
+    labels: "all",
+    antialias: true,
+  };
 }
 
 const STAGE_KEYS = ["terrain", "imagery", "plots", "sun", "homes"] as const;
@@ -44,7 +95,7 @@ export function ExperienceLauncher() {
   const t = useTranslations("opplev");
   const [checked, setChecked] = useState(false);
   const [capable, setCapable] = useState(false);
-  const [webglOk, setWebglOk] = useState(true);
+  const [quality, setQuality] = useState<Quality | null>(null);
   const [World, setWorld] = useState<WorldComponent | null>(null);
   const [heightmap, setHeightmap] = useState<Heightmap | null>(null);
   const [stage, setStage] = useState(0);
@@ -53,9 +104,9 @@ export function ExperienceLauncher() {
   // Capability check after mount (hydration-safe).
   useEffect(() => {
     /* eslint-disable react-hooks/set-state-in-effect */
-    const ok = hasWebgl();
-    setWebglOk(ok);
-    setCapable(ok && window.innerWidth >= 768);
+    const probe = probeGl();
+    setQuality(detectQuality(probe));
+    setCapable(probe.ok && !probe.software);
     setChecked(true);
     /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
@@ -63,7 +114,7 @@ export function ExperienceLauncher() {
   // Auto-enter: load the world chunk and the heightmap as soon as we know the
   // device is capable. No Enter click.
   useEffect(() => {
-    if (!capable) return;
+    if (!capable || !quality) return;
     let alive = true;
     timer.current = setInterval(() => {
       setStage((s) => Math.min(s + 1, STAGE_KEYS.length - 1));
@@ -74,25 +125,27 @@ export function ExperienceLauncher() {
       })
       .catch(() => {});
     // Progressive: the coarse heightmap renders instantly and is walkable at
-    // once; the high-resolution terrain then streams in and swaps without a
-    // wait. Fast things first, heavy things after.
+    // once; on high-tier devices the high-resolution terrain then streams in and
+    // swaps. Phones stay on the light coarse heightmap. Fast things first.
     fetch("/terrain/heightmap.json")
       .then((r) => r.json())
       .then((d: Heightmap) => {
         if (alive) setHeightmap(d);
-        fetch("/experience/terrain-hi.json")
-          .then((r) => r.json())
-          .then((hi: Heightmap) => {
-            if (alive) setHeightmap(hi);
-          })
-          .catch(() => {});
+        if (quality.hiTerrain) {
+          fetch("/experience/terrain-hi.json")
+            .then((r) => r.json())
+            .then((hi: Heightmap) => {
+              if (alive) setHeightmap(hi);
+            })
+            .catch(() => {});
+        }
       })
       .catch(() => {});
     return () => {
       alive = false;
       if (timer.current) clearInterval(timer.current);
     };
-  }, [capable]);
+  }, [capable, quality]);
 
   const ready = Boolean(World && heightmap);
   useEffect(() => {
@@ -123,7 +176,7 @@ export function ExperienceLauncher() {
         <Poster alt={t("fallbackTitle")} />
         <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-black/70 to-transparent p-6">
           <p className="max-w-md rounded-md bg-black/55 px-4 py-3 text-center text-sm text-white">
-            {webglOk ? t("enterHint") : t("fallbackNote")}
+            {t("fallbackNote")}
           </p>
         </div>
       </div>
@@ -133,8 +186,8 @@ export function ExperienceLauncher() {
   // Capable: the world (once ready) or the staged loader.
   return (
     <div className="relative h-full w-full bg-[#0b1722]">
-      {ready && World && heightmap ? (
-        <World heightmap={heightmap} />
+      {ready && World && heightmap && quality ? (
+        <World heightmap={heightmap} quality={quality} />
       ) : (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-5 text-white">
           <Poster alt={t("fallbackTitle")} />

@@ -28,7 +28,7 @@ export default async function OpplevPage({ params }: Props) {
   return (
     <main id="main-content" className="flex-1">
       {/* The 3D experience fills the viewport and enters automatically; no click. */}
-      <section className="relative h-[92svh] min-h-[520px] w-full overflow-hidden bg-[#0b1722]">
+      <section className="relative h-[92svh] min-h-[440px] w-full overflow-hidden overscroll-none bg-[#0b1722] sm:min-h-[520px]">
         <ExperienceLauncher />
         <ExperienceTitle eyebrow={t("eyebrow")} title={t("title")} lead={t("lead")} />
       </section>

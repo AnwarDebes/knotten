@@ -366,6 +366,7 @@
       "sprint": "Shift for å gå raskere",
       "fly": "Space / C for opp og ned",
       "speedLabel": "Fart",
+      "touchHint": "Venstre spak for å gå. Dra for å se deg rundt. Knapper for opp, fart og ned.",
       "map": "M for kartet",
       "exit": "Esc for å frigjøre pekeren"
     },
