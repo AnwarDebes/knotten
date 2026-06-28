@@ -62,6 +62,10 @@ Step-by-step guides written for a non-developer live in `docs/runbooks/`:
 
 The five-minute demo walkthrough is in `docs/DEMO.md`.
 
+The immersive 3D experience (the walkable site at `/opplev`) has its own guide in
+`docs/EXPERIENCE.md`: how to open it, the controls, a five-minute investor
+walkthrough, and the real-vs-indicative framing.
+
 ## Costs
 
 See `COSTS.md` for the indicative monthly cost ledger.
