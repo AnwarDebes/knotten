@@ -861,9 +861,15 @@ function Investor({
       face.current = Math.atan2(mX, mZ);
       bob.current += dt * speed * mag * 3.2;
     }
+    // Vertical: Space rises, C or Ctrl descends. When airborne and pressing
+    // neither, settle gently back to the ground, so simply releasing Space
+    // always brings you down and you can never get stuck in the air.
     const climb = 9 * speedMul;
-    if (k["Space"] || j.rise) alt.current += climb * dt;
-    if (k["KeyC"] || k["ControlLeft"] || j.descend) alt.current -= climb * dt;
+    const rising = k["Space"] || j.rise;
+    const descending = k["KeyC"] || k["ControlLeft"] || k["ControlRight"] || j.descend;
+    if (rising) alt.current += climb * dt;
+    else if (descending) alt.current -= climb * dt;
+    else if (alt.current > 0) alt.current -= Math.min(alt.current, 6 * dt);
     alt.current = Math.max(0, Math.min(150, alt.current));
 
     const hw = h.widthMeters / 2 - 3;
@@ -1317,7 +1323,7 @@ export default function ExperienceWorld({
           <span className="hidden px-1 text-[10px] tracking-wide text-white/70 uppercase sm:inline">
             {t("controls.speedLabel")}
           </span>
-          {([1, 3, 5, 10, 20] as const).map((mul) => (
+          {([1, 5, 10, 20, 50] as const).map((mul) => (
             <button
               key={mul}
               type="button"

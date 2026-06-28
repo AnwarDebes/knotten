@@ -376,7 +376,7 @@
       "walk": "WASD or arrows to walk",
       "look": "Drag, or click, to look around",
       "sprint": "Shift to move faster",
-      "fly": "Space / C to rise and descend",
+      "fly": "Space to rise; release or C to come down",
       "speedLabel": "Speed",
       "touchHint": "Left stick to walk. Drag to look. Buttons to rise, sprint, descend.",
       "map": "M for the map",

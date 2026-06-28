@@ -376,7 +376,7 @@
       "walk": "WASD eller piltaster for å gå",
       "look": "Dra, eller klikk, for å se deg rundt",
       "sprint": "Shift for å gå raskere",
-      "fly": "Space / C for opp og ned",
+      "fly": "Space for å heve; slipp eller C for å komme ned",
       "speedLabel": "Fart",
       "touchHint": "Venstre spak for å gå. Dra for å se deg rundt. Knapper for opp, fart og ned.",
       "map": "M for kartet",
