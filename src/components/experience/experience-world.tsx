@@ -284,11 +284,28 @@ function Houses({ h }: { h: Heightmap }) {
   );
 }
 
+/** True when the visitor's OS asks for reduced motion; decorative animation holds still. */
+function usePrefersReducedMotion(): boolean {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    /* eslint-disable-next-line react-hooks/set-state-in-effect -- sync the media
+       query to state on mount and on change; this is the standard pattern and is
+       hydration-safe because the initial state matches the server (no reduction). */
+    setReduced(mq.matches);
+    const on = () => setReduced(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  return reduced;
+}
+
 /**
  * The energy concept, in motion. Glowing particles flow from each home up to a
  * shared hub, an indicative picture of the rooftop solar feeding the local
  * energy sharing (plusskunde up to 1 MW per property). The figures are real
- * (PVGIS about 1010 kWh/kWp at 58 N); the layout is indicative.
+ * (PVGIS about 1010 kWh/kWp at 58 N); the layout is indicative. Under reduced
+ * motion the particles are placed once and held still.
  */
 function EnergyFlows({ h }: { h: Heightmap }) {
   const { hub, starts } = useMemo(() => {
@@ -308,11 +325,14 @@ function EnergyFlows({ h }: { h: Heightmap }) {
   const ref = useRef<THREE.InstancedMesh | null>(null);
   const m = useMemo(() => new THREE.Matrix4(), []);
   const v = useMemo(() => new THREE.Vector3(), []);
+  const reduced = usePrefersReducedMotion();
+  const filled = useRef(false);
 
   useFrame((state) => {
     const mesh = ref.current;
     if (!mesh) return;
-    const time = state.clock.elapsedTime;
+    if (reduced && filled.current) return; // reduced motion: place once, then hold
+    const time = reduced ? 0 : state.clock.elapsedTime;
     let idx = 0;
     for (let s = 0; s < starts.length; s++) {
       const st = starts[s];
@@ -326,6 +346,7 @@ function EnergyFlows({ h }: { h: Heightmap }) {
       }
     }
     mesh.instanceMatrix.needsUpdate = true;
+    filled.current = true;
   });
 
   return (
