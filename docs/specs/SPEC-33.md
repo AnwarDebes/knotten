@@ -37,6 +37,13 @@ experiences the space and the view from within, clearly framed as indicative.
 
 - Honesty: the show-home is indicative; the global indicative badge and narrative apply. A leveransebeskrivelse, not an illustration, governs the real specification.
 
+## Update: the show-home is now a building
+
+When the massing became multi-storey blocks (SPEC-31 update), the show-home was
+rebuilt to match: a building of the same form whose ground floor stays open and
+enterable behind the sea-facing picture window, with storeys above. The
+enterable ground floor and the fjord view are unchanged.
+
 ## Out of scope (tracked for later)
 
 - Interior furnishing, a measured floor-plan overlay, and honest passivhus feature call-outs (balanced ventilation, heat pump, triple glazing, battery) inside the show-home.

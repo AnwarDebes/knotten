@@ -45,6 +45,27 @@ landscape and the distances are experienced honestly rather than described.
 - Accessibility: keyboard movement is supported; reduced-motion toning of decorative animation and a guided still alternative are tracked for a later pass.
 - Performance: instanced vegetation and a single terrain mesh keep draw calls low.
 
-## Out of scope (tracked for later passes)
+## Update: third-person investor and free camera
 
-- Capsule collision against buildings, a click-to-teleport minimap, on-screen touch joysticks, and a first-person/orbit cinematic toggle.
+At the owner's direction the controls evolved from first person to a GTA-style
+third-person investor. The terrain, sun control, HUD and frame-loop fix above
+still hold; the camera and the avatar changed.
+
+- A visible investor avatar (dark suit, carrying a briefcase) walks the terrain
+  in third person, turning to face the way it moves, with an animated walk cycle.
+- A custom orbit camera replaces PointerLockControls: the yaw is an unbounded
+  accumulator, so it spins a full smooth 360 with no snap at any angle, and the
+  pitch sweeps from the sky down to nearly overhead. Look by dragging or by
+  clicking to capture the mouse.
+- Space and C rise and descend for an overhead survey; a speed control (1x, 2x,
+  3x) sets the pace; Shift still sprints.
+- An orientation minimap shows the plots and the investor's live position.
+- Reduced motion is respected (the energy animation holds still).
+
+All verified in a real foreground browser: walking, the 360 spin, the sky and
+overhead look, fly-up, the speed control and the minimap, with a clean console.
+
+## Out of scope (still tracked for later)
+
+- Capsule collision against the buildings, on-screen touch joysticks for phones,
+  and a scripted cinematic intro flyover.

@@ -35,6 +35,11 @@ site to the surrounding region.
 
 - Honesty: distances are the real sourced figures; bearings are computed from real coordinates; plot positions remain indicative placeholders.
 
+## Update
+
+An orientation minimap was added (north-up, the plots as status dots and the
+investor's live position). The richer info layer below remains for later.
+
 ## Out of scope (tracked for later)
 
-- A sequenced guided-tour mode with factual panels and a progress checklist, sea-view sightline cones, and a click-to-teleport minimap.
+- A sequenced guided-tour mode with factual panels and a progress checklist, sea-view sightline cones, and click-to-teleport on the minimap.
