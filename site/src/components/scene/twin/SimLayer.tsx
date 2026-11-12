@@ -1,11 +1,12 @@
 "use client";
 /* eslint-disable react-hooks/immutability -- react-three-fiber's own pattern: uniforms, instance buffers and animated objects are three.js state, changed in effects and useFrame outside React's render */
-import { useEffect, useMemo, useRef } from "react";
+import { use, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import type { Plot } from "@/lib/types";
 import { houseUniforms, MAX_HOUSES, MODULE } from "./TwinHouses";
-import { groundHeight } from "./twinData";
+import { builtGroundHeight, groundHeight } from "./twinData";
+import { fitFor, loadHouses, toLocal } from "../house/frame";
 import { twinUniforms } from "./materials";
 import { markShadowsDirty } from "./shadowState";
 
@@ -39,6 +40,8 @@ export function turbineSpots(park: { x: number; y: number }) {
 
 export function SimLayer({ plots, frame, park, showPark, showWind }: { plots: Plot[]; frame: SimFrame; park: { x: number; y: number } | null; showPark: boolean; showWind: boolean }) {
   const n = Math.min(plots.length, MAX_HOUSES);
+  // (the houses' fit to their plots: which are mirrored; already loaded for the houses themselves)
+  const houses = use(loadHouses());
   // house-indexed glow
   useEffect(() => {
     houseUniforms.uEnergy.value = 1;
@@ -50,7 +53,7 @@ export function SimLayer({ plots, frame, park, showPark, showWind }: { plots: Pl
   }, [frame, n]);
   useEffect(() => () => { houseUniforms.uEnergy.value = 0; houseUniforms.uOff.value.fill(0); }, []);
 
-  // batteries: a slim bar beside each terrace, height = charge
+  // batteries: a slim bar beside each terrace, height = charge, standing on the ground as graded for the plan
   const bars = useMemo(() => {
     const g = new THREE.BoxGeometry(0.45, 1, 0.45);
     g.translate(0, 0.5, 0);
@@ -70,14 +73,15 @@ totalEmissiveRadiance += diffuseColor.rgb * 0.22;`);
   }, [bars]);
   // the grid point, the plant's tables and the turbines throw shadows: draw the shadow map again as they come and go
   useEffect(() => { markShadowsDirty(); return () => markShadowsDirty(); }, [showPark, showWind, park]);
+  // (beside the same gable on every house: on a mirrored house that is the other end)
+  const spots = useMemo(() => plots.slice(0, n).map((p) => {
+    const { x, y } = toLocal(p, fitFor(houses, p).mirror, p.house.width_m / 2 + 0.9, p.house.depth_m / 2 + 1.2);
+    return { x, y, z: builtGroundHeight(x, y) };
+  }), [plots, n, houses]);
   useEffect(() => {
     const m4 = new THREE.Matrix4(), c = new THREE.Color();
     for (let k = 0; k < n; k++) {
-      const p = plots[k];
-      const f = (p.house.facing_deg * Math.PI) / 180;
-      const u = p.house.width_m / 2 + 0.9, v = p.house.depth_m / 2 + 1.2;
-      const x = p.local.x + u * Math.cos(f) + v * Math.sin(f), y = p.local.y - u * Math.sin(f) + v * Math.cos(f);
-      const z = p.local.z_floor;
+      const { x, y, z } = spots[k];
       const s = Math.max(0.03, frame.soc[k]);
       m4.compose(new THREE.Vector3(x, z, -y), new THREE.Quaternion(), new THREE.Vector3(1, 2.2 * s, 1));
       bars.mesh.setMatrixAt(k, m4);
@@ -89,7 +93,7 @@ totalEmissiveRadiance += diffuseColor.rgb * 0.22;`);
     bars.mesh.instanceMatrix.needsUpdate = true;
     bars.shell.instanceMatrix.needsUpdate = true;
     if (bars.mesh.instanceColor) bars.mesh.instanceColor.needsUpdate = true;
-  }, [frame, plots, n, bars]);
+  }, [frame, spots, n, bars]);
 
   // flows: neighbours sharing, and the field's exchange with the grid
   const flows = useMemo(() => {

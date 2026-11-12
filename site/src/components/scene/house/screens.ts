@@ -12,6 +12,9 @@ import type { LiveFigures } from "./walkState";
 
 export type Screen = { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D; texture: THREE.CanvasTexture };
 
+/** The house's figures; the page's simulation also gives what the house's own meter has counted this year (kWh). */
+export type ScreenFigures = LiveFigures & { meterKwh?: number };
+
 export function makeScreen(): Screen {
   const canvas = document.createElement("canvas");
   canvas.width = 1024; canvas.height = 1024;
@@ -25,7 +28,7 @@ export function makeScreen(): Screen {
 const n1 = (v: number, no: boolean) => (Math.abs(v) < 10 ? v.toFixed(1) : v.toFixed(0)).replace(".", no ? "," : ".");
 const MONTHS = { no: ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"], en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] };
 
-export function drawScreens(s: Screen, f: LiveFigures | null, locale: "no" | "en", plotNo: number) {
+export function drawScreens(s: Screen, f: ScreenFigures | null, locale: "no" | "en", plotNo: number) {
   const g = s.ctx, no = locale === "no";
   g.save();
   // ---------------- the energy screen (1024 x 512, top half of the canvas)
@@ -34,15 +37,23 @@ export function drawScreens(s: Screen, f: LiveFigures | null, locale: "no" | "en
   g.fillText(no ? `Hus ${plotNo} · energi nå` : `House ${plotNo} · energy now`, 36, 58);
   g.font = "400 26px system-ui, sans-serif"; g.fillStyle = "#8fa3b3";
   if (f) g.fillText(`${String(f.hour).padStart(2, "0")}:00 · ${f.day}. ${MONTHS[locale][f.month - 1]} · ${n1(f.temp, no)} °C · ${n1(f.price, no)} kr/kWh`, 36, 100);
-  const tile = (x: number, y: number, label: string, value: string, unit: string, col: string) => {
+  const tile = (x: number, y: number, label: string, value: string, unit: string, col: string, sub?: string) => {
     g.fillStyle = "#162330"; g.beginPath(); g.roundRect(x, y, 300, 160, 18); g.fill();
     g.fillStyle = "#8fa3b3"; g.font = "500 24px system-ui, sans-serif"; g.fillText(label, x + 22, y + 40);
     g.fillStyle = col; g.font = "700 64px system-ui, sans-serif"; g.fillText(value, x + 22, y + 118);
     const w = g.measureText(value).width;
     g.fillStyle = "#c9d6df"; g.font = "500 28px system-ui, sans-serif"; g.fillText(unit, x + 32 + w, y + 118);
+    if (sub) {
+      // a small line under the figure, made smaller if it would run out of the tile
+      let px = 22;
+      g.font = `500 ${px}px system-ui, sans-serif`;
+      while (px > 15 && g.measureText(sub).width > 256) { px--; g.font = `500 ${px}px system-ui, sans-serif`; }
+      g.fillStyle = "#8fa3b3"; g.fillText(sub, x + 22, y + 147);
+    }
   };
   if (f) {
-    tile(36, 128, no ? "Sol på taket" : "Solar on the roof", n1(f.pv, no), "kW", "#f2b84b");
+    // the roof's power, and how much of it the house uses itself this hour
+    tile(36, 128, no ? "Sol på taket" : "Solar on the roof", n1(f.pv, no), "kW", "#f2b84b", `${no ? "Brukt i huset" : "Used in the house"} ${n1(f.selfUse, no)} kW`);
     tile(362, 128, no ? "Huset bruker" : "The house uses", n1(f.use, no), "kW", "#e9eef2");
     tile(688, 128, no ? "Batteri" : "Battery", String(Math.round(f.soc * 100)), "%", "#5fd18b");
     tile(36, 310, no ? "Varmepumpe" : "Heat pump", n1(f.hp, no), "kW", "#9fc7e8");
@@ -72,10 +83,11 @@ export function drawScreens(s: Screen, f: LiveFigures | null, locale: "no" | "en
   g.font = "500 26px system-ui, sans-serif"; g.fillStyle = "#9fb0bd";
   g.fillText(f ? `${no ? "Batteri" : "Battery"} ${Math.round(f.soc * 100)} % · ${n1(f.batteryKwh, no)} kWh` : "", 534, 700);
   g.fillText(f ? `${n1(f.kwp, no)} kWp ${no ? "på taket" : "on the roof"}` : "", 534, 740);
-  // ---------------- the electricity meter (512 x 256 at y 768): an LCD with the reading
+  // ---------------- the electricity meter (512 x 256 at y 768): an LCD with the reading, what has come in through
+  // the house's own meter since 1 January (from the grid or the neighbours), as the simulation has it
   g.fillStyle = "#a6b39a"; g.fillRect(0, 768, 512, 256);
   g.fillStyle = "#1c241a"; g.font = "700 76px ui-monospace, monospace";
-  const reading = f ? Math.round(f.yearUse * 0.73) : 0;
+  const reading = f?.meterKwh !== undefined ? Math.round(f.meterKwh) : 0;
   g.fillText(String(reading).padStart(6, "0"), 30, 900);
   g.font = "600 34px ui-monospace, monospace"; g.fillText("kWh  HAN", 340, 960);
   // ---------------- the thermostat (256 x 256 at x 512, y 768)

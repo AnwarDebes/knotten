@@ -11,6 +11,10 @@
  * and litter, and leaves conifer woods nearly as they are.
  */
 import * as THREE from "three";
+import { HOUSE } from "@/lib/house/plan";
+
+// the visited house's footprint less 2 cm, where its own floors stand in for the ground (house-local u, v)
+const CLIP_U = (HOUSE.hw - 0.02).toFixed(3), CLIP_V = (HOUSE.hd - 0.02).toFixed(3);
 
 /** With ?twindebug the clock can be held (DebugHook's freeze): stills of the moving water, clouds and trees then come out the same every time. */
 export const twinClock = { frozen: null as number | null };
@@ -204,7 +208,7 @@ float twinVNoise(vec2 p) {
 if (uClipOn > 0.5) {
   vec2 cd = vec2(vTwinWorld.x - uClipHouse.x, -(vTwinWorld.z - uClipHouse.y));
   float cu = cd.x * uClipHouse.z - cd.y * uClipHouse.w, cv = cd.x * uClipHouse.w + cd.y * uClipHouse.z;
-  if (abs(cu) < 5.48 && abs(cv) < 4.23) discard;
+  if (abs(cu) < ${CLIP_U} && abs(cv) < ${CLIP_V}) discard;
 }
 vec3 twinMask = texture2D(uMask, vMapUv).rgb;
 twinWater = smoothstep(0.35, 0.65, twinMask.r);

@@ -4,7 +4,7 @@ import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
 import { DETAIL_MODELS, MODELS, shadowCone } from "./treeModels";
 import { closeFoliageTextures, foliageTextures } from "./foliageTextures";
-import { bakeAtlas, cardGeometry, cardMaterial, createAtlas } from "./impostor";
+import { bakeAtlas, cardGeometry, cardMaterial, createAtlas, keepOpaque } from "./impostor";
 import { season as seasonFor, type Season } from "./season";
 import { TREE_AERIAL_GLSL, treeAerial, twinUniforms } from "./materials";
 import { markShadowsDirty } from "./shadowState";
@@ -77,8 +77,11 @@ export function foliage(s: Season) {
  * turning broadleaf crowns) on the painted shading, leaves dropped one by one as density falls.
  */
 export function foliageMaterial(map: THREE.Texture, key: string, species: number) {
-  // plain alpha test: alpha-to-coverage let the background through as bright speckles on some GPUs (ANGLE/D3D11)
-  const m = new THREE.MeshStandardMaterial({ map, vertexColors: true, side: THREE.DoubleSide, alphaTest: 0.45, roughness: 1, envMapIntensity: 0.8 });
+  // The leaves' edges are smoothed by the picture's multisampling (alpha to coverage) instead of being cut on whole
+  // pixels, which shimmered as the view moved. The alpha is sharpened to the width of one pixel round the cut (three's
+  // alpha test under alpha to coverage), so a leaf is solid inside and only its edge is partly covered: no background
+  // shows through the crown (plain alpha to coverage let the sky through as bright speckles on some GPUs).
+  const m = new THREE.MeshStandardMaterial({ map, vertexColors: true, side: THREE.DoubleSide, alphaTest: 0.45, alphaToCoverage: true, roughness: 1, envMapIntensity: 0.8 });
   const u = { uLeafColor: { value: new THREE.Color() }, uTwigColor: { value: new THREE.Color() }, uDensity: { value: 1 }, uSpecies: { value: species } };
   m.userData.foliage = u;
   // every leaf material compiles to the same program (species, colours and textures are uniforms): one key, one
@@ -108,7 +111,12 @@ float twig = 1.0 - step(0.03, fol.b);
 if (twig < 0.5 && fol.b > uDensity + 0.001) fol.a = 0.0;
 vec3 leafC = mix(uLeafColor, vAerial, vAerialW);
 diffuseColor.rgb = mix(leafC, uTwigColor, twig) * (0.35 + 0.75 * fol.r);
-diffuseColor.a = fol.a;`)
+// a smaller mip level averages the needles with the gaps between them and its alpha falls below the cut, so crowns
+// thinned out with distance; scaled up by the level, the cut covers about what the full-size card covers
+vec2 folPx = vMapUv * vec2(textureSize(map, 0));
+vec2 folDx = dFdx(folPx), folDy = dFdy(folPx);
+float folLod = max(0.0, 0.5 * log2(max(dot(folDx, folDx), dot(folDy, folDy))));
+diffuseColor.a = fol.a * (1.0 + folLod * 0.25);`)
       .replace("#include <normal_fragment_begin>", THREE.ShaderChunk.normal_fragment_begin.replace("normal *= faceDirection;", ""))
       // a card stands for many needles or leaves at all angles: no mirror-like sheen at grazing angles
       // (seen from behind, its normal points away and the Fresnel term would reflect the whole sky)
@@ -165,7 +173,9 @@ export const forestCull: { run: ((cam: THREE.Camera) => void) | null; dirty: () 
 export const TwinForest = forwardRef<THREE.Group, { month: number; day?: number; quality?: "full" | "lite"; shadows: boolean }>(function TwinForest({ month, day = 21, quality = "full", shadows }, clearedRef) {
   const trees = use(loadTrees());
   const twin = use(loadTwin());
-  const { gl, camera } = useThree();
+  const { gl, camera, scene } = useThree();
+  // the leaves and the cards use alpha to coverage: the canvas's alpha is set back to opaque after each picture
+  useEffect(() => keepOpaque(scene), [scene]);
   const nearR = quality === "full" ? 260 : 150;
   const closeR = quality === "full" ? 70 : 0;   // detailed trees this close to the camera
   const s = useMemo(() => seasonFor(month, day), [month, day]);

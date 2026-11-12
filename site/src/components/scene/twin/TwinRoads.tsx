@@ -92,6 +92,7 @@ export function TwinRoads({ shadows, quality = "full" }: { shadows: boolean; qua
     m.customProgramCacheKey = () => "twin-lamps-v1";
     return m;
   }, []);
+  useEffect(() => () => lampMat.dispose(), [lampMat]);
   const parts = useMemo(() => {
     if (!objects) return null;
     const metal = new THREE.MeshStandardMaterial({ color: new THREE.Color(0.6, 0.62, 0.64), roughness: 0.45, metalness: 0.5 });
@@ -120,7 +121,16 @@ export function TwinRoads({ shadows, quality = "full" }: { shadows: boolean; qua
       mesh.receiveShadow = shadows;
     });
   }, [gltf, shadows]);
-  useEffect(() => () => { parts?.forEach((o) => { const m = o as THREE.Mesh; m.geometry?.dispose(); }); }, [parts]);
+  // (the lamps' material outlives the parts: it is the lamps' own, let go above)
+  useEffect(() => () => {
+    const mats = new Set<THREE.Material>();
+    parts?.forEach((o) => {
+      const m = o as THREE.Mesh;
+      m.geometry?.dispose();
+      (Array.isArray(m.material) ? m.material : [m.material]).forEach((x) => { if (x && x !== lampMat) mats.add(x); });
+    });
+    mats.forEach((x) => x.dispose());
+  }, [parts, lampMat]);
   return (
     <group>
       <primitive object={gltf.scene} />

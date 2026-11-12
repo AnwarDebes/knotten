@@ -18,7 +18,8 @@ import Passport from "./ui/Passport";
 import type { CameraPreset } from "./scene/KnottenScene";
 import WalkHud from "./walk/WalkHud";
 import { fitFor, loadHouses } from "./scene/house/frame";
-import { addLook, requestClick, setLive, subscribeWalk, walkState, walkVersion, type LiveFigures, type WalkStart } from "./scene/house/walkState";
+import { addLook, requestClick, setLive, subscribeWalk, walkState, walkVersion, type WalkStart } from "./scene/house/walkState";
+import { houseFigures, type HouseFigures } from "./walk/liveFigures";
 import { useTapFocus } from "./scene/tapFocus";
 import { has3d } from "./scene/has3d";
 import type { HouseFit } from "@/lib/house/plan";
@@ -166,16 +167,20 @@ export default function Stage({ plots, locale, initialPlot = null, initialMode =
   const onFailed = useCallback(() => { setReady(false); setFailed(has3d() ? "load" : "no3d"); }, []);
   const retryLoad = () => { setFailed(null); setSceneKey((k) => k + 1); };
   const plot = useMemo(() => plots.find((p) => p.id === selected) ?? null, [plots, selected]);
-  // the living field: the energy simulation (the budget's scenario) at the dial's day and hour
+  // the living field: the energy simulation (the budget's scenario) at the dial's day and hour, in the field view and
+  // as the lived-in side of the wipe (its panels, lit windows, batteries and flows)
+  const lived = mode === "field" || (mode === "wipe" && state === "lived");
   const homes = useMemo(() => homesOf(plots), [plots]);
-  const { out: simOut } = useSim(homes, BUDGET_SCENARIO, armed && (mode === "field" || !!walk));
+  const { out: simOut } = useSim(homes, BUDGET_SCENARIO, armed && (lived || !!walk));
   const simHour = hourOf(2025, dial.month, 21, Math.floor(dial.hour));
+  // (the power cut is a drill of the field view only)
+  const cutOn = outage && mode === "field";
   const sim = useMemo(() => {
     const r = simOut?.result;
     if (!r) return undefined;
-    const cut = outage ? runOutage(r, simHour, 1, true) : null;
+    const cut = cutOn ? runOutage(r, simHour, 1, true) : null;
     return frameAt(r, simHour, cut, cut ? 0 : -1);
-  }, [simOut, simHour, outage]);
+  }, [simOut, simHour, cutOn]);
   const simField = simOut?.result ? {
     pv: simOut.result.field.pvRoofs[simHour] + simOut.result.field.pvOffice[simHour] + simOut.result.field.wind[simHour],
     use: simOut.result.field.homes[simHour] + simOut.result.field.heatPumps[simHour] + simOut.result.field.office[simHour],
@@ -187,19 +192,10 @@ export default function Stage({ plots, locale, initialPlot = null, initialMode =
   // (the dial moves in quarter hours; the house's figures change by the hour, so they are worked out, and its screens
   // redrawn, only when the hour or the month changes)
   const dialMonth = dial.month, dialHour = Math.floor(dial.hour);
-  const live = useMemo<LiveFigures | null>(() => {
+  const live = useMemo<HouseFigures | null>(() => {
     const r = simOut?.result;
     if (!r || visit < 0 || visit >= r.homes) return null;
-    const h = simHour, k = visit;
-    let yearPv = 0, yearUse = 0;
-    for (let i = 0; i < r.pv[k].length; i++) { yearPv += r.pv[k][i]; yearUse += r.load[k][i]; }
-    const local = { month: dialMonth, day: 21, hour: dialHour };
-    return {
-      pv: r.pv[k][h], use: r.load[k][h], hp: Math.max(0, r.load[k][h] - r.appliance[k][h]), soc: r.soc[k][h], share: r.share[k][h],
-      grid: r.field.imp[h] - r.field.exp[h], temp: r.field.temp[h], price: r.field.buy[h], cop: r.field.cop[h] || 3.6,
-      hour: local.hour, day: local.day, month: local.month, yearPv, yearUse, selfUse: 0,
-      batteryKwh: r.scenario.batteryKwh, kwp: r.scenario.pvPerHomeKwp, offline: false,
-    };
+    return houseFigures(r, visit, simHour, { month: dialMonth, day: 21, hour: dialHour });
   }, [simOut, simHour, visit, dialMonth, dialHour]);
   useEffect(() => { setLive(live); }, [live]);
   const onReady = useCallback(() => setReady(true), []);
@@ -297,10 +293,9 @@ export default function Stage({ plots, locale, initialPlot = null, initialMode =
             labels={preset === "fjord" ? "wide" : "near"}
             walk={walk}
             locale={locale}
-            sim={mode === "field" ? sim : undefined}
-            showWind={mode === "field"}
+            sim={lived ? sim : undefined}
+            showWind={lived}
             simPark={simOut?.info.park ?? null}
-            outage={outage}
             onPick={onPick}
             onReady={onReady}
           />

@@ -1,11 +1,11 @@
 "use client";
 /* eslint-disable react-hooks/immutability -- react-three-fiber's own pattern: the camera, the controls and the renderer are three.js objects, changed in useFrame outside React's render */
-import { Component, memo, Suspense, use, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Component, memo, Suspense, use, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import * as THREE from "three";
 import { Canvas, events as r3fEvents, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import type { OrbitControls as OrbitControlsImpl } from "three-stdlib";
-import type { EnergyFrame, Plot, SceneState } from "@/lib/types";
+import type { Plot, SceneState } from "@/lib/types";
 import { Powerlines } from "./layers";
 import { TwinBuildings } from "./twin/TwinBuildings";
 import { TwinRoads } from "./twin/TwinRoads";
@@ -25,11 +25,11 @@ import { WalkRig } from "./house/WalkRig";
 import { loadHouses } from "./house/frame";
 import { walkState, type WalkStart } from "./house/walkState";
 import { forestCull, TwinForest } from "./twin/TwinForest";
-import { EnergyOverlay } from "./Overlay";
 import { ViewCorridor } from "./ViewCorridor";
 import type { HouseOptions } from "@/lib/house/options";
 import type { CustomBuild, SiteData } from "./house/custom";
 import { builtGroundHeight } from "./twin/twinData";
+import { PixelRoom } from "./twin/PixelRoom";
 
 // The heavy parts of the model, memoised: the page re-renders the scene for every change of its own state (each move of
 // the wipe, each hour of a playback), and these parts take none of it (their props stay the same), so React skips them.
@@ -54,8 +54,6 @@ export type SceneProps = {
   selectedPlot: string | null;   // stand-on-plot mode when set
   inside?: boolean;              // with selectedPlot: stand in the living room
   preset: CameraPreset;
-  frame?: EnergyFrame;
-  outage?: boolean;
   quality?: "full" | "lite";
   paused?: boolean;              // stop the render loop when the stage is off screen
   interactive?: boolean;         // wheel and drag only after the visitor has clicked in
@@ -372,6 +370,17 @@ function WarmUp({ onReady, warm }: { onReady?: () => void; warm: React.RefObject
   return null;
 }
 
+/** A finger as the main pointer (phones, tablets), followed live: a laptop folded into a tablet, a window moved to another screen. */
+const COARSE = "(pointer: coarse)";
+function subscribeCoarse(change: () => void) {
+  const mq = window.matchMedia(COARSE);
+  mq.addEventListener("change", change);
+  window.addEventListener("resize", change);
+  return () => { mq.removeEventListener("change", change); window.removeEventListener("resize", change); };
+}
+const coarseNow = () => window.matchMedia(COARSE).matches;
+const coarseOnServer = () => true;
+
 /** Pointer events for picking a house only: no hit test on every wheel tick, right click or double click (nothing listens to them). */
 const pickEvents: typeof r3fEvents = (store) => {
   const e = r3fEvents(store);
@@ -389,7 +398,7 @@ export default function KnottenScene(props: SceneProps) {
   const month = dateOverride?.month ?? props.month;
   const hour = dateOverride?.hour ?? props.hour;
   const weather = dateOverride?.clouds !== undefined ? { clouds: dateOverride.clouds, wind: 2 } : props.weather;
-  const { state, wipe, plots, inside = false, preset, frame, outage, quality = "full", paused = false, interactive = true, calm = false, onPick, onContextLost } = props;
+  const { state, wipe, plots, inside = false, preset, quality = "full", paused = false, interactive = true, calm = false, onPick, onContextLost } = props;
   // ---- the configure mode: the configured house's plot, which of its views, and when it is on screen
   const cfg = props.configure ?? null;
   const cfgIndex = cfg?.plot ? plots.findIndex((p) => p.id === cfg.plot) : -1;
@@ -419,15 +428,23 @@ export default function KnottenScene(props: SceneProps) {
   const todayGround = useRef<THREE.Group>(null);
   const gradedGround = useRef<THREE.Group>(null);
   const registry = useRef<PlotRegistry>(new Map());
+  // (one object for the page's life: the console hook is built once, not again on every render)
+  const debugGroups = useMemo(() => ({ cleared: clearedGroup, proposal: proposalGroup, today: todayGround, graded: gradedGround }), []);
   // false until WarmUp has built the shader programs: nothing is drawn before (the still covers the canvas)
   const warm = useRef(false);
-  // the scene only renders in the browser (Stage loads it with ssr: false), so the screen can be read directly
-  // shadows everywhere but on phones and tablets (a narrow screen, or a finger as the main pointer); a laptop with
-  // a touch screen as well as a touchpad is a laptop (asking for touch points at all took its shadows away)
-  const shadows = useMemo(() => quality === "full" && !(window.innerWidth < 900 || window.matchMedia("(pointer: coarse)").matches), [quality]);
+  // shadows on every screen with a mouse or a touchpad as its main pointer, however narrow the window (it can be
+  // resized); phones and tablets (a finger as the main pointer) go without. A laptop with a touch screen as well as a
+  // touchpad is a laptop (asking for touch points at all took its shadows away)
+  const coarse = useSyncExternalStore(subscribeCoarse, coarseNow, coarseOnServer);
+  const shadows = quality === "full" && !coarse;
+  // pixels: the screen's own up to 1.5; on a finer screen with a mouse or a touchpad, up to 2 once the first frames
+  // show this GPU has room for it (PixelRoom); never less than before
+  const finest = Math.min(2, window.devicePixelRatio || 1);
+  const [finer, setFiner] = useState(false);
+  const onRoom = useCallback(() => setFiner(true), []);
+  const canFiner = quality === "full" && !coarse && finest > 1.5;
   const plot = useMemo(() => plots.find((p) => p.id === selectedPlot) ?? null, [plots, selectedPlot]);
   const presets = useMemo(() => framePresets(plots), [plots]);
-  const showOverlay = state === "lived" && !!frame;
   // on foot: the house being walked through (it changes as the visitor walks up to another one)
   const [walkOverride, setWalkOverride] = useState<{ plot: string; start: WalkStart } | null | undefined>(undefined);
   const walkProp = walkOverride !== undefined ? walkOverride : cfg ? cfgWalk : props.walk;
@@ -451,7 +468,7 @@ export default function KnottenScene(props: SceneProps) {
       // shader compile twice, once before and once after three switched the type in the first shadow pass)
       shadows={shadows ? "percentage" : false}
       events={pickEvents}
-      dpr={[1, quality === "lite" ? 1 : 1.5]}
+      dpr={[1, quality === "lite" ? 1 : canFiner && finer ? finest : 1.5]}
       frameloop={paused ? "never" : "always"}
       gl={{ alpha: false, antialias: quality !== "lite", toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 0.92, powerPreference: "high-performance", logarithmicDepthBuffer: false }}
       camera={{ fov: 48, near: 1, far: 200000, position: presets.site.pos }}
@@ -470,9 +487,7 @@ export default function KnottenScene(props: SceneProps) {
           </group>
           <PlannedBuildings />
           {interiorIndex >= 0 && <HouseInterior plots={plots} index={interiorIndex} locale={props.locale ?? "no"} custom={customBuild} />}
-          {props.sim ? (
-            <SimLayer plots={plots} frame={props.sim} park={props.simPark ?? null} showPark={!!props.showPark} showWind={!!props.showWind} />
-          ) : showOverlay && frame && <EnergyOverlay frame={frame} plots={plots} outage={!!outage} registry={registry} />}
+          {props.sim && <SimLayer plots={plots} frame={props.sim} park={props.simPark ?? null} showPark={!!props.showPark} showWind={!!props.showWind} />}
         </group>
         {plot && !inside && !walking && <ViewCorridor plot={plot} />}
         {props.labels && props.labels !== "off" && !plot && !walking && <Labels locale={props.locale ?? "no"} wide={props.labels === "wide"} />}
@@ -480,8 +495,9 @@ export default function KnottenScene(props: SceneProps) {
         <WarmUp onReady={onReady} warm={warm} />
       </Suspense>
       <ContextGuard onLost={onContextLost} />
+      {canFiner && !finer && <PixelRoom ratio={finest} onRoom={onRoom} warm={warm} />}
       <DepthRange walking={walking || inside} />
-      <DebugHook controls={controls} setDate={setDateOverride} setWalk={setWalkOverride} groups={{ cleared: clearedGroup, proposal: proposalGroup, today: todayGround, graded: gradedGround }} />
+      <DebugHook controls={controls} setDate={setDateOverride} setWalk={setWalkOverride} groups={debugGroups} />
       <OrbitControls ref={controls} makeDefault enabled={!walking} enableDamping dampingFactor={0.08} enablePan={!plot && !cfgOrbit && interactive} enableZoom={interactive && !inside} enableRotate={interactive} />
       <TouchScroll interactive={interactive} />
       <CameraRig preset={preset} plot={plot} inside={inside} controls={controls} presets={presets} idle={!interactive && !calm && !cfg} frozen={walking || cfgOrbit} />
@@ -541,7 +557,8 @@ function DebugHook({ controls, setDate, setWalk, groups }: { controls: React.Ref
     if (!window.location.search.includes("twindebug")) return;
     const w = window as unknown as { __twin?: unknown };
     w.__twin = {
-      camera, gl, scene, controls: controls.current,
+      camera, gl, scene,
+      get controls() { return controls.current; },
       date(month: number, hour: number, clouds?: number) { setDate({ month, hour, clouds }); },
       /** Walk from the console: __twin.walk("plot-12", "door"); __twin.walk(null) stops; __twin.walk() hands back to the page. */
       walk(plot?: string | null, start: WalkStart = "door") { setWalk(plot === undefined ? undefined : plot === null ? null : { plot, start }); },
@@ -563,10 +580,13 @@ function DebugHook({ controls, setDate, setWalk, groups }: { controls: React.Ref
         cam.updateProjectionMatrix();
         gl.setScissorTest(false);
         gl.shadowMap.needsUpdate = true;
-        // the trees this picture can see (its shape is not the page's)
+        // the trees this picture can see (its shape is not the page's), and the water's detail for its own pixels
         forestCull.run?.(cam);
+        const pixelAngle = twinUniforms.uPixelAngle.value;
+        twinUniforms.uPixelAngle.value = (cam.fov * Math.PI) / 180 / o.h;
         gl.render(scene, cam);
         const url = gl.domElement.toDataURL("image/png");
+        twinUniforms.uPixelAngle.value = pixelAngle;
         markShadowsDirty();
         forestCull.dirty();
         gl.setPixelRatio(ratio);
@@ -584,7 +604,11 @@ function DebugHook({ controls, setDate, setWalk, groups }: { controls: React.Ref
         else camera.lookAt(...target);
       },
     };
-    return () => { delete w.__twin; };
+    return () => {
+      delete w.__twin;
+      // a view held from the console ends with the scene (it no longer stops the idle turn on the next page)
+      delete (window as unknown as { __twinHold?: boolean }).__twinHold;
+    };
   }, [camera, gl, scene, controls, setDate, setWalk, groups]);
   return null;
 }

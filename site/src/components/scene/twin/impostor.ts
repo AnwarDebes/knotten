@@ -121,6 +121,28 @@ export function bakeAtlas(gl: THREE.WebGLRenderer, geoms: THREE.BufferGeometry[]
   gl.setViewport(0, 0, size.x, size.y);
 }
 
+/**
+ * Alpha to coverage writes a crown's alpha into the picture as well as using it for coverage, and three always keeps
+ * an alpha channel in the canvas, which the page composites with whatever lies under it: where a crown's edge covers
+ * part of a pixel, the page would show through. After each picture of the scene its alpha is set back to opaque, one
+ * clear of the alpha channel alone (the colours are not touched). Returns the undo.
+ */
+export function keepOpaque(scene: THREE.Scene) {
+  const prev = scene.onAfterRender;
+  scene.onAfterRender = function (renderer, sc, camera, geometry, material, group) {
+    prev.call(this, renderer, sc, camera, geometry, material, group);
+    const gl = renderer.getContext();
+    const color = renderer.state.buffers.color;
+    color.setClear(0, 0, 0, 1, false);           // (through three, so its record of the clear colour stays true)
+    gl.colorMask(false, false, false, true);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.colorMask(true, true, true, true);
+    color.setMask(false);                        // three's record of the mask agrees with the context again
+    color.setMask(true);
+  };
+  return () => { scene.onAfterRender = prev; };
+}
+
 /** The card mesh: two quads per tree (upright, flat), positioned in the vertex shader. */
 export function cardGeometry(count: number, pos: Float32Array, dim: Float32Array, info: Float32Array) {
   const g = new THREE.InstancedBufferGeometry();
@@ -135,9 +157,14 @@ export function cardGeometry(count: number, pos: Float32Array, dim: Float32Array
   return g;
 }
 
-/** Lit, fogged, shadowed cards: a standard material whose vertices and normals come from the atlas. */
+/**
+ * Lit, fogged, shadowed cards: a standard material whose vertices and normals come from the atlas. A card covers
+ * as much of each pixel as its crown does there (alpha to coverage: the samples of the picture's multisampling), so
+ * the soft edge of a far crown, the gaps in it and the fade between the cards blend smoothly; a pattern of whole
+ * pixels fixed to the screen read as dotted noise that crawled over the hills as the view moved.
+ */
 export function cardMaterial(atlas: Atlas, uniforms: { uNear: { value: number }; uTime: { value: number }; uClear?: { value: THREE.Vector4 }; uClearOn?: { value: number } }) {
-  const m = new THREE.MeshStandardMaterial({ roughness: 0.92, metalness: 0, envMapIntensity: 0.6 });
+  const m = new THREE.MeshStandardMaterial({ roughness: 0.92, metalness: 0, envMapIntensity: 0.6, alphaToCoverage: true });
   m.onBeforeCompile = (shader) => {
     Object.assign(shader.uniforms, treeAerial);
     shader.uniforms.uAlbedo = { value: atlas.albedo.texture };
@@ -153,7 +180,7 @@ uniform vec4 uClear;
 uniform float uClearOn;
 varying vec2 vCardUv; varying float vCardFade; varying vec4 vCardInfo; varying float vCardKind;
 varying vec3 vCardR; varying vec3 vCardU; varying vec3 vCardF;
-varying vec3 vCardAerial; varying float vCardAerialW;
+varying vec3 vCardAerial; varying float vCardAerialW; varying float vCardDither;
 ${TREE_AERIAL_GLSL}`)
       .replace("#include <beginnormal_vertex>", `
 vec3 cBase = iPos; float cH = iDim.x; float cR = iDim.y;
@@ -184,6 +211,8 @@ vCardFade *= smoothstep(uNear - 45.0, uNear, cDist);
 if (uClearOn > 0.5 && cBase.x > uClear.x && cBase.x < uClear.z && cBase.z > uClear.y && cBase.z < uClear.w) vCardFade = 0.0;
 if (vCardFade < 0.004) cardPos = vec3(0.0, -9999.0, 0.0);
 vCardInfo = iInfo; vCardKind = position.z;
+// one number per tree, spread evenly over 0..1 (from its turn, a byte, and its tint, 5 bits)
+vCardDither = fract(floor(iInfo.z * 40.743665 + 0.5) * 0.618034 + floor(iInfo.y * 31.0 + 0.5) * 0.7548777);
 // a folded card (the other one of the pair is the one seen from here, or the tree is near enough to be 3D) has
 // no area and draws nothing: its photo colour is not looked up (two texture reads for half the cards)
 if (vCardFade >= 0.004) {
@@ -201,13 +230,16 @@ objectNormal = vCardF;`)
 uniform sampler2D uAlbedo; uniform sampler2D uNormalAtlas;
 varying vec2 vCardUv; varying float vCardFade; varying vec4 vCardInfo; varying float vCardKind;
 varying vec3 vCardR; varying vec3 vCardU; varying vec3 vCardF;
-varying vec3 vCardAerial; varying float vCardAerialW;
+varying vec3 vCardAerial; varying float vCardAerialW; varying float vCardDither;
 vec2 cardAtlasUv() { return (vec2(vCardInfo.x, vCardKind) + clamp(vCardUv, 0.004, 0.996)) / vec2(4.0, 2.0); }`)
       .replace("#include <map_fragment>", `
 vec4 cardAlb = texture2D(uAlbedo, cardAtlasUv());
-float cardA = cardAlb.a * vCardFade;
-float cardHash = fract(sin(dot(floor(gl_FragCoord.xy), vec2(12.9898, 78.233))) * 43758.5453);
-if (cardA < max(cardHash, 0.06)) discard;
+// The samples covered are the alpha rounded to quarters of a pixel. Each tree rounds up or down by its own measure,
+// the same over all of it: a thin or fading crown (under an eighth) is not left out, and the forest as a whole covers
+// what its crowns cover, as the earlier pattern of whole pixels did on average.
+float cardA = cardAlb.a * vCardFade + (vCardDither - 0.5) * 0.25;
+if (cardA < 0.125) discard;
+diffuseColor.a = cardA;
 float tint = vCardInfo.y;
 // leaves: the photo's colour at the tree on the painted shading (kept in the normal atlas's alpha)
 float cardShade = texture2D(uNormalAtlas, cardAtlasUv()).a;
@@ -221,6 +253,6 @@ vec3 cardNW = normalize(vCardR * cardN.x + vCardU * cardN.y + vCardF * max(cardN
 normal = normalize((viewMatrix * vec4(cardNW, 0.0)).xyz);`)
       .replace("#include <lights_fragment_end>", "#include <lights_fragment_end>\nreflectedLight.indirectSpecular *= 0.15;\nreflectedLight.directSpecular *= 0.35;");
   };
-  m.customProgramCacheKey = () => "twin-cards-v3";
+  m.customProgramCacheKey = () => "twin-cards-v4";
   return m;
 }

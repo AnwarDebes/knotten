@@ -126,7 +126,9 @@ async function load(): Promise<Twin> {
   const loader = new THREE.TextureLoader();
   const tex = (file: string, srgb: boolean) => loader.loadAsync(TWIN_BASE + file).then((t) => {
     t.colorSpace = srgb ? THREE.SRGBColorSpace : THREE.NoColorSpace;
-    t.anisotropy = 8;
+    // filtered as sharply at a slant as the GPU allows: 16 is the most any GPU offers, and three takes the GPU's own
+    // maximum where that is lower (the ground far off on foot, and the roads painted into it, stay crisp)
+    t.anisotropy = 16;
     t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping;
     return t;
   });

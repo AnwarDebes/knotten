@@ -66,10 +66,12 @@ export function TwinTerrain({ shadows, todayRef, gradedRef }: { shadows: boolean
     return { geometry: oceanGeometry(last.half, rEff), material: oceanMaterial() };
   }, [twin]);
 
-  useFrame(({ clock, camera, size }) => {
+  useFrame(({ clock, camera, gl }) => {
     twinUniforms.uTime.value = twinClock.frozen ?? clock.getElapsedTime();
     const cam = camera as THREE.PerspectiveCamera;
-    twinUniforms.uPixelAngle.value = ((cam.fov ?? 48) * Math.PI) / 180 / Math.max(1, size.height);
+    // the angle of one pixel of the picture as drawn (device pixels, not CSS pixels): the waves' finest swells fade
+    // out as they reach it
+    twinUniforms.uPixelAngle.value = ((cam.fov ?? 48) * Math.PI) / 180 / Math.max(1, gl.domElement.height);
   });
 
   // the innermost ring exists twice: as measured today, and graded for the plan (pads, roads, path)
