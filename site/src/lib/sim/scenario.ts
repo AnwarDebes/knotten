@@ -3,7 +3,7 @@
  * simulator (useSim) and the server-side portal figures (src/lib/energy.ts).
  */
 import type { Plot } from "../types";
-import { BUDGET } from "../facts";
+import { BUDGET, SIM_SETTINGS } from "../facts";
 import type { HomeSpec, Scenario } from "./run";
 
 /** The budget's own inputs: homes, heat, office and workshop use (src/lib/facts). */
@@ -19,8 +19,8 @@ export const BUDGET_SCENARIO: Scenario = {
   windKw: BUDGET.wind.installed_kw,
   windSiteFactor: 1,
   batteryKwh: BUDGET.battery.per_home_kwh,
-  batteryKw: 5,
-  reserve: 0.3,
+  batteryKw: SIM_SETTINGS.battery_kw,
+  reserve: SIM_SETTINGS.reserve,
   sharing: true,
   prices: "budget",
   scop: BUDGET.bedrock.scop,

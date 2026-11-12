@@ -59,6 +59,7 @@ export default async function PortalLayout({ children, params }: { children: Rea
         { href: p("/admin/interessenter"), label: no ? "Interessenter" : "Leads", icon: "users", badge: newLeads },
         { href: p("/admin/statistikk"), label: no ? "Besøk på nettsiden" : "Website visits", icon: "pulse" },
         { href: p("/admin/tomter"), label: no ? "Tomter og priser" : "Plots and prices", icon: "map" },
+        { href: p("/admin/konfigurator"), label: no ? "Husvalg og priser" : "House choices and prices", icon: "sliders" },
         { href: p("/admin/nyheter"), label: no ? "Nyheter" : "News", icon: "news" },
         { href: p("/admin/brukere"), label: no ? "Brukere og tilgang" : "Users and access", icon: "shield" },
         { href: p("/admin/innstillinger"), label: no ? "Innstillinger" : "Settings", icon: "gear" },

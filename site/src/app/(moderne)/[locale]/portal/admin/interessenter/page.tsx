@@ -6,6 +6,7 @@ import { addLead, addLeadNote, deleteLead, setLeadStatus, toggleExcluded } from 
 import NoAccess from "@/components/portal/NoAccess";
 import { ConfirmButton } from "@/components/portal/forms";
 import { PageHead, when } from "@/components/portal/ui";
+import { leadsWithConfig } from "@/lib/server/configurations";
 
 export const dynamic = "force-dynamic";
 export const generateMetadata = pageTitle("Interessenter", "Leads");
@@ -18,6 +19,7 @@ export default async function Leads({ params, searchParams }: { params: Promise<
   if (!ok) return <NoAccess locale={locale} session={session} area="admin" />;
   const { status, q = "" } = await searchParams;
   const store = await readStore();
+  const withConfig = await leadsWithConfig();
   const needle = q.toLowerCase();
   const leads = [...store.leads].reverse().filter((x) => (!status || x.status === status) && (!needle || `${x.name} ${x.email} ${x.phone} ${x.plots.join(" ")}`.toLowerCase().includes(needle)));
   const csv = [["created", "name", "email", "phone", "purpose", "plots", "status", "replied", "counted", "consent_updates", "consent_investor", "consent_research", "source"].join(";"), ...store.leads.map((x) => [x.created, x.name, x.email, x.phone, x.purpose, x.plots.join(" "), x.status, x.replied ?? "", !x.excluded, x.consent_updates, x.consent_investor, x.consent_research, x.source].map((v) => `"${String(v).replace(/"/g, "'")}"`).join(";"))].join("\n");
@@ -51,6 +53,7 @@ export default async function Leads({ params, searchParams }: { params: Promise<
                   {x.name || (no ? "Uten navn" : "No name")}
                   {x.source === "eksempel" && <span className="chip chip-amber ml-2">{no ? "eksempel" : "example"}</span>}
                   {x.excluded && <span className="chip ml-2">{no ? "telles ikke" : "not counted"}</span>}
+                  {withConfig.has(x.id) && <Link href={`/${locale}/portal/admin/konfigurator?lead=${encodeURIComponent(x.id)}#sendt`} className="chip chip-fjord ml-2 no-underline">{no ? "Husvalg" : "House choices"}</Link>}
                 </div>
                 <div className="text-[13.5px] text-muted">{x.email}{x.phone ? `, ${x.phone}` : ""}</div>
               </div>

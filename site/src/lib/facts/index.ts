@@ -11,3 +11,4 @@ export * from "./sources";
 export * from "./energy";
 export * from "./figures";
 export * from "./project";
+export * from "./model";

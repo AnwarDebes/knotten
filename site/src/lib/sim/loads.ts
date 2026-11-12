@@ -14,6 +14,21 @@
  */
 import { HOURS, localOf, type Weather } from "./inputs";
 
+/**
+ * One home's household and heat when they should not be a random draw (the house configurator's house is the
+ * budget's average home). Every field left out keeps the home's own draw.
+ */
+export type HouseholdSpec = {
+  /** Household size and habits: 1 is the budget's 7,000 kWh; drawn 0.8 to 1.2 otherwise. */
+  size?: number;
+  /** Exposure and room temperature: 1 is the budget's room heat; drawn 0.9 to 1.1 otherwise. */
+  insul?: number;
+  /** Hours the home's daily rhythm runs early (negative) or late; drawn -1 to 1 otherwise. */
+  shift?: number;
+  /** Room heat for a heated area other than the budget's house (1 = as the budget). Hot water is not scaled. */
+  roomHeat?: number;
+};
+
 export type LoadSpec = {
   homes: number;
   elPerHome: number;      // kWh/year, household electricity without heating
@@ -22,6 +37,7 @@ export type LoadSpec = {
   scop: number;           // seasonal factor of the heat pump (1 = direct electric)
   officeKwh: number;
   workshopKwh: number;
+  perHome?: (HouseholdSpec | undefined)[];
 };
 
 export type Loads = {
@@ -84,19 +100,23 @@ export function buildLoads(year: number, w: Weather, spec: LoadSpec): Loads {
     rooms[h] = roomsPerDegH * Math.max(0, 15 - tEff[h]);
     water[h] = (spec.heatPerHome * spec.dhwShare / 365) * DHW_SHAPE[loc[h].hour] / dhwSum;
   }
+  // each home a little different (size and habits, rhythm, exposure), unless the home is given as it should be
+  const homes = Array.from({ length: spec.homes }, (_, k) => {
+    const o = spec.perHome?.[k];
+    const insul = o?.insul ?? 0.9 + 0.2 * hash(k, 7);
+    return { size: o?.size ?? 0.8 + 0.4 * hash(k, 3), shift: o?.shift ?? Math.round((hash(k, 5) - 0.5) * 2.4), roomF: insul * (o?.roomHeat ?? 1) };
+  });
   for (let k = 0; k < spec.homes; k++) {
-    const size = 0.8 + 0.4 * hash(k, 3);            // household size and habits
-    const shift = Math.round((hash(k, 5) - 0.5) * 2.4);
-    const insul = 0.9 + 0.2 * hash(k, 7);            // exposure and room temperature
+    const { size, shift, roomF } = homes[k];
     const a = new Float32Array(HOURS), q = new Float32Array(HOURS);
     let s = 0;
     for (let h = 0; h < HOURS; h++) { a[h] = rhythm(h, shift); s += a[h]; }
     const scale = (spec.elPerHome * size) / s;
     for (let h = 0; h < HOURS; h++) {
       a[h] *= scale;
-      q[h] = rooms[h] * insul + water[(h + shift + HOURS) % HOURS] * size;
+      q[h] = rooms[h] * roomF + water[(h + shift + HOURS) % HOURS] * size;
       heatAll += q[h];
-      elRaw += rooms[h] * insul / copRaw[h] + water[(h + shift + HOURS) % HOURS] * size / copDhwRaw[h];
+      elRaw += rooms[h] * roomF / copRaw[h] + water[(h + shift + HOURS) % HOURS] * size / copDhwRaw[h];
     }
     appliance.push(a);
     heat.push(q);
@@ -107,11 +127,10 @@ export function buildLoads(year: number, w: Weather, spec: LoadSpec): Loads {
   for (let h = 0; h < HOURS; h++) cop[h] = spec.scop > 1 ? eta * copRaw[h] : 1;
   for (let k = 0; k < spec.homes; k++) {
     const e = new Float32Array(HOURS);
-    const shift = Math.round((hash(k, 5) - 0.5) * 2.4);
-    const size = 0.8 + 0.4 * hash(k, 3), insul = 0.9 + 0.2 * hash(k, 7);
+    const { size, shift, roomF } = homes[k];
     for (let h = 0; h < HOURS; h++) {
       if (spec.scop <= 1) { e[h] = heat[k][h]; continue; }
-      e[h] = rooms[h] * insul / (eta * copRaw[h]) + water[(h + shift + HOURS) % HOURS] * size / (eta * copDhwRaw[h]);
+      e[h] = rooms[h] * roomF / (eta * copRaw[h]) + water[(h + shift + HOURS) % HOURS] * size / (eta * copDhwRaw[h]);
     }
     hp.push(e);
   }

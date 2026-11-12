@@ -9,10 +9,29 @@
  * sharing off, every home is on its own and the shared plant and turbines sell to the grid.
  */
 import { HOURS, type EnergyInputs, type Weather, localOf } from "./inputs";
-import { panelSeries, windSeries, sunTable, annualYield, type Sun } from "./pv";
-import { buildLoads, type Loads } from "./loads";
+import { panelSeries, windSeries, sunTable, annualYield, type Panel, type Sun } from "./pv";
+import { buildLoads, type HouseholdSpec, type Loads } from "./loads";
+import { BUDGET, SIM_SETTINGS } from "../facts";
 
-export type HomeSpec = { id: string; tilt: number; azimuth: number; horizon: number[] };
+/** A panel plane on a home besides its roof (a carport roof): kWp, pitch, direction and terrain horizon. */
+export type PvPlane = Panel & { kwp: number };
+
+/**
+ * A home's own options. A home without them follows the scenario, the way the energy budget sets every home; the
+ * house configurator sets them for the one house it shows (src/lib/configurator/energy.ts).
+ */
+export type HomeOptions = HouseholdSpec & {
+  /** kWp on the roof plane; the scenario's pvPerHomeKwp otherwise. */
+  kwp?: number;
+  /** More panel planes, each with its own kWp, pitch, direction and horizon. */
+  planes?: PvPlane[];
+  /** Home charging of electric cars: kWh a year, the charger's kW, and the local hours the car is at home (from, to). */
+  ev?: { kwhYear: number; kw: number; from: number; to: number };
+  /** A constant draw of the heating plant in some local months, kW (the circulation pump for free cooling). */
+  cooling?: { kw: number; months: number[] };
+};
+
+export type HomeSpec = { id: string; tilt: number; azimuth: number; horizon: number[]; opts?: HomeOptions };
 
 export type Scenario = {
   pvPerHomeKwp: number;
@@ -33,12 +52,12 @@ export type Prices = { buyFixed: number; sellFixed: number; gridFee: number; co2
 export type YearResult = {
   scenario: Scenario;
   homes: number;
-  // per home, per hour
-  pv: Float32Array[]; load: Float32Array[]; appliance: Float32Array[]; soc: Float32Array[]; share: Float32Array[];
+  // per home, per hour (load includes the car; ev is the car's charging, null for a home without one)
+  pv: Float32Array[]; load: Float32Array[]; appliance: Float32Array[]; soc: Float32Array[]; share: Float32Array[]; ev: (Float32Array | null)[];
   // field, per hour (kW)
   field: {
     pvRoofs: Float32Array; pvOffice: Float32Array; park: Float32Array; wind: Float32Array;
-    homes: Float32Array; heatPumps: Float32Array; office: Float32Array;
+    homes: Float32Array; heatPumps: Float32Array; ev: Float32Array; office: Float32Array;
     charge: Float32Array; discharge: Float32Array; imp: Float32Array; exp: Float32Array; shared: Float32Array;
     soc: Float32Array; buy: Float32Array; sell: Float32Array; temp: Float32Array; ghi: Float32Array; wind10: Float32Array; cop: Float32Array;
   };
@@ -49,57 +68,159 @@ export type YearResult = {
 
 export type Totals = {
   production: number; pvRoofs: number; pvOffice: number; park: number; wind: number;
-  demand: number; homesEl: number; heatPumpEl: number; heat: number; office: number;
+  demand: number; homesEl: number; heatPumpEl: number; ev: number; heat: number; office: number;
   imp: number; exp: number; shared: number; batteryOut: number;
   selfSufficiency: number; selfConsumption: number;
   cost: number; refCost: number; saving: number; savingPerHome: number;
   co2Saved: number; refDemand: number;
 };
 
-export const BUDGET_PRICES: Prices = { buyFixed: 2.1, sellFixed: 0.75, gridFee: 0.1, co2: 0.2 };
+export const BUDGET_PRICES: Prices = { buyFixed: BUDGET.prices.buy_nok, sellFixed: BUDGET.prices.sell_nok, gridFee: BUDGET.prices.grid_nok, co2: BUDGET.prices.co2_kg_per_kwh };
 
-type Cache = { sun: Sun; homes: Float32Array[]; office: Float32Array; park: Float32Array; parkYield: number; officeYield: number; calibration: number; loads: Map<string, Loads> };
+type Cache = {
+  sun: Sun; calibration: number; office: Float32Array; park: Float32Array; parkYield: number; officeYield: number;
+  /** AC output per kWp of every panel plane seen so far, keyed on its pitch, direction and horizon. */
+  planes: Map<string, Float32Array>;
+  /** Loads, keyed on everything that shapes them (the scenario's SCOP, the base figures and each home's household). */
+  loads: Map<string, Loads>;
+  /** Local month and hour of each hour of the year (the monthly sums, the car and the cooling pump). */
+  local?: { month: Uint8Array; hour: Uint8Array };
+};
 const caches = new WeakMap<EnergyInputs, Cache>();
+const MAX_PLANES = 256, MAX_LOADS = 24;
 
-/** Per-kWp series and loads are computed once per input set and reused for every scenario. */
-function cacheFor(inputs: EnergyInputs, w: Weather, homes: HomeSpec[]): Cache {
+/**
+ * The sun, the calibration and the shared plant's series, once per input set. The homes' series and loads are
+ * cached apart, keyed on what shapes them, so a home with another roof or other options never reuses a stale one.
+ */
+function cacheFor(inputs: EnergyInputs, w: Weather): Cache {
   let c = caches.get(inputs);
-  if (c && c.homes.length === homes.length) return c;
+  if (c) return c;
   const sun = sunTable(inputs.year);
   // calibrate to PVGIS: the model's 1 kWp due south at 35 degrees, no horizon, against PVGIS's own yield
   // for this spot (long-term average, 14 % losses); every panel series is scaled by the same factor
   const ref = annualYield(panelSeries(w, sun, { tilt: 35, azimuth: 180 }));
   const calibration = inputs.pvgis_kwh_per_kwp["35/0"] / ref;
-  const scale = (a: Float32Array) => { for (let i = 0; i < a.length; i++) a[i] *= calibration; return a; };
-  const homeSeries = homes.map((h) => scale(panelSeries(w, sun, { tilt: h.tilt, azimuth: h.azimuth, horizon: h.horizon }).kw));
-  const office = scale(panelSeries(w, sun, { tilt: inputs.office_roof.tilt, azimuth: inputs.office_roof.azimuth, horizon: inputs.office_roof.horizon }).kw);
-  const park = scale(panelSeries(w, sun, { tilt: 30, azimuth: 180, horizon: inputs.park.horizon }).kw);
-  c = { sun, homes: homeSeries, office, park, parkYield: annualYield({ kw: park }), officeYield: annualYield({ kw: office }), calibration, loads: new Map() };
+  const office = scaled(panelSeries(w, sun, { tilt: inputs.office_roof.tilt, azimuth: inputs.office_roof.azimuth, horizon: inputs.office_roof.horizon }).kw, calibration);
+  const park = scaled(panelSeries(w, sun, { tilt: 30, azimuth: 180, horizon: inputs.park.horizon }).kw, calibration);
+  c = { sun, calibration, office, park, parkYield: annualYield({ kw: park }), officeYield: annualYield({ kw: office }), planes: new Map(), loads: new Map() };
   caches.set(inputs, c);
   return c;
 }
 
+function scaled(a: Float32Array, k: number) {
+  for (let i = 0; i < a.length; i++) a[i] *= k;
+  return a;
+}
+
+/** Keeps a cache map below `max` entries (the oldest goes first). */
+function bound<V>(m: Map<string, V>, max: number) {
+  while (m.size >= max) m.delete(m.keys().next().value as string);
+}
+
+/** A plane's AC output per kWp, hour by hour (calibrated). Shared between runs: never written to. */
+function planeSeries(c: Cache, w: Weather, p: Panel): Float32Array {
+  const key = `${p.tilt}|${p.azimuth}|${p.horizon ? p.horizon.join(",") : "-"}`;
+  let s = c.planes.get(key);
+  if (!s) {
+    s = scaled(panelSeries(w, c.sun, { tilt: p.tilt, azimuth: p.azimuth, horizon: p.horizon }).kw, c.calibration);
+    bound(c.planes, MAX_PLANES);
+    c.planes.set(key, s);
+  }
+  return s;
+}
+
+function localHours(c: Cache, year: number) {
+  if (!c.local) {
+    const month = new Uint8Array(HOURS), hour = new Uint8Array(HOURS);
+    for (let h = 0; h < HOURS; h++) { const l = localOf(year, h); month[h] = l.month; hour[h] = l.hour; }
+    c.local = { month, hour };
+  }
+  return c.local;
+}
+
+/**
+ * A car's home charging, placed the way smart control places it: the car comes home at the local hour `from` and
+ * must have the day's energy by `to`. The day's kWh go first into hours with spare solar power, then into the
+ * cheapest hours, and with a flat price into the hours when the house itself uses least.
+ */
+function chargeSeries(ev: NonNullable<HomeOptions["ev"]>, hourOfDay: Uint8Array, spare: (h: number) => number, buy: (h: number) => number, houseLoad: (h: number) => number) {
+  const out = new Float32Array(HOURS);
+  const daily = ev.kwhYear / 365;
+  if (!(daily > 0) || !(ev.kw > 0)) return out;
+  for (let s = 0; s < HOURS; s++) {
+    if (hourOfDay[s] !== ev.from || hourOfDay[(s + HOURS - 1) % HOURS] === ev.from) continue;
+    const win: { h: number; j: number; sun: number; price: number; load: number }[] = [];
+    for (let j = 0; j < 24; j++) {
+      const h = (s + j) % HOURS;
+      if (hourOfDay[h] === ev.to) break;
+      win.push({ h, j, sun: Math.max(0, spare(h)), price: buy(h), load: houseLoad(h) });
+    }
+    win.sort((a, b) => (b.sun > 0.01 ? 1 : 0) - (a.sun > 0.01 ? 1 : 0) || b.sun - a.sun || a.price - b.price || a.load - b.load || a.j - b.j);
+    let left = daily;
+    for (const x of win) {
+      const e = Math.min(ev.kw, left);
+      out[x.h] += e;
+      left -= e;
+      if (left <= 1e-9) break;
+    }
+  }
+  return out;
+}
+
 export function runYear(inputs: EnergyInputs, w: Weather, homes: HomeSpec[], sc: Scenario, base: { elPerHome: number; heatPerHome: number; officeKwh: number; workshopKwh: number }, prices = BUDGET_PRICES): YearResult {
   const n = homes.length;
-  const c = cacheFor(inputs, w, homes);
-  const lkey = `${sc.scop}|${n}`;
+  const c = cacheFor(inputs, w);
+  const per = homes.map((s) => s.opts);
+  const household = (o: HomeOptions | undefined) => (o ? [o.size, o.insul, o.shift, o.roomHeat].map((v) => v ?? "").join(":") : "");
+  const lkey = [sc.scop, n, base.elPerHome, base.heatPerHome, base.officeKwh, base.workshopKwh, SIM_SETTINGS.dhw_share, ...per.map(household)].join("|");
   let L = c.loads.get(lkey);
   if (!L) {
-    L = buildLoads(inputs.year, w, { homes: n, elPerHome: base.elPerHome, heatPerHome: base.heatPerHome, dhwShare: 0.2, scop: sc.scop, officeKwh: base.officeKwh, workshopKwh: base.workshopKwh });
+    const perHome = per.some(Boolean) ? per.map((o) => (o ? { size: o.size, insul: o.insul, shift: o.shift, roomHeat: o.roomHeat } : undefined)) : undefined;
+    L = buildLoads(inputs.year, w, { homes: n, elPerHome: base.elPerHome, heatPerHome: base.heatPerHome, dhwShare: SIM_SETTINGS.dhw_share, scop: sc.scop, officeKwh: base.officeKwh, workshopKwh: base.workshopKwh, perHome });
+    bound(c.loads, MAX_LOADS);
     c.loads.set(lkey, L);
   }
+  const loads = L;
   const wind = sc.windKw > 0 ? windSeries(w, { kw: sc.windKw, hub: 18, siteFactor: sc.windSiteFactor, availability: 0.8 }) : new Float32Array(HOURS);
+  const buyAt = (h: number) => (sc.prices === "budget" ? prices.buyFixed : w.price[h] + prices.gridFee);
+
+  // each home's panels (its roof and any other plane), its cooling pump and its car
+  const roof = homes.map((s) => planeSeries(c, w, s));
+  const kwp = per.map((o) => o?.kwp ?? sc.pvPerHomeKwp);
+  const extra = per.map((o) => (o?.planes ?? []).map((p) => ({ s: planeSeries(c, w, p), kwp: p.kwp })));
+  const pvAt = (k: number, h: number) => {
+    let g = roof[k][h] * kwp[k];
+    const ex = extra[k];
+    for (let i = 0; i < ex.length; i++) g += ex[i].s[h] * ex[i].kwp;
+    return g;
+  };
+  const local = localHours(c, inputs.year);
+  const monthOf = local.month;
+  const cool = per.map((o) => {
+    if (!o?.cooling) return null;
+    const a = new Float32Array(HOURS);
+    for (let h = 0; h < HOURS; h++) if (o.cooling.months.includes(local.month[h])) a[h] = o.cooling.kw;
+    return a;
+  });
+  const evs = per.map((o, k) => {
+    if (!o?.ev) return null;
+    const co = cool[k];
+    const houseLoad = (h: number) => loads.appliance[k][h] + loads.hp[k][h] + (co ? co[h] : 0);
+    return chargeSeries(o.ev, local.hour, (h) => pvAt(k, h) - houseLoad(h), buyAt, houseLoad);
+  });
 
   const cap = sc.batteryKwh, pmax = sc.batteryKw, socMax = 0.95 * cap;
   const keep = Math.max(0.05, Math.min(0.9, sc.reserve)) * cap;  // the outage reserve is not used day to day
   const socMin = keep;
-  const ec = Math.sqrt(0.9), ed = Math.sqrt(0.9);   // 90 % round trip, as in the budget
+  const rt = Math.sqrt(BUDGET.battery.round_trip_pct / 100);   // 90 % round trip, as in the budget
+  const ec = rt, ed = rt;
   const soc = new Float32Array(n).fill(Math.max(keep, cap * 0.5));
   const pv = homes.map(() => new Float32Array(HOURS)), load = homes.map(() => new Float32Array(HOURS));
   const socS = homes.map(() => new Float32Array(HOURS)), share = homes.map(() => new Float32Array(HOURS));
   const F = {
     pvRoofs: new Float32Array(HOURS), pvOffice: new Float32Array(HOURS), park: new Float32Array(HOURS), wind,
-    homes: new Float32Array(HOURS), heatPumps: new Float32Array(HOURS), office: new Float32Array(HOURS),
+    homes: new Float32Array(HOURS), heatPumps: new Float32Array(HOURS), ev: new Float32Array(HOURS), office: new Float32Array(HOURS),
     charge: new Float32Array(HOURS), discharge: new Float32Array(HOURS), imp: new Float32Array(HOURS), exp: new Float32Array(HOURS), shared: new Float32Array(HOURS),
     soc: new Float32Array(HOURS), buy: new Float32Array(HOURS), sell: new Float32Array(HOURS),
     temp: w.temp, ghi: w.ghi, wind10: w.wind, cop: L.cop,
@@ -109,20 +230,27 @@ export function runYear(inputs: EnergyInputs, w: Weather, homes: HomeSpec[], sc:
   const monthly = { prod: Array(12).fill(0), use: Array(12).fill(0), imp: Array(12).fill(0), exp: Array(12).fill(0), selfUse: Array(12).fill(0) };
 
   for (let h = 0; h < HOURS; h++) {
-    const buy = sc.prices === "budget" ? prices.buyFixed : w.price[h] + prices.gridFee;
+    const buy = buyAt(h);
     const sell = sc.prices === "budget" ? prices.sellFixed : Math.max(0, w.price[h]);
     F.buy[h] = buy; F.sell[h] = sell;
     let S = 0, D = 0;
     for (let k = 0; k < n; k++) {
-      const g = c.homes[k][h] * sc.pvPerHomeKwp;
-      const l = L.appliance[k][h] + L.hp[k][h];
+      const g = pvAt(k, h);
+      const co = cool[k], car = evs[k];
+      let l = L.appliance[k][h] + L.hp[k][h];
+      if (co) l += co[h];
+      if (car) l += car[h];
       pv[k][h] = g; load[k][h] = l;
       const own = Math.min(g, l);
       surplus[k] = g - own; deficit[k] = l - own;
       S += surplus[k]; D += deficit[k];
-      F.pvRoofs[h] += g; F.homes[h] += L.appliance[k][h]; F.heatPumps[h] += L.hp[k][h];
-      refDemand += L.appliance[k][h] + L.heat[k][h];
-      refCost += (L.appliance[k][h] + L.heat[k][h]) * buy;
+      F.pvRoofs[h] += g; F.homes[h] += L.appliance[k][h]; F.heatPumps[h] += co ? L.hp[k][h] + co[h] : L.hp[k][h];
+      if (car) F.ev[h] += car[h];
+      // the reference: the same home with direct electric heat and no panels or battery (the same car, no cooling)
+      let ref = L.appliance[k][h] + L.heat[k][h];
+      if (car) ref += car[h];
+      refDemand += ref;
+      refCost += ref * buy;
     }
     const og = c.office[h] * sc.officePvKwp, ol = L.office[h] + L.workshop[h];
     const parkG = c.park[h] * sc.parkKwp;
@@ -178,24 +306,24 @@ export function runYear(inputs: EnergyInputs, w: Weather, homes: HomeSpec[], sc:
     F.soc[h] = n ? socSum / n : 0;
     F.imp[h] = imp; F.exp[h] = exp; F.shared[h] = shared; F.charge[h] = chg; F.discharge[h] = dis;
     cost += imp * buy - exp * sell;
-    const m = localOf(inputs.year, h).month - 1;
+    const m = monthOf[h] - 1;
     const prod = F.pvRoofs[h] + og + parkG + wind[h];
-    const use = F.homes[h] + F.heatPumps[h] + ol;
+    const use = F.homes[h] + F.heatPumps[h] + F.ev[h] + ol;
     monthly.prod[m] += prod; monthly.use[m] += use; monthly.imp[m] += imp; monthly.exp[m] += exp; monthly.selfUse[m] += prod - exp;
   }
 
   const sum = (a: Float32Array) => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i]; return s; };
   const pvRoofs = sum(F.pvRoofs), pvOffice = sum(F.pvOffice), park = sum(F.park), windE = sum(wind);
   const production = pvRoofs + pvOffice + park + windE;
-  const homesEl = sum(F.homes), heatPumpEl = sum(F.heatPumps), office = sum(F.office);
-  const demand = homesEl + heatPumpEl + office;
+  const homesEl = sum(F.homes), heatPumpEl = sum(F.heatPumps), evEl = sum(F.ev), office = sum(F.office);
+  const demand = homesEl + heatPumpEl + evEl + office;
   const imp = sum(F.imp), exp = sum(F.exp);
   let heat = 0;
   for (let k = 0; k < n; k++) heat += sum(L.heat[k]);
-  const yields = c.homes.map((s) => annualYield({ kw: s }));
+  const yields = roof.map((s) => annualYield({ kw: s }));
   const totals: Totals = {
     production, pvRoofs, pvOffice, park, wind: windE,
-    demand, homesEl, heatPumpEl, heat, office,
+    demand, homesEl, heatPumpEl, ev: evEl, heat, office,
     imp, exp, shared: sum(F.shared), batteryOut: sum(F.discharge),
     selfSufficiency: demand > 0 ? 1 - imp / demand : 0,
     selfConsumption: production > 0 ? 1 - exp / production : 0,
@@ -203,7 +331,7 @@ export function runYear(inputs: EnergyInputs, w: Weather, homes: HomeSpec[], sc:
     co2Saved: Math.max(0, refDemand - imp) * prices.co2, refDemand,
   };
   return {
-    scenario: sc, homes: n, pv, load, appliance: L.appliance, soc: socS, share, field: F, totals, monthly,
+    scenario: sc, homes: n, pv, load, appliance: L.appliance, soc: socS, share, ev: evs, field: F, totals, monthly,
     yieldPerKwp: {
       roofsMean: yields.reduce((a, b) => a + b, 0) / Math.max(1, yields.length),
       best: Math.max(...yields), worst: Math.min(...yields),
@@ -214,8 +342,9 @@ export function runYear(inputs: EnergyInputs, w: Weather, homes: HomeSpec[], sc:
 
 /**
  * A power cut from hour `start`, `hours` long: the field on its own panels and batteries. With
- * `essential` on, homes cut to what matters (heat pump at half, a third of the rest). Returns, per
- * hour, which homes still have power, their state of charge, and what could not be supplied.
+ * `essential` on, homes cut to what matters (heat pump at half, a third of the rest). Cars are not
+ * charged while the grid is down. Returns, per hour, which homes still have power, their state of
+ * charge, and what could not be supplied.
  */
 export function outage(y: YearResult, start: number, hours: number, essential: boolean, emergencyKwh = 0) {
   const n = y.homes, sc = y.scenario;
@@ -230,10 +359,11 @@ export function outage(y: YearResult, start: number, hours: number, essential: b
     const row = new Uint8Array(n), srow = new Float32Array(n);
     const g = y.pv.map((p) => p[h]);
     const l = y.load.map((x, k) => {
-      if (!essential) return x[h];
+      const all = x[h] - (y.ev?.[k]?.[h] ?? 0);
+      if (!essential) return all;
       // essential: the heat pump at half, a third of everything else (light, fridge, router, cooking)
       const app = y.appliance[k][h];
-      return 0.5 * Math.max(0, x[h] - app) + 0.33 * app;
+      return SIM_SETTINGS.essential.heat_pump * Math.max(0, all - app) + SIM_SETTINGS.essential.rest * app;
     });
     const extra = (y.field.park[h] + y.field.wind[h] + y.field.pvOffice[h]) * (sc.sharing ? 1 : 0);
     let pool = sc.sharing ? extra : 0;
