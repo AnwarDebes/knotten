@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { TITLE_TEMPLATE } from "@/lib/meta";
 import { getRealSession, getSession, can, isAdmin, ROLE_LABEL, AREA_LABEL } from "@/lib/auth";
 import { loadPlots } from "@/lib/data";
 import { readStore } from "@/lib/store";
@@ -7,8 +8,8 @@ import { initials } from "@/components/portal/ui";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const en = (await params).locale === "en";
-  // the root layout adds ". Knotten" to the default; the template does the same for each portal page
-  return { title: { default: en ? "Project portal" : "Prosjektportal", template: "%s. Knotten" }, robots: { index: false, follow: false } };
+  // the root layout adds " | Knotten" to the default; the template does the same for each portal page
+  return { title: { default: en ? "Project portal" : "Prosjektportal", template: TITLE_TEMPLATE }, robots: { index: false, follow: false } };
 }
 
 /**

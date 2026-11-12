@@ -63,7 +63,8 @@ const MODEL: T = { no: "nettsidens modell", en: "the website's model" };
 const same = (s: string): T => ({ no: s, en: s });
 const PLOTS: T = { no: "tomter", en: "plots" };
 const TREES: T = { no: "trær", en: "trees" };
-const PLACEHOLDER: T = { no: "Plassholder", en: "Placeholder" };
+/** A value set to show how something works, not a figure from the sources. */
+const ILLUSTRATION: T = { no: "Illustrasjon, ikke et tall fra kildene", en: "Illustration, not a figure from the sources" };
 
 /** Solar per home in the energy budget: 30 m² of roof, 75 % used, 31 % modules, so about 7 kWp. */
 export const PV_KWP_PER_HOME = Math.round((BUDGET.pv.roof_per_home_m2 * BUDGET.pv.usable_pct * BUDGET.pv.module_eff_pct) / 10000);
@@ -81,8 +82,8 @@ export const ASSUMPTIONS: Assumption[] = [
   { key: "saving_per_home", value: BUDGET.results.saving_per_home_nok, unit: { no: "kr/år", en: "kr/year" }, source: { no: `${BUDGET_DOC.no}, mot direkte elektrisk oppvarming`, en: `${BUDGET_DOC.en}, compared with direct electric heating` }, date: "2026-09", provisional: true, label: { no: "Besparelse per bolig", en: "Saving per home" } },
   { key: "pv_kwp_per_home", value: PV_KWP_PER_HOME, unit: same("kWp"), source: { no: `${BUDGET_DOC.no}: ${BUDGET.pv.installed_kwp} kWp på ${nb(BUDGET.pv.roof_total_m2)} m² tak, ${BUDGET.pv.roof_per_home_m2} m² per bolig`, en: `${BUDGET_DOC.en}: ${BUDGET.pv.installed_kwp} kWp on ${BUDGET.pv.roof_total_m2.toLocaleString("en-GB")} m² of roof, ${BUDGET.pv.roof_per_home_m2} m² per home` }, date: "2026-09", provisional: true, label: { no: "Solceller per bolig", en: "PV per home" } },
   { key: "battery_kwh_per_home", value: BUDGET.battery.per_home_kwh, unit: same("kWh"), source: BUDGET_DOC, date: "2026-09", provisional: true, label: { no: "Batteri per bolig", en: "Battery per home" } },
-  { key: "hub_storage_kwh", value: 400, unit: same("kWh"), source: PLACEHOLDER, date: "2026-09-05", provisional: true, label: { no: "Felles energilager", en: "Shared storage" } },
-  { key: "islanding_hours_winter", value: 18, unit: { no: "timer", en: "hours" }, source: PLACEHOLDER, date: "2026-09-05", provisional: true, label: { no: "Drift uten nett, januar", en: "Islanding, January" } },
+  { key: "hub_storage_kwh", value: 400, unit: same("kWh"), source: ILLUSTRATION, date: "2026-09-05", provisional: true, label: { no: "Felles energilager", en: "Shared storage" } },
+  { key: "islanding_hours_winter", value: 18, unit: { no: "timer", en: "hours" }, source: ILLUSTRATION, date: "2026-09-05", provisional: true, label: { no: "Drift uten nett, januar", en: "Islanding, January" } },
   { key: "self_sufficiency_pct", value: BUDGET.results.self_sufficiency_pct, unit: same("%"), source: { no: `${BUDGET_DOC.no}, sol satt for høyt i arket`, en: `${BUDGET_DOC.en}, solar set too high in the spreadsheet` }, date: "2026-09", provisional: true, label: { no: "Selvforsyning strøm", en: "Self-sufficiency, power" } },
   { key: "co2_saved", value: BUDGET.results.co2_saved_kg, unit: { no: "kg/år", en: "kg/year" }, source: { no: `${BUDGET_DOC.no}, 0,2 kg CO₂/kWh`, en: `${BUDGET_DOC.en}, 0.2 kg CO₂/kWh` }, date: "2026-09", provisional: true, label: { no: "Spart CO₂, hele feltet", en: "CO₂ saved, whole field" } },
 ];
@@ -104,7 +105,7 @@ export const FIGURES: {
 }[] = [
   { what: "Antall tomter", value: `rundt ${FACT.plots}`, unit: "tomter", src: "sigve30", status: "Foreløpig", owner: "Prosjekteier" },
   { what: "Samlet areal for eiendommene", value: nb(FACT.parcel_m2), unit: "m²", src: "areal", status: "Fastsatt", owner: "Kartverket og prosjekteier" },
-  { what: "Maks stigning på vei", value: nb(FACT.road_grade_pct), unit: "%", src: "vei", status: "Foreløpig", owner: "Prosjekteier" },
+  { what: "Maks stigning på vei, målet", value: nb(FACT.road_grade_pct), unit: "%", src: "vei", status: "Foreløpig", owner: "Prosjekteier" },
   { what: "Terrengprofil, lengde", value: nb(FACT.profile_m), unit: "m", src: "profil", status: "Fastsatt", owner: "Norgeskart" },
   { what: "Terrengprofil, høyde", value: `0 til ${FACT.knotten_m}`, unit: "moh", src: "profil", status: "Fastsatt", owner: "Norgeskart" },
   { what: "Kontorer ferdig i dag", value: nb(FACT.offices_now), unit: "kontorer", src: "kontor", status: "Fastsatt", owner: "Prosjekteier" },

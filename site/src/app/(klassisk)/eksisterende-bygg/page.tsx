@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { klassiskMeta } from "@/lib/meta";
 import PageHead from "@/components/klassisk/PageHead";
 import Reveal from "@/components/klassisk/Reveal";
 import { Src } from "@/components/klassisk/Source";
@@ -6,34 +6,12 @@ import { FACT } from "@/lib/facts";
 import { beforeAfter, meters, type Building } from "@/lib/server/records";
 import MeterChart from "@/components/klassisk/MeterChart";
 
-export const metadata: Metadata = { title: "Eksisterende bygg" };
+export const metadata = klassiskMeta("/eksisterende-bygg", { title: "Eksisterende bygg", description: "Kontorbygget og bolighuset som står på eiendommen i dag, og lager- og verkstedbygget som er planlagt. Målt forbruk blir sammenligningsgrunnlaget for de nye boligene." });
 
-function EmptyChart({ title }: { title: string }) {
-  return (
-    <svg viewBox="0 0 420 150" aria-label={`${title}: måledata er ikke hentet ennå`}>
-      <g stroke="#E3E9EF" strokeWidth="1"><path d="M40 20H410M40 55H410M40 90H410M40 125H410" /></g>
-      <path className="ghostline" d="M40 110C80 100 100 70 140 78 180 86 200 40 240 52 280 64 300 95 340 88 380 81 395 60 410 58" fill="none" stroke="#C9D3DC" strokeWidth="2" strokeDasharray="4 5" />
-      <g fontSize="9" fill="#5C6979"><text x="40" y="142">jan</text><text x="220" y="142">jul</text><text x="396" y="142">des</text><text x="4" y="24">kWh</text></g>
-      <rect x="150" y="40" width="130" height="34" rx="6" fill="#fff" stroke="#D4DCE4" />
-      <text x="215" y="61" textAnchor="middle" fontSize="10" fill="#4A5A6E" fontWeight="600">Måledata ikke hentet ennå</text>
-    </svg>
-  );
-}
+const published = (b?: Building): b is Building => !!b && b.public && b.readings.length > 0;
 
-/** Measured data for a building, or nothing until the owner has loaded it and chosen to publish it. */
-function Measured({ b, title, text }: { b?: Building; title: string; text: string }) {
-  if (!b || !b.public || b.readings.length === 0) {
-    return (
-      <>
-        <div>
-          <span className="tag blue">Kommer</span>
-          <h3>{title}</h3>
-          <p className="small" style={{ marginTop: 8 }}>{text}</p>
-        </div>
-        <EmptyChart title={title} />
-      </>
-    );
-  }
+/** Measured data for a building, once the owner has loaded it and chosen to publish it. */
+function Measured({ b, title }: { b: Building; title: string }) {
   const nf = (v: number) => Math.round(v).toLocaleString("nb-NO");
   const first = b.readings[0].month, last = b.readings[b.readings.length - 1].month;
   return (
@@ -68,13 +46,22 @@ export default async function Bygg() {
             <article><span className="st">Planlagt</span><h3>Lager og verksted</h3><p>Bygges rett bak bolighuset. Til målte tall finnes, dimensjoneres bygget som én bolig. Det er en tydelig merket antakelse som byttes ut med målerdata. <Src id="lager" /></p></article>
           </Reveal>
 
-          <Reveal className="meter" delay={100}>
-            <Measured b={office} title="Strømforbruk, kontorbygget" text="Historisk forbruk vises her når målingene er hentet inn. Så kan vi sammenligne før og etter utvidelsen, og vise faktisk ytelse i stedet for løfter." />
-          </Reveal>
-          <Reveal className="meter" delay={160}>
-            <Measured b={house} title="Strømforbruk, bolighuset" text="Et vanlig hus i dag, målt time for time. Referansen for hva de nye boligene skal slå." />
-          </Reveal>
-          <p className="small" style={{ marginTop: 20, maxWidth: "70ch" }}>Målingene leses fra strømmålernes HAN-port eller hentes fra Elhub. Nettsiden viser data, den styrer ingenting i byggene.</p>
+          {/* the measurements show once they exist; until then the page says so in one line instead of empty charts */}
+          {published(office) && (
+            <Reveal className="meter" delay={100}>
+              <Measured b={office} title="Strømforbruk, kontorbygget" />
+            </Reveal>
+          )}
+          {published(house) && (
+            <Reveal className="meter" delay={160}>
+              <Measured b={house} title="Strømforbruk, bolighuset" />
+            </Reveal>
+          )}
+          {published(office) || published(house) ? (
+            <p className="small" style={{ marginTop: 20, maxWidth: "70ch" }}>Målingene leses fra strømmålernes HAN-port eller hentes fra Elhub. Nettsiden viser data, den styrer ingenting i byggene.</p>
+          ) : (
+            <p className="small" style={{ marginTop: 28, maxWidth: "70ch" }}>Målt strømforbruk for byggene er ikke hentet inn ennå. Det vises her når prosjekteier har lagt det inn.</p>
+          )}
         </div>
       </section>
     </>

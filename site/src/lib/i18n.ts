@@ -29,7 +29,7 @@ const dict = {
     passport: { title: "Solpass", sunDec: "Sol 21. desember", sunMar: "Sol 21. mars", sunJun: "Sol 21. juni", first: "første sol", last: "siste sol", seaDeg: "Sjø i sikt", openSea: "Åpent hav", yes: "ja", no: "nei", elevation: "Høyde", slope: "Helning", cutfill: "Planering", share: "Del solpasset", row: "Rekke", flat: "Flaten ved Rødbergsveien" },
     cta: { register: "Meld interesse", seePlots: "Se tomtene", investor: "For investorer", passport: "Åpne solpasset" },
     provenance: { computed: "beregnet", provisional: "foreløpig", source: "Kilde" },
-    footer: { rights: "Sigve Simonsen AS", data: "Data: Kartverket (CC BY 4.0), Norkart, OpenStreetMap (ODbL), AWS Terrain Tiles. Flyfoto i modellen: Esri World Imagery (studie).", privacy: "Personvern" },
+    footer: { rights: "Sigve Simonsen AS", data: "Data: Kartverket (CC BY 4.0), Norkart, OpenStreetMap (ODbL), AWS Terrain Tiles. Flyfoto i modellen: Esri World Imagery, etter Esris vilkår.", privacy: "Personvern" },
   },
   en: {
     nav: { plots: "Plots", view: "The view", energy: "Energy", area: "The area", project: "The project", investor: "Investors", contact: "Contact", login: "Log in", interest: "Register interest", menu: "Menu", close: "Close", portal: "Portal", logout: "Log out" },
@@ -56,7 +56,7 @@ const dict = {
     passport: { title: "Sun passport", sunDec: "Sun 21 December", sunMar: "Sun 21 March", sunJun: "Sun 21 June", first: "first sun", last: "last sun", seaDeg: "Water in view", openSea: "Open sea", yes: "yes", no: "no", elevation: "Elevation", slope: "Slope", cutfill: "Levelling", share: "Share the passport", row: "Row", flat: "The flat by Rødbergsveien" },
     cta: { register: "Register interest", seePlots: "See the plots", investor: "For investors", passport: "Open the sun passport" },
     provenance: { computed: "computed", provisional: "provisional", source: "Source" },
-    footer: { rights: "Sigve Simonsen AS", data: "Data: Kartverket (CC BY 4.0), Norkart, OpenStreetMap (ODbL), AWS Terrain Tiles. Aerial imagery in the model: Esri World Imagery (study).", privacy: "Privacy" },
+    footer: { rights: "Sigve Simonsen AS", data: "Data: Kartverket (CC BY 4.0), Norkart, OpenStreetMap (ODbL), AWS Terrain Tiles. Aerial imagery in the model: Esri World Imagery, under Esri's terms.", privacy: "Privacy" },
   },
 } as const;
 

@@ -1,6 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { CONTACT } from "./facts";
+import { RELEASE_NOTE } from "./content/status";
 import { mutate, readJSON, STORAGE } from "./server/kv";
 
 /**
@@ -46,7 +47,21 @@ export type KpiTargets = {
   form_completion_pct?: number;
   active_stakeholders?: number;
 };
-export type Settings = { release_note: { no: string; en: string }; contact_email: string; contact_phone: string; weekly_digest: boolean; digest_lang?: "no" | "en"; kpi: KpiTargets };
+/**
+ * The company behind the project, as the administrator enters it (Innstillinger). Empty until it is filled
+ * in: the public pages show a field only when it is set, and never a made-up value.
+ */
+export type CompanyFacts = { org_number: string; postal_address: string; email: string; phone: string };
+export type Settings = {
+  /** The status line under both front pages' headline and the note on the plot pages, in both languages. */
+  release_note: { no: string; en: string };
+  contact_email: string;
+  contact_phone: string;
+  weekly_digest: boolean;
+  digest_lang?: "no" | "en";
+  kpi: KpiTargets;
+  company: CompanyFacts;
+};
 export type Activity = { at: string; by: string; what: string };
 export type Store = { leads: Lead[]; plots: Record<string, PlotState>; news: NewsItem[]; settings: Settings; activity: Activity[] };
 
@@ -69,6 +84,9 @@ const EXAMPLE_LEADS: Lead[] = [
   { id: "ex-5", name: "Per Eksempel", email: "per@example.com", phone: "+47 900 00 005", purpose: "curious", plots: ["plot-05"], consent_updates: true, consent_investor: false, consent_research: true, source: "eksempel", created: ago(12), status: "lost", notes: [{ at: ago(10), by: "Eksempel", text: "Ville ha tomt på flaten med sjøutsikt. Finnes ikke." }] },
 ];
 
+/** The note the site started with; a store that still holds it word for word gets the one above. */
+const FIRST_RELEASE_NOTE = "Tomtene slippes etter at reguleringsplanen er vedtatt.";
+
 const SEED: Store = {
   leads: EXAMPLE_LEADS,
   plots: {},
@@ -79,14 +97,16 @@ const SEED: Store = {
     { id: "n-2026-09-04", date: "2026-09-04", published: true, title: { no: "Foreløpig retning for energikonseptet", en: "Preliminary direction for the energy concept" }, text: { no: "Prosjekteier ga en foreløpig retning for energikonseptet: eget batteri og energistyring i hver bolig med mulig tilgang til felles lager, mikronett undersøkes uten å være en forutsetning, sandbatteri holdes åpent (senere lagt bort), sol på boligene pluss et fellesanlegg på om lag 600 paneler, og vind vurderes som supplement. Målet er et robust og fleksibelt system, ikke et felt bygget rundt én teknologi.", en: "The project owner gave a preliminary direction for the energy concept: a battery and energy management in every home with possible access to shared storage, a microgrid investigated without being a prerequisite, the sand battery kept open (since dropped), solar on the homes plus a shared plant of about 600 panels, and wind evaluated as a supplement. The aim is a robust, flexible system, not a field built around one technology." } },
     { id: "n-2026-08-25", date: "2026-08-25", published: true, title: { no: "Praksisperioden med Universitetet i Agder er i gang", en: "The internship with the University of Agder has started" }, text: { no: "Studenter fra Universitetet i Agder arbeider i to fagspor, energi og teknikk, og profilering og marked, med en digital plattform som samler arbeidet.", en: "Students from the University of Agder work in two tracks, energy and technology, and profile and market, with a digital platform bringing the work together." } },
   ],
-  settings: { release_note: { no: "Tomtene slippes etter at reguleringsplanen er vedtatt.", en: "The plots are released once the zoning plan is adopted." }, contact_email: CONTACT.email, contact_phone: CONTACT.phone_intl, weekly_digest: true, kpi: {} },
+  settings: { release_note: { ...RELEASE_NOTE }, contact_email: CONTACT.email, contact_phone: CONTACT.phone_intl, weekly_digest: true, kpi: {}, company: { org_number: "", postal_address: "", email: "", phone: "" } },
   activity: [],
 };
 
 function complete(s: Partial<Store> & { users?: unknown }): Store {
   const { users: _legacy, ...rest } = s;
   void _legacy;
-  return { ...SEED, ...rest, settings: { ...SEED.settings, ...(rest.settings ?? {}), kpi: { ...(rest.settings?.kpi ?? {}) } } };
+  const saved: Partial<Settings> = rest.settings ?? {};
+  const release_note = !saved.release_note || saved.release_note.no === FIRST_RELEASE_NOTE ? SEED.settings.release_note : saved.release_note;
+  return { ...SEED, ...rest, settings: { ...SEED.settings, ...saved, release_note, kpi: { ...(saved.kpi ?? {}) }, company: { ...SEED.settings.company, ...(saved.company ?? {}) } } };
 }
 
 /**

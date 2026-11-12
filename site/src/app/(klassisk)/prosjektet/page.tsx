@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { klassiskMeta } from "@/lib/meta";
 import Image from "next/image";
 import Link from "next/link";
 import PageHead from "@/components/klassisk/PageHead";
@@ -7,7 +7,7 @@ import { Src } from "@/components/klassisk/Source";
 import { PHOTOS } from "@/lib/klassisk/photos";
 import { FACT, FINAL_PHASE, INTERNSHIP, WORK_PLAN, cap, fmt, weeks, word } from "@/lib/facts";
 
-export const metadata: Metadata = { title: "Om prosjektet" };
+export const metadata = klassiskMeta("/prosjektet", { title: "Om prosjektet", description: "Ambisjonen, de to fagsporene med Universitetet i Agder og fasene i arbeidet med Knotten på Rødberg i Lindesnes." });
 
 const GOALS = [
   ["Lavt energibehov", "Boligene planlegges med lavest mulig energibehov fra start, med bygningsutforming, tetthet og varmegjenvinning."],

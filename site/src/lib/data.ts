@@ -2,6 +2,8 @@ import { promises as fs } from "fs";
 import path from "path";
 import type { PlotsFile, Plot } from "./types";
 import { readStore } from "./store";
+// read at build time: the server bundles leave public/twin out (next.config.ts)
+import HOUSES from "../../public/twin/houses.json";
 
 const PUBLIC = path.join(process.cwd(), "public");
 
@@ -20,7 +22,19 @@ export async function loadPlot(id: string): Promise<Plot | undefined> {
 }
 
 /** Plot status/price overlay. In production this is the `plot` table; here a small JSON. */
-export type PlotCommercial = { id: string; status: "available" | "reserved" | "sold" | "unreleased"; price_nok?: number; note?: string; house_type: string };
+export type PlotCommercial = { id: string; status: "available" | "reserved" | "sold" | "unreleased"; price_nok?: number; note?: string; house_type: { no: string; en: string } };
+
+/** Which of the model's example houses have a lower floor under the view side (public/twin/houses.json). */
+const LOWER = new Set((HOUSES as { houses: { id: string; lower?: boolean }[] }).houses.filter((h) => h.lower).map((h) => h.id));
+
+/**
+ * The model's example house on a plot, as the 3D shows it: one floor, and a lower floor under the view side where
+ * the ground in front lies low enough. An illustration of one house type, not a design.
+ */
+export function houseLabel(p: Plot): { no: string; en: string } {
+  if (p.zone === "flat") return { no: "Modell: 1 etasje, flaten", en: "Model: one floor, the flat" };
+  return LOWER.has(p.id) ? { no: "Modell: 1 etasje og underetasje", en: "Model: one floor and a lower floor" } : { no: "Modell: 1 etasje", en: "Model: one floor" };
+}
 
 /** Status, price and note per plot, as the administrator set them; unreleased until then. */
 export async function loadCommercial(): Promise<Record<string, PlotCommercial>> {
@@ -29,7 +43,7 @@ export async function loadCommercial(): Promise<Record<string, PlotCommercial>> 
   const out: Record<string, PlotCommercial> = {};
   for (const p of plots) {
     const s = store.plots[p.id];
-    out[p.id] = { id: p.id, status: s?.status ?? "unreleased", price_nok: s?.price_nok, note: s?.note, house_type: p.zone === "flat" ? "Modell: 1 etasje, flaten" : (p.house.storeys ?? 1) > 1 ? "Modell: 1,5 etasje" : "Modell: 1 etasje" };
+    out[p.id] = { id: p.id, status: s?.status ?? "unreleased", price_nok: s?.price_nok, note: s?.note, house_type: houseLabel(p) };
   }
   return out;
 }

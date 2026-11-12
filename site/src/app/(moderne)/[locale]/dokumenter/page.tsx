@@ -32,7 +32,7 @@ export default async function Documents({ params }: { params: Promise<{ locale: 
         doc("view_photos", "Utsikt fra Knotten byggefelt", "Fire bilder av utsikten mot fjorden og havet.", "Prosjekteier", "PDF"),
         doc("feedback", "Tilbakemelding på leveranseplanen", "Prosjekteiers vurdering av planen for den digitale plattformen, med seks punkter til neste revisjon.", "Prosjekteier", "PDF"),
         doc("plots_data", "Tomtedata, alle tomter", "Posisjon, terreng, sol, sikt og horisontprofil for hver tomt, beregnet av nettsidens modell for det foreløpige utlegget.", "Plattform", "JSON"),
-        doc("road_data", "Veinett med stigning", `Veiene i modellens forslag med stigning per del, målt mot ${FACT.road_grade_pct} %-kravet. Veiene er plassholdere.`, "Plattform", "JSON"),
+        doc("road_data", "Veinett med stigning", `Veiene i modellens forslag med stigning per del, sammenlignet med målet om høyst ${FACT.road_grade_pct} %. Svingene og adkomsten er en illustrasjon til reguleringsplanen er klar.`, "Plattform", "JSON"),
         doc("parcel_data", "Eiendom fra Matrikkelen", `Eiendomsgrensen for gnr ${FACT.gnr} bnr ${FACT.bnr} og ${FACT.bnr_extra}, lokale koordinater.`, "Plattform, fra Kartverkets data", "JSON"),
       ]
     : [
@@ -43,7 +43,7 @@ export default async function Documents({ params }: { params: Promise<{ locale: 
         doc("view_photos", "The view from Knotten", "Four photos of the view towards the fjord and the sea.", "Project owner", "PDF"),
         doc("feedback", "Feedback on the delivery plan", "The project owner's assessment of the plan for the digital platform, with six points for the next revision.", "Project owner", "PDF"),
         doc("plots_data", "Plot data, all plots", "Position, terrain, sun, view and horizon profile for every plot, computed by the website's model for the provisional layout.", "Platform", "JSON"),
-        doc("road_data", "Road network with grades", `The roads in the model's proposal with the grade per segment, against the ${FACT.road_grade_pct} % limit. The roads are placeholders.`, "Platform", "JSON"),
+        doc("road_data", "Road network with grades", `The roads in the model's proposal with the grade per segment, against the aim of at most ${FACT.road_grade_pct} %. The bends and the access are an illustration until the zoning plan is ready.`, "Platform", "JSON"),
         doc("parcel_data", "Parcel from the cadastre", `The parcel boundary for ${FACT.gnr}/${FACT.bnr} and ${FACT.gnr}/${FACT.bnr_extra}, local coordinates.`, "Platform, from Kartverket data", "JSON"),
       ];
   return (

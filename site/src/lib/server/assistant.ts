@@ -20,7 +20,11 @@ const plotNo = (id: string) => Number(id.slice(5));
 
 const has = (q: string, re: RegExp) => re.test(q);
 
-export async function answer(question: string, lang: L): Promise<Answer> {
+/**
+ * `allowModel` is asked right before a question would go to the language model (the daily budget in /api/ask);
+ * when it says no, the answer comes from the data only.
+ */
+export async function answer(question: string, lang: L, { allowModel }: { allowModel?: () => Promise<boolean> } = {}): Promise<Answer> {
   const q = question.toLowerCase().normalize("NFC").replace(/\s+/g, " ").trim();
   const base = `/${lang}`;
   const { plots } = await loadPlots();
@@ -109,10 +113,13 @@ export async function answer(question: string, lang: L): Promise<Answer> {
     const all = Object.values(commercial);
     const free = all.filter((c) => c.status === "available");
     const prices = free.map((c) => c.price_nok).filter((v): v is number => !!v);
+    // the status line may already invite people to register; then it is not said twice
+    const inviteNo = /meld interesse/i.test(settings.release_note.no) ? "" : " Meld interesse, så får du beskjed når tomtene slippes.";
+    const inviteEn = /register/i.test(settings.release_note.en) ? "" : " Register your interest and you will hear when the plots are released.";
     return {
       text: T(lang,
-        `${settings.release_note.no} ${free.length ? `${free.length} ${free.length === 1 ? "tomt er" : "tomter er"} ledige nå${prices.length ? `, fra ${nf(Math.min(...prices), lang)} kr` : ""}.` : "Ingen tomter er sluppet for salg ennå, og prisene er ikke satt."} Meld interesse, så får du beskjed når tomtene slippes.`,
-        `${settings.release_note.en} ${free.length ? `${free.length} ${free.length === 1 ? "plot is" : "plots are"} available now${prices.length ? `, from ${nf(Math.min(...prices), lang)} kr` : ""}.` : "No plots are released for sale yet, and prices are not set."} Register your interest and you will hear when the plots are released.`),
+        `${settings.release_note.no} ${free.length ? `${free.length} ${free.length === 1 ? "tomt er" : "tomter er"} ledige nå${prices.length ? `, fra ${nf(Math.min(...prices), lang)} kr` : ""}.` : "Prisene er ikke satt ennå."}${inviteNo}`,
+        `${settings.release_note.en} ${free.length ? `${free.length} ${free.length === 1 ? "plot is" : "plots are"} available now${prices.length ? `, from ${nf(Math.min(...prices), lang)} kr` : ""}.` : "Prices are not set yet."}${inviteEn}`),
       links: [{ href: `${base}/interesse`, label: T(lang, "Meld interesse", "Register interest") }, { href: `${base}/tomter`, label: T(lang, "Tomtene", "The plots") }],
       source: "data", intent: "release",
     };
@@ -226,7 +233,7 @@ export async function answer(question: string, lang: L): Promise<Answer> {
   }
 
   // nothing in the data matches: the language model, if it is set up, with the same facts; otherwise say so
-  const ai = await askModel(question, lang, plots.length).catch(() => null);
+  const ai = MODEL_ON && (!allowModel || (await allowModel())) ? await askModel(question, lang, plots.length).catch(() => null) : null;
   if (ai) return { text: ai, links: [{ href: `${base}/kontakt`, label: T(lang, "Spør prosjekteier", "Ask the project owner") }], source: "ai", intent: "ai" };
   return {
     text: T(lang,

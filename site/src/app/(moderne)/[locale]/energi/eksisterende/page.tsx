@@ -21,7 +21,9 @@ export default async function Existing({ params }: { params: Promise<{ locale: s
   const nb = (v: number) => fmt(v, no ? "no" : "en");
   const range = `±${BUDGET.office_storage_range_pct} %`;
   const extension = FACT.offices_after - FACT.offices_now;
-  const { buildings: measured } = await meters.read();
+  const { buildings: all } = await meters.read();
+  // only buildings whose readings the owner has published; until then the page shows no empty panels
+  const measured = all.filter((m) => m.public && m.readings.length > 0);
   const buildings: { name: string; status: string; text: string; figure: string; note: string }[] = no
     ? [
         { name: "Kontorbygget", status: "Står i dag", text: `Ved Rødbergsveien. ${FACT.offices_now} kontorer i dag, ${FACT.offices_after} når utvidelsen står. Faktisk strømforbruk hentes inn for dagens bygg, deles på ferdige kontorer og skaleres til ${FACT.offices_after}, med felleslastene skilt ut.`, figure: `${nb(BUDGET.office_kwh)} kWh/år`, note: `Arbeidsforutsetning i energiregnskapet, ${range}. Byttes ut med målt forbruk.` },
@@ -57,25 +59,20 @@ export default async function Existing({ params }: { params: Promise<{ locale: s
           </div>
         ))}
       </section>
-      <section className="wrap pb-16 grid gap-12 lg:grid-cols-2">
-        {measured.map((m) => (
-          <div key={m.id}>
-            <h2 className="display text-[32px]">{m.name[locale]}</h2>
-            {m.public && m.readings.length > 0 ? (
+      {measured.length > 0 && (
+        <section className="wrap pb-16 grid gap-12 lg:grid-cols-2">
+          {measured.map((m) => (
+            <div key={m.id}>
+              <h2 className="display text-[32px]">{m.name[locale]}</h2>
               <div className="mt-4 panel p-4 md:p-5">
                 <MeterView b={m} locale={locale} />
                 <div className="provenance mt-3">{no ? `Målt forbruk, ${m.readings[0].month} til ${m.readings[m.readings.length - 1].month}. Kilde: ${m.source ?? "måleverdier"}.` : `Measured consumption, ${m.readings[0].month} to ${m.readings[m.readings.length - 1].month}. Source: ${m.source ?? "meter values"}.`}</div>
               </div>
-            ) : (
-              <div className="mt-4 panel p-6 grid gap-2">
-                <span className="chip chip-amber justify-self-start">{no ? "Ikke koblet til ennå" : "Not connected yet"}</span>
-                <p className="text-[15px] text-bone-2">{no ? "Målt forbruk per måned, årstall og effekten av hvert tiltak vises her når målerdataene er lagt inn." : "Measured consumption per month, yearly totals and the effect of each upgrade show here once the meter data is in."}</p>
-              </div>
-            )}
-          </div>
-        ))}
-      </section>
-      <section className="wrap pb-24">
+            </div>
+          ))}
+        </section>
+      )}
+      {measured.length > 0 && <section className="wrap pb-24">
         <div className="panel p-7 max-w-[70ch]">
           <div className="font-medium">{no ? "Slik kobles målingene til" : "How the meters get connected"}</div>
           <ol className="mt-3 list-decimal ml-5 text-[15px] grid gap-1.5">
@@ -86,7 +83,8 @@ export default async function Existing({ params }: { params: Promise<{ locale: s
           </ol>
           <p className="provenance mt-4">{no ? "Målingene legges inn i prosjektportalen og vises her når prosjekteier velger det." : "The readings are added in the project portal and shown here when the project owner chooses to."}</p>
         </div>
-      </section>
+      </section>}
+      {measured.length === 0 && <div className="pb-16" />}
     </>
   );
 }

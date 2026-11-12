@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
+import { klassiskMeta } from "@/lib/meta";
 import PageHead from "@/components/klassisk/PageHead";
 import Reveal from "@/components/klassisk/Reveal";
 import { Src } from "@/components/klassisk/Source";
 import { FIGURES } from "@/lib/facts";
 
-export const metadata: Metadata = { title: "Kilder og forutsetninger" };
+export const metadata = klassiskMeta("/kilder", { title: "Kilder og forutsetninger", description: "Hvert tall på nettsiden med verdi, status og kilde: fastsatt, foreløpig, beregnet eller verifisert." });
 
 const TAG: Record<string, string> = { Fastsatt: "tag green", Verifisert: "tag green", Beregnet: "tag blue", Foreløpig: "tag" };
 

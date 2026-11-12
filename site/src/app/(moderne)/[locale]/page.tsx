@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import type { Locale } from "@/lib/i18n";
 import { isLocale, t } from "@/lib/i18n";
 import { loadPlots } from "@/lib/data";
-import { BUDGET, DIRECTION, DOCS, EED, FACT, MEASURES, STATUS_SOLAR, assumption, dateLong, fmt, word } from "@/lib/facts";
+import { BUDGET, DIRECTION, DOCS, EED, FACT, MEASURES, MEASURES_COMPARED, STATUS_SOLAR, assumption, dateLong, fmt, word } from "@/lib/facts";
 import Nav from "@/components/ui/Nav";
 import Ambient from "@/components/ui/Ambient";
 import Film from "@/components/ui/Film";
@@ -15,7 +15,12 @@ import TerrainCut from "@/components/ui/TerrainCut";
 import MapJourney from "@/components/ui/MapJourney";
 import { Figure } from "@/components/ui/Provenance";
 import { Words } from "@/components/ui/Motion";
-import { pageMeta } from "@/lib/meta";
+import { SITE, pageMeta } from "@/lib/meta";
+import StatusLine from "@/components/ui/StatusLine";
+import AboutDeveloper from "@/components/ui/AboutDeveloper";
+import JsonLd from "@/components/JsonLd";
+import { organizationJsonLd } from "@/lib/content/jsonld";
+import { formatOrgNumber, loadPublicSettings } from "@/lib/server/siteSettings";
 
 export const generateMetadata = pageMeta("", {
   no: { description: `Rundt ${FACT.plots} energivennlige boliger på en skogkledd knaus over Audna, nær Sniksfjorden i Lindesnes. Terrenget er målt, solen er ekte. Stå på tomten før den finnes.` },
@@ -29,7 +34,7 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
   const locale = l as Locale;
   const d = t(locale);
   const no = locale === "no";
-  const { plots } = await loadPlots();
+  const [{ plots }, settings] = await Promise.all([loadPlots(), loadPublicSettings()]);
   const withSea = plots.filter((p) => p.view.water_visible_deg > 0).length;
   const openSea = plots.filter((p) => p.view.open_sea_visible).length;
   const best = [...plots].sort((a, b) => b.sun.dec21.hours - a.sun.dec21.hours || b.view.water_visible_deg - a.view.water_visible_deg).slice(0, 3);
@@ -48,13 +53,17 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
 
   return (
     <>
+      <JsonLd data={organizationJsonLd(SITE, settings.company)} />
       <Ambient />
       <Nav locale={locale} />
 
       {/* 1. the journey is the front page */}
       <section id="modell" className="wrap pt-3 md:pt-6">
         <div className="grid gap-5 lg:grid-cols-[1fr_auto] items-end mb-5 md:mb-7">
-          <Words as="h1" className="words-now display text-[clamp(40px,6.6vw,104px)] max-w-[13ch]" text={no ? "Norges mest energivennlige boligfelt." : "Norway's most energy-friendly housing field."} />
+          <div>
+            <Words as="h1" className="words-now display text-[clamp(40px,6.6vw,104px)] max-w-[13ch]" text={no ? "Planlagt som Norges mest energivennlige boligfelt." : "Planned as Norway's most energy-friendly housing development."} />
+            <StatusLine locale={locale} text={settings.release_note[locale]} className="mt-5 md:mt-6 rise-in rise-in-2" />
+          </div>
           <p className="lede max-w-[38ch] lg:pb-3 rise-in rise-in-2">
             {no
               ? `Rundt ${FACT.plots} boliger på Knotten over Sniksfjorden i Lindesnes, i modellen lagt i ${word(FACT.rows)} rekker over sørhellingen og på knausen. Ønsket er sjøutsikt fra alle tomtene, men det er ikke sikkert at det går fra alle. Reisen under går fra fjorden og helt inn i stua.`
@@ -90,7 +99,7 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
         <div className="facts rise">
           <div className="fact"><b>{no ? `Rundt ${FACT.plots}` : `About ${FACT.plots}`}</b><span>{no ? "tomter, ønsket er sjøutsikt fra alle" : "plots, the aim is a sea view from all"} <Src id="sigve30" locale={locale} /></span></div>
           <div className="fact"><b>{`${nb(FACT.parcel_m2)} m²`}</b><span>{no ? `samlet for eiendommene gnr ${FACT.gnr} bnr ${FACT.bnr} og ${FACT.bnr_extra}` : `in total for the properties ${FACT.gnr}/${FACT.bnr} and ${FACT.gnr}/${FACT.bnr_extra}`} <Src id="areal" locale={locale} /></span></div>
-          <div className="fact"><b>{no ? `Maks ${FACT.road_grade_pct} %` : `Max ${FACT.road_grade_pct} %`}</b><span>{no ? "stigning på veiene i feltet" : "grade on the roads in the field"} <Src id="vei" locale={locale} /></span></div>
+          <div className="fact"><b>{no ? `Maks ${FACT.road_grade_pct} %` : `Max ${FACT.road_grade_pct} %`}</b><span>{no ? "stigning er målet for veien. På dagens terreng er den brattere, så planen må gi lengre sløyfer" : "grade is the aim for the road. On today's ground it is steeper, so the plan must give longer loops"} <Src id="vei" locale={locale} /></span></div>
           <div className="fact"><b>{no ? "Regulering" : "Zoning"}</b><span>{no ? "ikke vedtatt ennå. Prosjektet starter før reguleringsplanen" : "not adopted yet. The project starts before the zoning plan"} <Src id="regulering" locale={locale} /></span></div>
         </div>
       </section>
@@ -191,8 +200,8 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
                 <h2 className="display text-[clamp(34px,4.6vw,64px)] max-w-[12ch]">{no ? "Et felt som skal klare seg mest mulig selv." : "A field built to look after itself as far as possible."}</h2>
                 <p className="lede mt-5 max-w-[50ch]">
                   {no
-                    ? "Energikonseptet utvikles av energisporet, studenter fra Universitetet i Agder i et internship. Grunnlaget finnes allerede: et energiregnskap for hele feltet, en brønnpark simulert i EED, og energisporets vurdering av seksten tiltak. Tallene er foreløpige og står med kilde."
-                    : "The energy concept is developed by the energy track, students from the University of Agder on an internship. The basis already exists: an energy budget for the whole field, a borehole field simulated in EED, and the energy track's assessment of sixteen measures. The figures are provisional and carry their source."}
+                    ? `Energikonseptet utvikles av energisporet, studenter fra Universitetet i Agder i et internship. Grunnlaget finnes allerede: et energiregnskap for hele feltet, en brønnpark simulert i EED, og energisporets vurdering av ${MEASURES_COMPARED} tiltak. Tallene er foreløpige og står med kilde.`
+                    : `The energy concept is developed by the energy track, students from the University of Agder on an internship. The basis already exists: an energy budget for the whole field, a borehole field simulated in EED, and the energy track's assessment of ${MEASURES_COMPARED} measures. The figures are provisional and carry their source.`}
                   {" "}<Src id="retning" locale={locale} />
                 </p>
               </div>
@@ -214,7 +223,7 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
             </div>
             <div className="grid content-between gap-6 p-7 md:p-12 bg-bone/4 border-t lg:border-t-0 lg:border-l line">
               <figure className="paper p-3 md:p-4">
-                <img src="/assets/energy/eed_fluid_temperatures.webp" alt={no ? `Væsketemperatur i brønnparken over ${EED.years} år` : `Fluid temperature in the borehole field over ${EED.years} years`} className="w-full rounded-[8px]" loading="lazy" />
+                <img src="/img/eed-temperatur.png" width={2341} height={1005} alt={no ? `Væsketemperatur i brønnparken over ${EED.years} år` : `Fluid temperature in the borehole field over ${EED.years} years`} className="w-full rounded-[8px]" loading="lazy" />
                 <figcaption className="provenance mt-2.5">{no ? `Brønnparken simulert i Earth Energy Designer: ${EED.boreholes} brønner, ${EED.grid}, åpent rektangel, ${EED.spacing_m} m avstand. Væsketemperaturen stabiliserer seg over ${EED.years} år; siste år ligger den mellom ${nb(EED.fluid_min_c)} og ${nb(EED.fluid_max_c)} °C. Energisporet vurderer begge deler som bra.` : `The borehole field simulated in Earth Energy Designer: ${EED.boreholes} boreholes, ${EED.config}, ${EED.spacing_m} m apart. The fluid temperature settles over ${EED.years} years; in the last year it stays between ${nb(EED.fluid_min_c)} and ${nb(EED.fluid_max_c)} °C. The energy track judges both to be good.`}</figcaption>
               </figure>
               <div>
@@ -286,6 +295,9 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
           <Link className="btn btn-ghost" href={`/${locale}/dokumenter`}>{no ? "Dokumenter" : "Documents"}</Link>
         </div>
       </section>
+
+      {/* who is behind it */}
+      <AboutDeveloper locale={locale} company={settings.company} orgDisplay={formatOrgNumber(settings.company.org_number)} />
 
       {/* 11. invitation */}
       <section className="wrap pb-6">

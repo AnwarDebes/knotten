@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import { klassiskMeta } from "@/lib/meta";
 import PageHead from "@/components/klassisk/PageHead";
 import EnergyFlow from "@/components/klassisk/EnergyFlow";
 import Reveal from "@/components/klassisk/Reveal";
@@ -9,7 +9,7 @@ import { BUDGET, EED as SIM, STATUS_SOLAR, fmt, fmtRound, measure } from "@/lib/
 import EnergySimulator from "@/components/energy/EnergySimulator";
 import { loadPlots } from "@/lib/data";
 
-export const metadata: Metadata = { title: "Energi og teknologi" };
+export const metadata = klassiskMeta("/energi", { title: "Energi og teknologi", description: "Energikonseptet for Knotten: sol, bergvarme, batteri i hver bolig og smart styring, med energisporets vurdering av tiltakene. Alle tall er foreløpige." });
 
 const CLASS = { yes: "ok", maybe: "maybe", no: "no" } as const;
 

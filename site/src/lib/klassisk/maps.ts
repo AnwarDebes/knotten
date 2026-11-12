@@ -36,7 +36,7 @@ export const MAPS: Record<string, MapImg> = {
     src: "/img/skisse-situasjonsplan.png", w: 1234, h: 777,
     alt: `Skisse over flyfoto: rekker med boliger langs en vei i hårnålssvinger, merket Stigning på veien max ${FACT.road_grade_pct} % og Gang sti`,
     title: "Skissen til situasjonsplan",
-    text: `Prosjekteiers første skisse: boligrekker langs en vei som svinger seg oppover feltet med maks ${FACT.road_grade_pct} prosent stigning, gangstier mellom rekkene, og de to planlagte byggene i grønt nederst til høyre.`,
+    text: `Prosjekteiers første skisse: boligrekker langs en vei som svinger seg oppover feltet, med maks ${FACT.road_grade_pct} prosent stigning som mål, gangstier mellom rekkene, og de to planlagte byggene i grønt nederst til høyre.`,
     credit: "Prosjekteier",
   },
   terreng: {
@@ -64,21 +64,21 @@ export const MAPS: Record<string, MapImg> = {
 
 export const EED: Record<string, MapImg> = {
   grunnlast: {
-    src: "/img/eed-grunnlast.png", w: 668, h: 1570,
+    src: "/img/eed-grunnlast.png", w: 601, h: 1439,
     alt: "Earth Energy Designer, dialogen Base load med årlig varme, kjøling og tappevann",
     title: "Grunnlast",
     text: `Varme ${SIM.base_heat_mwh} MWh per år, kjøling ${SIM.base_cool_mwh} MWh, tappevann ${SIM.dhw_mwh} MWh med SPF ${fmt(SIM.dhw_spf, "no", 1)}. Netto varme hentet fra grunnen: ${Math.round(SIM.ground_net_mwh)} MWh.`,
     credit: "Energisporet, Earth Energy Designer",
   },
   bronn: {
-    src: "/img/eed-bronn.png", w: 820, h: 1380,
+    src: "/img/eed-bronn.png", w: 785, h: 1256,
     alt: `Earth Energy Designer, dialogen Borehole and heat exchanger med ${SIM.boreholes} brønner i ${SIM.grid} åpen rektangel`,
     title: "Brønnfeltet",
     text: `${SIM.boreholes} brønner i et åpent rektangel på ${SIM.grid}, ${Math.round(SIM.depth_m)} meter dype, ${SIM.spacing_m} meter mellom hver, ${SIM.diameter_mm} mm diameter, dobbel U-kollektor.`,
     credit: "Energisporet, Earth Energy Designer",
   },
   temperatur: {
-    src: "/img/eed-temperatur.png", w: 2384, h: 1320,
+    src: "/img/eed-temperatur.png", w: 2341, h: 1005,
     alt: `Earth Energy Designer, graf over væsketemperatur i brønnene over ${SIM.years} år`,
     title: `Temperatur over ${SIM.years} år`,
     text: `Grafen stabiliserer seg. Siste år er minimum ${fmt(SIM.fluid_min_c)} °C og maksimum ${fmt(SIM.fluid_max_c)} °C. Energisporet vurderer begge deler som bra.`,

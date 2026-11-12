@@ -7,13 +7,14 @@ import type { Lang, T } from "./core";
  */
 
 /** Contact details, as in the internship posting. The place line is the project's location, not a postal
- *  address (none is given in the sources); chosen by the project on 27 September 2026. */
+ *  address (none is given in the sources); chosen by the project on 27 September 2026. Both designs print the
+ *  phone number in one format, with the country code (`phone` and `phone_intl` are the same). */
 export const CONTACT = {
   company: "Sigve Simonsen AS",
   name: "Sigve Simonsen",
   role: { no: "Daglig leder", en: "Managing Director" } as T,
   email: "sigve.simonsen@hotmail.com",
-  phone: "954 95 152",
+  phone: "+47 954 95 152",
   phone_intl: "+47 954 95 152",
   tel: "+4795495152",
   place: "Knotten, Rødberg, 4520 Lindesnes",

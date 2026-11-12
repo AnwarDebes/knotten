@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
+import { klassiskMeta } from "@/lib/meta";
 import Image from "next/image";
 import PageHead from "@/components/klassisk/PageHead";
 import Reveal from "@/components/klassisk/Reveal";
 import { PHOTOS } from "@/lib/klassisk/photos";
 
-export const metadata: Metadata = { title: "Bilder" };
+export const metadata = klassiskMeta("/galleri", { title: "Bilder", description: "Utsikten fra Knotten og bilder fra området rundt Sniksfjorden, med fotograf og lisens." });
 
 const ORDER: { key: keyof typeof PHOTOS; span: "g12" | "g6" | "g4" }[] = [
   { key: "view", span: "g12" },

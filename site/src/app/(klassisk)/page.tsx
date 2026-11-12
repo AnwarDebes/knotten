@@ -5,12 +5,25 @@ import PlanPreview from "@/components/klassisk/PlanPreview";
 import Hero from "@/components/klassisk/Hero";
 import MapJourney from "@/components/klassisk/MapJourney";
 import Reveal from "@/components/klassisk/Reveal";
+import StatusLine from "@/components/klassisk/StatusLine";
+import AboutDeveloper from "@/components/klassisk/AboutDeveloper";
+import JsonLd from "@/components/JsonLd";
 import { FACT, fmt, word } from "@/lib/facts";
+import { SITE, klassiskMeta } from "@/lib/meta";
+import { organizationJsonLd } from "@/lib/content/jsonld";
+import { formatOrgNumber, loadPublicSettings } from "@/lib/server/siteSettings";
 
-export default function Home() {
+export const metadata = klassiskMeta("", {
+  title: "Sjøutsikt i Rødberg",
+  description: `Knotten på Rødberg i Lindesnes: rundt ${FACT.plots} tomter i rekker over Sniksfjorden, planlagt som Norges mest energivennlige boligfelt. Hvert tall kan spores til kilden.`,
+});
+
+export default async function Home() {
+  const { release_note, company } = await loadPublicSettings();
   return (
     <>
-      <Hero />
+      <JsonLd data={organizationJsonLd(SITE, company)} />
+      <Hero status={<StatusLine locale="no" text={release_note.no} className="rise d2" />} />
 
       <section className="sec" id="stedet" data-journey="stedet">
         <div className="wrap split">
@@ -47,7 +60,7 @@ export default function Home() {
             <div className="eyebrow">Tomtene</div>
             <h2>Rekker mot sør, mot sjøen</h2>
             <p className="lede">
-              {`Boligene ligger i ${word(FACT.rows)} rekker langs en vei som svinger seg oppover knausen med maks ${FACT.road_grade_pct} prosent stigning. Gangstier binder rekkene sammen. Sørvendte tak bør være så enkle og sammenhengende som mulig, med få oppbygg, slik at de kan fylles med solceller.`} <Src id="tak" />
+              {`Boligene ligger i ${word(FACT.rows)} rekker langs en vei som svinger seg oppover knausen. Målet er maks ${FACT.road_grade_pct} prosent stigning; på dagens terreng er veien i modellen brattere, så reguleringsplanen må gi den lengre sløyfer og terrengarbeid. Gangstier binder rekkene sammen. Sørvendte tak bør være så enkle og sammenhengende som mulig, med få oppbygg, slik at de kan fylles med solceller.`} <Src id="tak" />
             </p>
             <p className="measure">
               Kontorbygget og bolighuset nederst finnes allerede. Utvidelsen av kontoret og et lager- og verkstedbygg bak bolighuset er planlagt. <Src id="bygg" />
@@ -101,6 +114,8 @@ export default function Home() {
           <div className="cta-row"><Link className="btn" href="/investorer">For investorer og kommune</Link></div>
         </div>
       </section>
+
+      <AboutDeveloper locale="no" company={company} orgDisplay={formatOrgNumber(company.org_number)} alt={false} />
 
       <section className="sec" id="kontakt" data-journey="kontakt">
         <div className="wrap band">

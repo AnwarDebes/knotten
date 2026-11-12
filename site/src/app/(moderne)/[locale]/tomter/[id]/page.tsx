@@ -4,13 +4,16 @@ import type { Metadata } from "next";
 import type { Locale } from "@/lib/i18n";
 import { isLocale, t } from "@/lib/i18n";
 import { loadPlots, loadPlot, loadCommercial, loadSettings } from "@/lib/data";
+import type { Plot } from "@/lib/types";
 import { plotName, rowLabel, sunLabel } from "@/lib/format";
 import { fmt } from "@/lib/facts/core";
 import Nav from "@/components/ui/Nav";
 import Stage from "@/components/Stage";
 import Passport from "@/components/ui/Passport";
 import HorizonChart from "@/components/charts/HorizonChart";
-import { withAlternates } from "@/lib/meta";
+import { SITE, withAlternates } from "@/lib/meta";
+import JsonLd from "@/components/JsonLd";
+import { plotPlaceJsonLd } from "@/lib/content/jsonld";
 
 export async function generateStaticParams() {
   const { plots } = await loadPlots();
@@ -23,12 +26,14 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const p = await loadPlot(id);
   const no = locale === "no";
   if (!p) return { title: no ? "Fant ikke siden" : "Page not found" };
-  return withAlternates(`/tomter/${id}`, no ? "no" : "en", {
-    title: plotName(id, no),
-    description: no
-      ? `Sol 21. desember: ${p.sun.dec21.hours.toLocaleString("nb-NO", { maximumFractionDigits: 1 })} timer. Sjø i sikt: ${p.view.water_visible_deg} grader.${p.view.open_sea_visible ? " Åpent hav i sikt." : ""}`
-      : `Sun 21 December: ${p.sun.dec21.hours.toLocaleString("en-GB", { maximumFractionDigits: 1 })} hours. Water in view: ${p.view.water_visible_deg} degrees.${p.view.open_sea_visible ? " Open sea visible." : ""}`,
-  });
+  // the plot's own share image (opengraph-image.tsx) is used, not the site's default
+  return withAlternates(`/tomter/${id}`, no ? "no" : "en", { title: plotName(id, no), description: plotDescription(p, no) }, { ownImage: true });
+}
+
+function plotDescription(p: Plot, no: boolean) {
+  return no
+    ? `Sol 21. desember: ${p.sun.dec21.hours.toLocaleString("nb-NO", { maximumFractionDigits: 1 })} timer. Sjø i sikt: ${p.view.water_visible_deg} grader.${p.view.open_sea_visible ? " Åpent hav i sikt." : ""}`
+    : `Sun 21 December: ${p.sun.dec21.hours.toLocaleString("en-GB", { maximumFractionDigits: 1 })} hours. Water in view: ${p.view.water_visible_deg} degrees.${p.view.open_sea_visible ? " Open sea visible." : ""}`;
 }
 
 export default async function PlotPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
@@ -47,6 +52,7 @@ export default async function PlotPage({ params }: { params: Promise<{ locale: s
   const statusLabel = { unreleased: no ? "ikke sluppet" : "unreleased", available: no ? "ledig" : "available", reserved: no ? "reservert" : "reserved", sold: no ? "solgt" : "sold" }[com.status];
   return (
     <>
+      <JsonLd data={plotPlaceJsonLd({ site: SITE, path: `/${locale}/tomter/${plot.id}`, name: `${name}, Knotten`, description: plotDescription(plot, no), lat: plot.lat, lon: plot.lon, elevation: plot.local.z_ground, lang })} />
       <Nav locale={locale} />
       <section className="wrap pt-12 md:pt-16 pb-8 md:pb-10 grid gap-8 lg:grid-cols-[1fr_auto] items-end">
         <div>
@@ -55,7 +61,7 @@ export default async function PlotPage({ params }: { params: Promise<{ locale: s
           <div className="mt-4 flex flex-wrap items-center gap-2 text-[14px]">
             <span className={`chip ${com.status === "available" ? "chip-pine" : com.status === "reserved" ? "chip-amber" : ""}`}>{statusLabel}</span>
             {com.price_nok ? <span className="num text-[22px]">{com.price_nok.toLocaleString(no ? "nb-NO" : "en-GB")} kr</span> : <span className="text-muted">{settings.release_note[locale]}</span>}
-            <span className="text-muted">{com.house_type}</span>
+            <span className="text-muted">{com.house_type[locale]}</span>
           </div>
           <p className="lede mt-5 max-w-[54ch]">
             {no ? `${plot.zone === "flat" ? "Flaten ved Rødbergsveien" : `Rekke ${rowLabel(plot)}`}, ${plot.local.z_ground.toFixed(0)} meter over havet. Huset vender mot ${plot.house.facing_deg.toFixed(0)} grader. ` : `${plot.zone === "flat" ? "The flat by Rødbergsveien" : `Row ${rowLabel(plot)}`}, ${plot.local.z_ground.toFixed(0)} m above sea level. The house faces ${plot.house.facing_deg.toFixed(0)} degrees. `}

@@ -1,11 +1,11 @@
-import type { Metadata } from "next";
+import { klassiskMeta } from "@/lib/meta";
 import Link from "next/link";
 import PageHead from "@/components/klassisk/PageHead";
 import Reveal from "@/components/klassisk/Reveal";
 import { DOCS, EED, dateNo, type Access } from "@/lib/facts";
 import { portalDocPath } from "@/lib/docRegister";
 
-export const metadata: Metadata = { title: "Dokumentbank" };
+export const metadata = klassiskMeta("/dokumentbank", { title: "Dokumentbank", description: "Rapporter, kart, data og notater fra arbeidet med Knotten, med dato og hvem som står bak." });
 
 type Doc = { key?: string; t: string; m: string; date: string; type: string; access: "Offentlig" | "Innlogging"; href?: string };
 

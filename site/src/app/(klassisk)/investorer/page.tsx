@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
+import { klassiskMeta } from "@/lib/meta";
 import Link from "next/link";
 import PageHead from "@/components/klassisk/PageHead";
 import Reveal from "@/components/klassisk/Reveal";
 import { FINAL_PHASE, weeks } from "@/lib/facts";
 
-export const metadata: Metadata = { title: "Investorer og kommune" };
+export const metadata = klassiskMeta("/investorer", { title: "Investorer og kommune", description: "Hva investorer, kommunen og Universitetet i Agder kan få innsyn i, og hva som må på plass før neste steg for Knotten." });
 
 export default function Investorer() {
   return (

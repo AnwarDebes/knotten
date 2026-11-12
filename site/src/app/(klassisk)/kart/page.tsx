@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
+import { klassiskMeta } from "@/lib/meta";
 import Image from "next/image";
 import PageHead from "@/components/klassisk/PageHead";
 import Reveal from "@/components/klassisk/Reveal";
 import { MAPS } from "@/lib/klassisk/maps";
 
-export const metadata: Metadata = { title: "Kart og terreng" };
+export const metadata = klassiskMeta("/kart", { title: "Kart og terreng", description: "Prosjekteiers kart og et terrengkart laget for nettsiden, fra siktlinjen ut til havet til den første skissen av boligrekkene." });
 
 const ORDER: (keyof typeof MAPS)[] = ["siktlinje", "terreng", "eiendom", "omrade", "bygg", "skisse", "profil", "grillbu"];
 

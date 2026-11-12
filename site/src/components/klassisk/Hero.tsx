@@ -9,7 +9,7 @@ import { FACT } from "@/lib/facts";
  * Hero: text left, the real view photo right at its native resolution (never upscaled),
  * with the two summer photos tucked in as small cards.
  */
-export default function Hero() {
+export default function Hero({ status }: { status?: React.ReactNode }) {
   const v = PHOTOS.view;
   const s1 = PHOTOS.sniksfjorden;
   const s2 = PHOTOS.spangereid;
@@ -19,6 +19,7 @@ export default function Hero() {
         <div className="hero2-text">
           <div className="kicker rise">Rødberg i Lindesnes, ved Audna elvas utløp</div>
           <h1 className="rise d1">Et boligfelt som ser havet, og som skal klare seg mest mulig selv.</h1>
+          {status}
           <p className="lede rise d2">
             {`Rundt ${FACT.plots} tomter på Knotten, i rekker oppover en skogkledd knaus over Sniksfjorden.`} Ønsket er sjøutsikt fra alle tomtene, men det er ikke sikkert at det går fra alle. Feltet planlegges fra første dag med lavt energibehov, egen energiproduksjon, lagring og robusthet ved strømbrudd. Alle tall vi viser kan spores til sin kilde.
           </p>
@@ -42,7 +43,7 @@ export default function Hero() {
         <div className="facts">
           <div className="fact"><CountUp value={FACT.plots} prefix="Rundt " /><span>tomter, ønsket er sjøutsikt fra alle <Src id="sigve30" /></span></div>
           <div className="fact"><CountUp value={FACT.parcel_m2} suffix=" m²" /><span>{`samlet for eiendommene gnr ${FACT.gnr} bnr ${FACT.bnr} og ${FACT.bnr_extra}`} <Src id="areal" /></span></div>
-          <div className="fact"><CountUp value={FACT.road_grade_pct} prefix="Maks " suffix=" %" /><span>stigning på veiene i feltet <Src id="vei" /></span></div>
+          <div className="fact"><CountUp value={FACT.road_grade_pct} prefix="Maks " suffix=" %" /><span>stigning er målet for veien. På dagens terreng er den brattere, så planen må gi lengre sløyfer <Src id="vei" /></span></div>
           <div className="fact"><b>Regulering</b><span>ikke vedtatt ennå. Prosjektet starter før reguleringsplan <Src id="regulering" /></span></div>
         </div>
       </div>

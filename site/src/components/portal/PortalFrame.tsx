@@ -122,7 +122,7 @@ export default function PortalFrame({ locale, groups, me, children, preview, can
             </details>
           )}
           <Link href={path.replace(/^\/(no|en)(?=\/|$)/, `/${other}`)} className="pt-top-link" hrefLang={other} lang={other}>{other === "en" ? "English" : "Norsk"}</Link>
-          <Link href="/" className="pt-top-link"><Icon name="external" size={16} /><span className="sr-only sm:not-sr-only">{no ? "Til nettsiden" : "To the website"}</span></Link>
+          <Link href={no ? "/" : "/en"} className="pt-top-link"><Icon name="external" size={16} /><span className="sr-only sm:not-sr-only">{no ? "Til nettsiden" : "To the website"}</span></Link>
         </header>
         <div className="pt-body"><PreviewContext.Provider value={preview}>{children}</PreviewContext.Provider></div>
       </div>

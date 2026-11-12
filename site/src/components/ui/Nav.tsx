@@ -78,7 +78,7 @@ export default function Nav({ locale }: { locale: Locale; dark?: boolean }) {
         </Link>
 
         <p className={`hidden lg:block justify-self-center max-w-[44ch] text-[15px] leading-snug text-center transition-opacity ${scrolled ? "opacity-0" : "opacity-80"}`}>
-          {no ? `Norges mest energivennlige boligfelt. Rundt ${FACT.plots} boliger på Knotten i Lindesnes, over Sniksfjorden.` : `Norway's most energy-friendly housing field. About ${FACT.plots} homes on Knotten in Lindesnes, above Sniksfjorden.`}
+          {no ? `Planlagt som Norges mest energivennlige boligfelt. Rundt ${FACT.plots} boliger på Knotten i Lindesnes, over Sniksfjorden.` : `Planned as Norway's most energy-friendly housing development. About ${FACT.plots} homes on Knotten in Lindesnes, above Sniksfjorden.`}
         </p>
 
         <div className="justify-self-end flex items-center gap-2">

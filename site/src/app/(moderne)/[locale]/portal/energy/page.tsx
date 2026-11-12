@@ -129,7 +129,7 @@ export default async function EnergyDashboard({ params, searchParams }: { params
           </div>
         </Section>
         <figure className="panel p-3 self-end">
-          <Image src="/assets/energy/eed_fluid_temperatures.webp" alt={no ? "Væsketemperaturer i brønnparken over 35 år" : "Fluid temperatures in the borehole field over 35 years"} width={1600} height={886} sizes="(min-width: 1024px) 40vw, 100vw" className="w-full h-auto rounded-[10px]" />
+          <Image src="/assets/energy/eed_fluid_temperatures.webp" alt={no ? "Væsketemperaturer i brønnparken over 35 år" : "Fluid temperatures in the borehole field over 35 years"} width={1569} height={673} sizes="(min-width: 1024px) 40vw, 100vw" className="w-full h-auto rounded-[10px]" />
         </figure>
       </div>
 

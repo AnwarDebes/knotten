@@ -103,6 +103,12 @@ export const MEASURES: Measure[] = [
   { id: "three_phase", category: "control", name: { no: "Trefase til boligene", en: "Three-phase supply" }, what: { no: "400 V inntak for raskere hjemmelading.", en: "400 V supply for faster home charging." }, verdict: "no", short: "Nei, ikke nødvendig", why: { no: "Ikke nødvendig for konseptet.", en: "Not needed for the concept." }, robustness: 0 },
 ];
 
+/**
+ * How many of the measures the energy track compared in its table of 28 August 2026: all but the shared solar plant,
+ * which came later from the project owner's direction. The pages say "17 tiltak, 16 sammenlignet av energisporet".
+ */
+export const MEASURES_COMPARED = MEASURES.filter((m) => m.id !== "shared_solar").length;
+
 /** One measure by id; throws if the id is unknown, so a typo fails the build instead of showing nothing. */
 export function measure(id: string): Measure {
   const m = MEASURES.find((x) => x.id === id);

@@ -4,7 +4,7 @@ import Nav from "@/components/ui/Nav";
 import PageHead from "@/components/ui/PageHead";
 import EnergySimulator from "@/components/energy/EnergySimulator";
 import { loadPlots } from "@/lib/data";
-import { BUDGET, DOCS, EED, MEASURES, DIRECTION, STATUS_SOLAR, dateLong, fmt } from "@/lib/facts";
+import { BUDGET, DOCS, EED, MEASURES, MEASURES_COMPARED, DIRECTION, STATUS_SOLAR, dateLong, fmt } from "@/lib/facts";
 import { pageMeta } from "@/lib/meta";
 import { isLocale } from "@/lib/i18n";
 import { notFound } from "next/navigation";
@@ -44,7 +44,7 @@ export default async function Energy({ params }: { params: Promise<{ locale: str
         title={no ? "Energien, tegnet på landskapet." : "Energy, drawn on the landscape."}
         lede={no
           ? "Målet er Norges mest energieffektive, robuste og attraktive boligfelt. Under er konseptet slik det står nå: retningen fra prosjekteier, energiregnskapet for hele feltet, den simulerte brønnparken, og vurderingen av hvert tiltak. Alt er arbeidsgrunnlag med kilde og dato, ikke løfter."
-          : "The goal is Norway's most energy-efficient, robust and attractive housing field. Below is the concept as it stands: the direction from the project owner, the energy budget for the whole field, the simulated borehole field, and the assessment of every measure. All of it is a working basis with source and date, not promises."}
+          : "The goal is Norway's most energy-efficient, robust and attractive housing development. Below is the concept as it stands: the direction from the project owner, the energy budget for the whole field, the simulated borehole field, and the assessment of every measure. All of it is a working basis with source and date, not promises."}
       />
 
       {/* the energy simulator: the field hour by hour through a typical year, on the 3D model */}
@@ -89,7 +89,7 @@ export default async function Energy({ params }: { params: Promise<{ locale: str
             </div>
           </div>
           <figure className="paper p-4 md:p-6">
-            <img src="/assets/energy/eed_fluid_temperatures.webp" alt={no ? `Væsketemperaturen i brønnparken over ${EED.years} år, simulert i Earth Energy Designer: den stabiliserer seg, og siste år ligger den mellom ${nb(EED.fluid_min_c)} og ${nb(EED.fluid_max_c)} °C` : `The fluid temperature in the borehole field over ${EED.years} years, simulated in Earth Energy Designer: it settles, and in the last year it stays between ${nb(EED.fluid_min_c)} and ${nb(EED.fluid_max_c)} °C`} className="w-full rounded-[10px]" loading="lazy" />
+            <img src="/img/eed-temperatur.png" width={2341} height={1005} alt={no ? `Væsketemperaturen i brønnparken over ${EED.years} år, simulert i Earth Energy Designer: den stabiliserer seg, og siste år ligger den mellom ${nb(EED.fluid_min_c)} og ${nb(EED.fluid_max_c)} °C` : `The fluid temperature in the borehole field over ${EED.years} years, simulated in Earth Energy Designer: it settles, and in the last year it stays between ${nb(EED.fluid_min_c)} and ${nb(EED.fluid_max_c)} °C`} className="w-full rounded-[10px]" loading="lazy" />
             <figcaption className="provenance !text-granite mt-3">{no ? `Væsketemperatur i brønnene gjennom ${EED.years} år, månedlig simulering i EED. Energisporet.` : `Fluid temperature in the boreholes over ${EED.years} years, monthly simulation in EED. The energy track.`}</figcaption>
           </figure>
         </div>
@@ -99,7 +99,7 @@ export default async function Energy({ params }: { params: Promise<{ locale: str
       <section className="wrap section-tight">
         <div className="grid gap-6 lg:grid-cols-[1fr_1.3fr] items-end">
           <h2 className="display text-[clamp(34px,4.6vw,64px)] max-w-[12ch] rise">{no ? "Hvert tiltak, vurdert." : "Every measure, assessed."}</h2>
-          <p className="lede max-w-[54ch] rise rise-late">{no ? "Seksten tiltak sammenlignet av energisporet på kostnad, gjennomførbarhet, robusthet ved strømbrudd og hva de faktisk gir. Ja, kanskje og nei er den foreløpige vurderingen; der energisporet og prosjekteier er uenige, står begge i teksten." : "Sixteen measures compared by the energy track on cost, feasibility, robustness in an outage and what they actually give. Yes, maybe and no are the provisional assessment; where the energy track and the project owner differ, both are in the text."}</p>
+          <p className="lede max-w-[54ch] rise rise-late">{no ? `${MEASURES.length} tiltak. Energisporet sammenlignet ${MEASURES_COMPARED} av dem på kostnad, gjennomførbarhet, robusthet ved strømbrudd og hva de faktisk gir; det felles solanlegget kom senere med retningen fra prosjekteier. Ja, kanskje og nei er den foreløpige vurderingen; der energisporet og prosjekteier er uenige, står begge i teksten.` : `${MEASURES.length} measures. The energy track compared ${MEASURES_COMPARED} of them on cost, feasibility, robustness in an outage and what they actually give; the shared solar plant came later with the project owner's direction. Yes, maybe and no are the provisional assessment; where the energy track and the project owner differ, both are in the text.`}</p>
         </div>
         <div className="mt-10 grid gap-3">
           {(["production", "storage", "efficiency", "control"] as const).map((c) => (

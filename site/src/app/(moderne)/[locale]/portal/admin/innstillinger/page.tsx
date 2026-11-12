@@ -5,6 +5,11 @@ import { STORAGE } from "@/lib/server/kv";
 import { MAIL_ON } from "@/lib/server/mail";
 import { FILES_ON, MAX_BYTES, prettySize } from "@/lib/server/files";
 import { saveSettings, sendDigestNow } from "../actions";
+import { saveCompany } from "./actions";
+import { MODEL_ON } from "@/lib/server/assistant";
+import { DAILY_LIMIT, modelCallsToday } from "@/lib/server/aiBudget";
+import { formatOrgNumber } from "@/lib/server/siteSettings";
+import { brregUrl } from "@/lib/content/company";
 import { buildDigest } from "@/lib/server/digest";
 import { ActionForm } from "@/components/portal/forms";
 import Icon from "@/components/portal/Icon";
@@ -27,6 +32,8 @@ export default async function Settings({ params }: { params: Promise<{ locale: s
   const digest = await buildDigest(digestLang);
   const cron = !!process.env.CRON_SECRET;
   const prod = process.env.NODE_ENV === "production";
+  const callsToday = MODEL_ON ? await modelCallsToday() : 0;
+  const co = settings.company;
   const services: { name: string; ok: boolean; state: string; how: string }[] = no
     ? [
         { name: "Lagring av data", ok: STORAGE !== "temp", state: STORAGE === "kv" ? "Database (Redis/KV)" : STORAGE === "file" ? "Filer på serveren (site/data)" : "Midlertidig: glemmes når serveren sover", how: "På Vercel: koble en Redis-database (Upstash) til prosjektet. Variablene KV_REST_API_URL og KV_REST_API_TOKEN settes da automatisk." },
@@ -35,6 +42,7 @@ export default async function Settings({ params }: { params: Promise<{ locale: s
         { name: "Fillagring", ok: FILES_ON, state: FILES_ON ? `På plass, inntil ${prettySize(MAX_BYTES)} per fil` : "Ikke satt opp: opplasting er slått av", how: "På Vercel: koble en Blob-lagring til prosjektet (BLOB_READ_WRITE_TOKEN). Filene lagres private." },
         { name: "Ukentlig sammendrag", ok: cron || !settings.weekly_digest, state: cron ? "Planlagt mandag morgen (Vercel Cron)" : settings.weekly_digest ? "Slått på, men ikke planlagt" : "Slått av", how: "Sett CRON_SECRET i Vercel (en lang, tilfeldig tekst). Tidsplanen står i vercel.json; e-post må også være satt opp." },
         { name: "Nettadresse i lenker", ok: !!process.env.SITE_URL || !prod, state: process.env.SITE_URL ?? "Hentes fra forespørselen", how: "Sett SITE_URL, for eksempel https://knotten.no, så lenker i e-post alltid peker riktig." },
+        { name: "Knotten AI", ok: true, state: MODEL_ON ? `Språkmodell på: ${callsToday} av ${DAILY_LIMIT} svar brukt i dag. Over grensen svarer Knotten AI bare fra dataene.` : "Svarer fra prosjektets data (ingen språkmodell satt opp)", how: "Grensen per dag settes med KNOTTEN_AI_DAILY_LIMIT." },
       ]
     : [
         { name: "Data storage", ok: STORAGE !== "temp", state: STORAGE === "kv" ? "Database (Redis/KV)" : STORAGE === "file" ? "Files on the server (site/data)" : "Temporary: forgotten when the server sleeps", how: "On Vercel: connect a Redis database (Upstash) to the project. KV_REST_API_URL and KV_REST_API_TOKEN are then set automatically." },
@@ -43,22 +51,54 @@ export default async function Settings({ params }: { params: Promise<{ locale: s
         { name: "File storage", ok: FILES_ON, state: FILES_ON ? `In place, up to ${prettySize(MAX_BYTES, false)} per file` : "Not set up: uploads are off", how: "On Vercel: connect a Blob store to the project (BLOB_READ_WRITE_TOKEN). Files are stored private." },
         { name: "Weekly summary", ok: cron || !settings.weekly_digest, state: cron ? "Scheduled Monday morning (Vercel Cron)" : settings.weekly_digest ? "Switched on, but not scheduled" : "Switched off", how: "Set CRON_SECRET in Vercel (a long random text). The schedule is in vercel.json; email must be set up too." },
         { name: "Address in links", ok: !!process.env.SITE_URL || !prod, state: process.env.SITE_URL ?? "Taken from the request", how: "Set SITE_URL, for example https://knotten.no, so links in emails always point right." },
+        { name: "Knotten AI", ok: true, state: MODEL_ON ? `Language model on: ${callsToday} of ${DAILY_LIMIT} answers used today. Over the limit Knotten AI answers from the data only.` : "Answers from the project's data (no language model set up)", how: "The daily limit is set with KNOTTEN_AI_DAILY_LIMIT." },
       ];
+  // what the public pages still lack before launch: listed here until it is filled in, never shown on the site itself
+  const before: { label: string; done: boolean }[] = [
+    { label: no ? "Organisasjonsnummer" : "Organisation number", done: !!co.org_number },
+    { label: no ? "Postadresse for selskapet" : "Company postal address", done: !!co.postal_address },
+    { label: no ? "E-postadresse for selskapet" : "Company email address", done: !!co.email },
+    { label: no ? "Nettadresse (SITE_URL)" : "Web address (SITE_URL)", done: !!process.env.SITE_URL },
+    { label: no ? "Lagring i database" : "Storage in a database", done: STORAGE === "kv" },
+    { label: no ? "E-post satt opp" : "Email set up", done: MAIL_ON },
+  ];
   return (
     <>
       <PageHead eyebrow={no ? "Administrasjon" : "Administration"} title={no ? "Innstillinger" : "Settings"} lede={no ? "Det du kan endre uten utvikler, tjenestene nettsiden står på, og tallene den bygger på." : "What you can change without a developer, the services the site runs on, and the figures it builds on."} />
       <div className="grid gap-6 xl:grid-cols-2 items-start">
         <Section title={no ? "Nettsiden" : "The website"}>
           <form action={saveSettings} className="panel p-5 md:p-6 grid gap-3">
-            <label className="grid gap-1.5 text-[13.5px]"><span className="font-medium text-ink-2">{no ? "Når slippes tomtene (norsk)" : "When plots are released (Norwegian)"}</span><input className="input !py-2" name="release_no" defaultValue={settings.release_note.no} /></label>
-            <label className="grid gap-1.5 text-[13.5px]"><span className="font-medium text-ink-2">{no ? "Når slippes tomtene (engelsk)" : "When plots are released (English)"}</span><input className="input !py-2" name="release_en" defaultValue={settings.release_note.en} /></label>
+            <label className="grid gap-1.5 text-[13.5px]"><span className="font-medium text-ink-2">{no ? "Statuslinje om salget (norsk)" : "Status line about the sale (Norwegian)"}</span><textarea className="input !py-2" name="release_no" rows={2} maxLength={300} defaultValue={settings.release_note.no} /></label>
+            <label className="grid gap-1.5 text-[13.5px]"><span className="font-medium text-ink-2">{no ? "Statuslinje om salget (engelsk)" : "Status line about the sale (English)"}</span><textarea className="input !py-2" name="release_en" rows={2} maxLength={300} defaultValue={settings.release_note.en} /></label>
             <label className="grid gap-1.5 text-[13.5px]"><span className="font-medium text-ink-2">{no ? "E-post for varsler om nye interessenter og henvendelser" : "Email for alerts about new leads and questions"}</span><input className="input !py-2" type="email" name="contact_email" defaultValue={settings.contact_email} /></label>
             <label className="grid gap-1.5 text-[13.5px]"><span className="font-medium text-ink-2">{no ? "Telefon" : "Phone"}</span><input className="input !py-2" name="contact_phone" defaultValue={settings.contact_phone} /></label>
             <label className="flex items-center gap-2 text-[14px]"><input type="checkbox" name="weekly_digest" defaultChecked={settings.weekly_digest} /> {no ? "Send meg et sammendrag på e-post hver mandag morgen" : "Email me a summary every Monday morning"}</label>
             <label className="grid gap-1.5 text-[13.5px]"><span className="font-medium text-ink-2">{no ? "Språk i sammendraget" : "Language of the summary"}</span><select key={digestLang} className="input !py-2" name="digest_lang" defaultValue={digestLang}><option value="no">Norsk</option><option value="en">English</option></select></label>
-            <p className="text-[12.5px] text-muted">{no ? "Beskjeden om når tomtene slippes, står på tomtesidene i moderne utseende." : "The release message shows on the plot pages in the modern design."}</p>
+            <p className="text-[12.5px] text-muted">{no ? "Statuslinjen står under overskriften på begge forsidene, på siden Status og spørsmål og på tomtesidene. Står feltet tomt, vises ingen statuslinje." : "The status line shows under the headline on both front pages, on the Status and questions page and on the plot pages. Leave it empty to show none."}</p>
             <button className="btn btn-sm justify-self-start">{no ? "Lagre" : "Save"}</button>
           </form>
+        </Section>
+        <Section title={no ? "Om utbygger" : "About the developer"} sub={no ? "Vises i «Om utbygger» på forsidene og siden Status og spørsmål, i bunnteksten og i personvernerklæringen. Et tomt felt vises ikke; da brukes e-post og telefon fra utlysningen." : "Shown under About the developer on the front pages and the Status and questions page, in the footer and in the privacy statement. An empty field is not shown; email and phone then come from the internship posting."}>
+          <div className="panel p-5 md:p-6 grid gap-4">
+            <ActionForm action={saveCompany} submit={no ? "Lagre" : "Save"} pending={no ? "Lagrer …" : "Saving …"} resetOnSuccess={false}>
+              <input type="hidden" name="lang" value={locale} />
+              <label className="grid gap-1.5 text-[13.5px]"><span className="font-medium text-ink-2">{no ? "Organisasjonsnummer (ni siffer)" : "Organisation number (nine digits)"}</span><input className="input !py-2" name="org_number" inputMode="numeric" autoComplete="off" defaultValue={formatOrgNumber(co.org_number)} aria-describedby="org-help" /></label>
+              <p id="org-help" className="text-[12.5px] text-muted -mt-1">{no ? "Kontrolleres mot kontrollsifferet. " : "Checked against the check digit. "}{co.org_number && <a className="underline underline-offset-2" href={brregUrl(co.org_number)} target="_blank" rel="noopener noreferrer">{no ? "Se oppføringen i Brønnøysundregistrene" : "See the entry in the Brønnøysund Register"}</a>}</p>
+              <label className="grid gap-1.5 text-[13.5px]"><span className="font-medium text-ink-2">{no ? "Postadresse" : "Postal address"}</span><input className="input !py-2" name="postal_address" autoComplete="off" defaultValue={co.postal_address} /></label>
+              <label className="grid gap-1.5 text-[13.5px]"><span className="font-medium text-ink-2">{no ? "E-post for selskapet" : "Company email"}</span><input className="input !py-2" type="email" name="company_email" autoComplete="off" defaultValue={co.email} /></label>
+              <label className="grid gap-1.5 text-[13.5px]"><span className="font-medium text-ink-2">{no ? "Telefon for selskapet" : "Company phone"}</span><input className="input !py-2" type="tel" name="company_phone" autoComplete="off" defaultValue={co.phone} /></label>
+            </ActionForm>
+          </div>
+        </Section>
+        <Section title={no ? "Før lansering" : "Before launch"} sub={no ? "Det som mangler før nettsiden settes i drift. Nettsiden viser aldri et oppdiktet tall i stedet." : "What is missing before the site goes live. The site never shows a made-up value instead."}>
+          <ul className="panel divide-y divide-[var(--line)]">
+            {before.map((b) => (
+              <li key={b.label} className="p-4 flex flex-wrap items-center justify-between gap-2 text-[14.5px]">
+                <span>{b.label}</span>
+                <span className={`chip ${b.done ? "chip-pine" : "chip-amber"}`}>{b.done ? (no ? "På plass" : "In place") : (no ? "Mangler" : "Missing")}</span>
+              </li>
+            ))}
+          </ul>
         </Section>
         <Section title={no ? "Tjenester" : "Services"} sub={no ? "Det som må være på plass når nettsiden settes i drift. Detaljene står i README.md." : "What must be in place when the site goes live. The details are in README.md."}>
           <div className="panel divide-y divide-[var(--line)]">
@@ -91,7 +131,7 @@ export default async function Settings({ params }: { params: Promise<{ locale: s
         </Section>
       </div>
       <Section title={no ? "Tallene nettsiden bygger på" : "The figures the site is built on"} sub={`${no ? "Versjon" : "Version"} ${ASSUMPTIONS_VERSION} (${no ? "foreløpig" : "provisional"}). ${no ? "Målte tall kommer fra modellen og endres når den regnes på nytt; foreløpige tall byttes ut når rapportene fra energi- og markedssporet leveres." : "Measured figures come from the model and change when it is recomputed; provisional figures are replaced when the energy and market track reports are delivered."}`}>
-        <div className="panel scroll-x">
+        <div className="panel scroll-x relative">
           <table className="table table-tight min-w-[720px]">
             <thead><tr><th>{no ? "Hva" : "What"}</th><th className="n">{no ? "Verdi" : "Value"}</th><th>{no ? "Kilde" : "Source"}</th><th>{no ? "Dato" : "Date"}</th><th><span className="sr-only">Status</span></th></tr></thead>
             <tbody>{ASSUMPTIONS.map((a) => <tr key={a.key}><td>{a.label[locale]}</td><td className="n whitespace-nowrap">{a.value.toLocaleString(no ? "nb-NO" : "en-GB")} {a.unit[locale]}</td><td>{a.source[locale]}</td><td className="whitespace-nowrap">{a.date}</td><td className="whitespace-nowrap">{a.provisional ? <span className="chip chip-amber">{no ? "foreløpig" : "provisional"}</span> : <span className="chip chip-pine">{no ? "fastsatt" : "settled"}</span>}</td></tr>)}</tbody>
