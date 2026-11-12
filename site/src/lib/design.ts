@@ -27,6 +27,7 @@ const KLASSISK_TO_MODERNE: Record<string, string> = {
   "/personvern": "/personvern",
   "/status": "/status",
   "/teamet": "/team",
+  "/konfigurator": "/konfigurator",
   // only in Klassisk: the closest Moderne page
   "/kart": "/omradet",
   "/galleri": "/utsikt",
@@ -58,6 +59,7 @@ const MODERNE_TO_KLASSISK: [string, string][] = [
   ["/personvern", "/personvern"],
   ["/status", "/status"],
   ["/team", "/teamet"],
+  ["/konfigurator", "/konfigurator"],
   // only in Moderne: the closest Klassisk page
   ["/utsikt", "/galleri"],
   ["/omradet", "/kart"],

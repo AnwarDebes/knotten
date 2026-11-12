@@ -104,6 +104,7 @@ export default function PlotStage() {
             </dl>
             <div className="cta-row" style={{ marginTop: 14 }}>
               <Link className="btn sm" href={`/kontakt?tomt=${p.n}`}>Meld interesse for tomten</Link>
+              <Link className="btn sm ghost" href={`/konfigurator?tomt=${p.n}`}>Sett sammen huset</Link>
             </div>
           </div>
         )}

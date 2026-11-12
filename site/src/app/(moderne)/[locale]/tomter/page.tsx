@@ -79,7 +79,10 @@ export default async function Plots({ params, searchParams }: { params: Promise<
                   <td className="n">{p.view.water_visible_deg}°</td>
                   <td>{p.view.open_sea_visible ? (no ? "ja" : "yes") : (no ? "nei" : "no")}</td>
                   <td className="n">{p.terrain.slope_deg.toFixed(0)}°</td>
-                  <td>{com[p.id].house_type[locale]}</td>
+                  <td>
+                    {com[p.id].house_type[locale]}
+                    <div className="mt-1"><Link href={`/${locale}/konfigurator?tomt=${p.id.slice(5)}`} prefetch={false} className="text-[13.5px]">{no ? "Sett sammen huset" : "Configure the house"}<span className="sr-only"> {no ? "på" : "on"} {plotName(p.id, no).toLowerCase()}</span></Link></div>
+                  </td>
                   <td><span className={`chip ${com[p.id].status === "available" ? "chip-pine" : com[p.id].status === "reserved" ? "chip-amber" : ""}`}>{{ unreleased: no ? "ikke sluppet" : "unreleased", available: no ? "ledig" : "available", reserved: no ? "reservert" : "reserved", sold: no ? "solgt" : "sold" }[com[p.id].status]}</span>{com[p.id].price_nok ? <div className="text-[12.5px] text-muted mt-1">{com[p.id].price_nok!.toLocaleString(no ? "nb-NO" : "en-GB")} kr</div> : null}</td>
                 </tr>
               ))}

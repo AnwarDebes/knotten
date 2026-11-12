@@ -388,3 +388,107 @@ canvas { display: block; outline: none; }
   .panel { break-inside: avoid; border-color: #ccc; }
 }
 }
+
+/* the house configurator (components/configurator/moderne): the step rail, the plot and choice cards, the controls
+   over the 3D view, the energy panel that rides along on phones, and the printed A4 summary */
+@layer components {
+.cfg-radio { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; pointer-events: none; }
+.cfg-m-group { border: 0; margin: 0; padding: 0; min-width: 0; }
+.cfg-m-group > legend { padding: 0; }
+/* a step's heading never lands under the step rail (the page's own scroll padding already clears the header) */
+.cfg-m-heading { scroll-margin-top: 64px; }
+
+.cfg-m-rail { background: var(--bg); border-bottom: 1px solid var(--line); margin-inline: -4px; padding-inline: 4px; }
+/* (positioned, so the list is where the steps are measured and the screen reader's extra words stay inside it) */
+.cfg-m-rail ol { position: relative; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; padding-top: 10px; }
+.cfg-m-rail ol::-webkit-scrollbar { display: none; }
+.cfg-m-rail li { flex: 1 0 auto; }
+.cfg-m-rail button { position: relative; display: flex; align-items: baseline; gap: 6px; width: 100%; padding: 9px 6px 11px 0; border-top: 2px solid var(--line-strong); font-size: 13px; font-weight: 500; color: var(--muted); white-space: nowrap; text-align: left; transition: color .18s ease, border-color .18s ease; }
+.cfg-m-rail button:hover { color: var(--ink); }
+.cfg-m-rail button.done { border-top-color: var(--fjord); color: var(--ink-2); }
+.cfg-m-rail button.on { border-top-color: var(--ink); color: var(--ink); }
+.cfg-m-rail button:focus-visible { outline-offset: -2px; }
+.cfg-m-rail .n { font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.cfg-m-rail .pk { align-self: center; display: inline-grid; place-items: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: rgba(47, 102, 136, .14); color: var(--fjord); font-size: 11px; font-weight: 600; }
+
+/* plots and choices: a white card, ink edge when chosen, the fjord ring when the keyboard is on it */
+.cfg-m-card, .cfg-m-choice { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 16px; cursor: pointer; transition: border-color .18s ease, box-shadow .18s ease; }
+.cfg-m-card:hover, .cfg-m-choice:hover { border-color: var(--line-strong); }
+.cfg-m-card.on, .cfg-m-choice.on { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.cfg-m-card:has(.cfg-radio:focus-visible), .cfg-m-choice:has(.cfg-radio:focus-visible) { outline: 2px solid var(--fjord); outline-offset: 3px; }
+.cfg-m-card { display: block; padding: 16px 16px 14px; }
+.cfg-m-choice { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; padding: 14px 16px; }
+.cfg-m-choice.col { grid-template-columns: minmax(0, 1fr); gap: 10px; padding: 10px 10px 12px; }
+.cfg-m-choice.off { cursor: not-allowed; background: transparent; border-style: dashed; color: var(--muted); }
+.cfg-m-dot { width: 18px; height: 18px; margin-top: 2px; border-radius: 50%; border: 1.5px solid #7f8c99; background: #fff; display: grid; place-items: center; }
+.cfg-m-dot::after { content: ""; width: 8px; height: 8px; border-radius: 50%; }
+.cfg-m-choice.on .cfg-m-dot { border-color: var(--ink); }
+.cfg-m-choice.on .cfg-m-dot::after { background: var(--ink); }
+.cfg-m-chip { position: relative; display: block; height: 46px; border-radius: 10px; box-shadow: inset 0 0 0 1px rgba(23, 40, 58, .14); }
+.cfg-m-chip.plain { background: repeating-linear-gradient(135deg, var(--bg-2) 0 6px, #ffffff 6px 12px); }
+.cfg-m-choice.on .cfg-m-chip::after { content: ""; position: absolute; right: 6px; top: 6px; width: 20px; height: 20px; border-radius: 50%; background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.3l2.2 2.2L9.5 3.7' fill='none' stroke='%2317283a' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 12px no-repeat; box-shadow: 0 1px 4px rgba(23, 40, 58, .3); }
+
+/* filters and sorts: pressed is ink */
+.cfg-m-press { display: inline-flex; align-items: center; padding: .4rem .82rem; border-radius: 999px; font-size: 13px; font-weight: 500; background: rgba(23, 40, 58, .07); color: var(--ink); transition: background .18s ease, color .18s ease; }
+.cfg-m-press:hover { background: rgba(23, 40, 58, .13); }
+.cfg-m-press[aria-pressed="true"] { background: var(--ink); color: #fff; }
+
+/* the views over the 3D (on dark glass), and the same switch on a light panel */
+.cfg-m-views { display: inline-flex; padding: 3px; gap: 2px; border-radius: 999px; background: rgba(23, 40, 58, .78); backdrop-filter: blur(10px); }
+.cfg-m-views > button { padding: .42rem .82rem; border-radius: 999px; font-size: 13px; font-weight: 500; color: rgba(255, 255, 255, .9); white-space: nowrap; }
+.cfg-m-views > button:hover { color: #fff; }
+.cfg-m-views > button[aria-pressed="true"] { background: #fff; color: var(--ink); }
+.cfg-m-views :focus-visible { outline-color: #fff; }
+.cfg-m-views.cfg-m-views-light { background: rgba(23, 40, 58, .08); backdrop-filter: none; flex-wrap: wrap; border-radius: 18px; }
+.cfg-m-views-light > button { color: var(--ink-2); }
+.cfg-m-views-light > button:hover { color: var(--ink); }
+.cfg-m-views-light > button[aria-pressed="true"] { background: var(--ink); color: #fff; }
+.cfg-m-views-light :focus-visible { outline-color: var(--fjord); }
+
+.cfg-m-method > summary { cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; color: var(--ink-2); list-style: none; border-radius: 6px; }
+.cfg-m-method > summary::-webkit-details-marker { display: none; }
+.cfg-m-method > summary::before { content: ""; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transition: transform .15s ease; }
+.cfg-m-method[open] > summary::before { transform: rotate(45deg); }
+.cfg-m-method > summary:hover { color: var(--ink); }
+
+/* on a phone or tablet the energy figures ride at the bottom left of the steps; the chat keeps the bottom right */
+.cfg-m-dock { position: sticky; bottom: 12px; z-index: 30; margin-top: 28px; width: fit-content; max-width: calc(100% - 64px); }
+.cfg-m-dock:has([aria-expanded="true"]) { width: 100%; }
+@media (min-width: 640px) { .cfg-m-dock { max-width: min(480px, calc(100% - 190px)); } }
+.cfg-m-dock > section { border: 1px solid var(--line); border-radius: 18px; overflow: hidden; }
+.cfg-m-docktoggle { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 48px; padding: 10px 16px; font-size: 14px; font-weight: 500; text-align: left; border-radius: 18px; }
+.cfg-m-docktoggle:focus-visible { outline-offset: -3px; }
+
+@keyframes cfg-loadbar { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+.cfg-m-loadbar { animation: cfg-loadbar 1.4s ease-in-out infinite; }
+}
+
+/* the printed summary: only the sheet, on A4 (components/configurator/PrintSheet.tsx) */
+.cfg-print { display: none; }
+@media print {
+  @page { size: A4; margin: 12mm 13mm 13mm; }
+  html, body { background: #ffffff !important; }
+  body:has(> main > .cfg-print) > :not(main) { display: none !important; }
+  main:has(> .cfg-print) > :not(.cfg-print) { display: none !important; }
+  .cfg-print { display: block; color: #17283a; font-family: var(--font-body); font-size: 9pt; line-height: 1.32; }
+  .cfgp-head { border-bottom: 1.5pt solid #17283a; padding-bottom: 6pt; }
+  .cfgp-brand { font-size: 8.5pt; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: #3a4d60; }
+  .cfgp-head h1 { font-family: var(--font-display); font-weight: 600; font-size: 17pt; letter-spacing: -.02em; line-height: 1.05; margin: 2pt 0 1pt; }
+  .cfgp-meta { color: #3a4d60; }
+  .cfgp-sec { margin-top: 7pt; break-inside: avoid; }
+  .cfgp-sec h2 { font-family: var(--font-display); font-weight: 600; font-size: 11.5pt; margin-bottom: 2pt; }
+  .cfgp-table { width: 100%; border-collapse: collapse; }
+  .cfgp-table th, .cfgp-table td { text-align: left; vertical-align: top; padding: 1.1pt 6pt 1.1pt 0; border-bottom: .5pt solid #c8d1d9; font-weight: 400; }
+  .cfgp-table th[scope="row"] { color: #3a4d60; width: 36%; }
+  .cfgp-choices tr { break-inside: avoid; }
+  .cfgp-group th { font-weight: 600; color: #17283a; padding-top: 3.5pt; border-bottom: 1pt solid #17283a; }
+  .cfgp-price { text-align: right !important; white-space: nowrap; }
+  .cfgp-total th, .cfgp-total td { font-weight: 600; color: #17283a; border-bottom: 0; }
+  .cfgp-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18pt; align-items: start; }
+  .cfgp-note { color: #3a4d60; font-size: 8.5pt; margin-top: 3pt; }
+  .cfgp-list { margin: 0; padding-left: 12pt; list-style: disc; }
+  .cfgp-list li { margin-top: 1.5pt; }
+  .cfgp-notes p { margin-top: 1.5pt; font-size: 8pt; }
+  .cfgp-foot { margin-top: 7pt; padding-top: 4pt; border-top: .5pt solid #c8d1d9; font-size: 8.5pt; color: #3a4d60; }
+  .cfgp-url { word-break: break-all; }
+}

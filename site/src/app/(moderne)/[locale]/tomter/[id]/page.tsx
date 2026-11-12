@@ -70,7 +70,10 @@ export default async function PlotPage({ params }: { params: Promise<{ locale: s
               : (no ? "Fjorden er i sikt. Åpent hav ligger bak åsen fra denne tomten." : "The fjord is in view. Open sea sits behind the hill from this plot.")}
           </p>
         </div>
-        <Link className="btn btn-amber" href={`/${locale}/interesse?plot=${plot.id}`}>{d.cta.register}</Link>
+        <div className="flex flex-wrap gap-3">
+          <Link className="btn" href={`/${locale}/konfigurator?tomt=${plot.id.slice(5)}`}>{no ? "Sett sammen huset på denne tomten" : "Configure a house on this plot"}</Link>
+          <Link className="btn btn-amber" href={`/${locale}/interesse?plot=${plot.id}`}>{d.cta.register}</Link>
+        </div>
       </section>
       <Stage plots={plots} locale={locale} initialMode="plot" initialPlot={plot.id} compact />
       <section className="wrap section-tight grid gap-12 lg:grid-cols-[400px_1fr]">

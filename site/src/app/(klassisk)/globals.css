@@ -735,3 +735,232 @@ footer.site .orgnr { color: #c9d5e2; }
 .team-others b { display: block; font-family: var(--font-serif), Georgia, serif; font-weight: 400; font-size: 1.2rem; }
 .team-others span span { display: block; color: var(--ink-3); font-size: 0.9rem; }
 @media (max-width: 640px) { .phead .team-mono { width: 120px !important; height: 120px !important; } }
+
+/* the house configurator (components/configurator/klassisk): the steps drawn like the project's phases, the step in
+   the main column, the model's picture and the energy figures in the margin, and the printed A4 summary */
+.cfg.sec { padding-top: clamp(18px, 2.5vw, 32px); }
+.cfg-grid { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: clamp(28px, 4vw, 56px); align-items: start; }
+.cfg-main { min-width: 0; }
+.cfg-side { position: sticky; top: 88px; display: grid; gap: 14px; min-width: 0; }
+.cfg-radio { position: absolute; width: 1px; height: 1px; margin: 0; opacity: 0; pointer-events: none; }
+.cfg-group { border: 0; margin: 0; padding: 0; min-width: 0; }
+.cfg-group > legend { padding: 0; margin-bottom: 4px; }
+.cfg-group > legend h3 { font-size: 1.35rem; }
+
+/* the steps: a short rule over each, the whole width for the open one, pine for those behind */
+.cfg-steps { position: sticky; top: 72px; z-index: 6; background: var(--paper); }
+.cfg-steps ol { position: relative; list-style: none; margin: 0; padding: 0; display: flex; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+.cfg-steps ol::-webkit-scrollbar { display: none; }
+.cfg-steps li { flex: 1 0 auto; }
+.cfg-steps button { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; padding: 11px 16px 10px 0; background: none; border: 0; cursor: pointer; text-align: left; white-space: nowrap; color: var(--ink-3); }
+.cfg-steps button::before { content: ""; position: absolute; top: -1px; left: 0; width: 26px; height: 2px; background: var(--ink-3); }
+.cfg-steps button.done::before { background: var(--pine); }
+.cfg-steps button[aria-current="step"]::before { width: 100%; background: var(--fjord-deep); }
+@media (prefers-reduced-motion: no-preference) { .cfg-steps button::before { transition: width 0.4s var(--ease), background 0.2s; } }
+.cfg-steps small { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.06em; font-variant-numeric: tabular-nums; }
+.cfg-steps small i { display: inline-block; margin-left: 6px; padding: 0 6px; min-width: 17px; border-radius: 999px; background: var(--fjord-pale); color: var(--fjord-deep); font-style: normal; font-size: 0.66rem; text-align: center; }
+.cfg-steps b { font-family: var(--font-serif), Georgia, serif; font-weight: 400; font-size: 1.08rem; line-height: 1.2; color: var(--ink-2); }
+.cfg-steps button:hover b, .cfg-steps button[aria-current="step"] b { color: var(--ink); }
+.cfg-steps button:focus-visible { outline-offset: -2px; }
+
+.cfg-head { padding-top: 26px; }
+.cfg-head .eyebrow { margin-bottom: 6px; }
+/* a step's heading never lands under the steps (the page's own scroll padding already clears the header) */
+.cfg-head h2 { outline: none; scroll-margin-top: 100px; }
+.cfg-head .lede { margin-top: 10px; }
+.cfg-plotline { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 6px 16px; margin-top: 18px; padding: 12px 16px; background: var(--paper-2); border-radius: 12px; font-size: 0.95rem; color: var(--ink-2); }
+.cfg-plotline b { color: var(--ink); font-weight: 600; }
+.cfg-k { font-size: 0.75rem; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-3); margin-right: 4px; }
+.cfg-picks { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 14px; }
+.cfg-picks .tag, .cfg-energy-head .tag, .cfg-card-top .tag { margin: 0; }
+.cfg-nav { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--line); }
+.cfg-draft { margin-top: 18px; padding: 14px 18px; background: #fff; border: 1px solid var(--line); border-left: 3px solid var(--fjord-deep); border-radius: 12px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
+.cfg-draft .cta-row, .cfg-actions .cta-row { margin-top: 0; gap: 10px; }
+.cfg-msg { margin: 12px 0 0; padding: 10px 14px; background: var(--paper-2); border-radius: 10px; font-size: 0.92rem; color: var(--ink); max-width: 62ch; }
+
+/* plots: the plot picker's cards, a radio group */
+.cfg-tools { display: flex; flex-wrap: wrap; gap: 12px 26px; align-items: center; margin-top: 26px; }
+.cfg-tools .chip, .cfg-tools .seg button { padding: 6px 12px; font-size: 0.85rem; }
+.cfg-release { margin-top: 12px; }
+.cfg-plots .cfg-group { margin-top: 14px; }
+.cfg-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.cfg-card { position: relative; display: flex; flex-direction: column; gap: 3px; padding: 12px 12px 10px; background: #fff; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; transition: border-color 0.2s; }
+.cfg-card:hover, .cfg-opt:hover { border-color: var(--fjord); }
+.cfg-card.sel, .cfg-opt.sel { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.cfg-card:has(.cfg-radio:focus-visible), .cfg-opt:has(.cfg-radio:focus-visible) { outline: 2px solid var(--fjord-deep); outline-offset: 3px; }
+.cfg-card-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 8px; }
+.cfg-card-top b { font-family: var(--font-serif), Georgia, serif; font-weight: 400; font-size: 1.25rem; line-height: 1.1; }
+.cfg-card .m { font-size: 0.8rem; color: var(--ink-3); }
+.cfg-card-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 10px; margin-top: 8px; font-size: 0.82rem; color: var(--ink-2); }
+.cfg-card-facts em { font-style: normal; font-family: var(--font-serif), Georgia, serif; font-size: 1.15rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+.cfg-card-price { grid-column: 1 / -1; font-family: var(--font-serif), Georgia, serif; font-size: 1.05rem; color: var(--ink); margin-top: 4px; }
+.cfg-sunbar { display: block; height: 3px; border-radius: 2px; background: var(--paper-3); margin-top: 10px; overflow: hidden; }
+.cfg-sunbar i { display: block; height: 100%; background: var(--sun); }
+.cfg-source { margin-top: 16px; max-width: 70ch; }
+
+/* choices: a ring for the plain ones, a round paint sample for the colours */
+.cfg-options { display: flex; flex-direction: column; gap: 40px; margin-top: 32px; }
+.cfg-help { margin-top: 2px; max-width: 60ch; }
+.cfg-choices { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; margin-top: 14px; }
+.cfg-choices.col { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+.cfg-opt { position: relative; display: flex; gap: 12px; align-items: flex-start; padding: 13px 14px; background: #fff; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; transition: border-color 0.2s; }
+.cfg-opt.off { cursor: not-allowed; background: transparent; border-style: dashed; }
+.cfg-opt.off:hover { border-color: var(--line); }
+.cfg-opt.off .cfg-opt-l { color: var(--ink-3); }
+.cfg-choices.col .cfg-opt { flex-direction: column; align-items: center; text-align: center; padding: 14px 10px 12px; }
+.cfg-ring { flex: none; width: 18px; height: 18px; margin-top: 2px; border-radius: 50%; border: 1.5px solid #7f8c99; background: #fff; display: grid; place-items: center; }
+.cfg-ring::after { content: ""; width: 8px; height: 8px; border-radius: 50%; }
+.cfg-opt.sel .cfg-ring { border-color: var(--ink); }
+.cfg-opt.sel .cfg-ring::after { background: var(--ink); }
+.cfg-sample { flex: none; width: 46px; height: 46px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(20, 38, 61, 0.16); }
+.cfg-sample.plain { background: repeating-linear-gradient(135deg, var(--paper-2) 0 5px, #fff 5px 10px); }
+.cfg-opt.sel .cfg-sample { box-shadow: inset 0 0 0 1px rgba(20, 38, 61, 0.16), 0 0 0 3px #fff, 0 0 0 4.5px var(--ink); }
+.cfg-opt-t { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.cfg-choices.col .cfg-opt-t { align-items: center; }
+.cfg-opt-l { font-weight: 500; line-height: 1.3; color: var(--ink); }
+.cfg-opt .m { font-size: 0.84rem; color: var(--ink-2); line-height: 1.35; }
+.cfg-opt .tag { margin: 4px 0 0; align-self: flex-start; }
+.cfg-choices.col .cfg-opt .tag { align-self: center; }
+.cfg-opt .cfg-price { color: var(--ink-3); font-size: 0.8rem; margin-top: 4px; }
+.cfg-dot { display: inline-block; width: 13px; height: 13px; border-radius: 50%; margin-left: 8px; vertical-align: -1px; box-shadow: inset 0 0 0 1px rgba(20, 38, 61, 0.2); }
+
+.cfg-included { margin-top: 44px; padding: 22px 24px; background: var(--paper-2); border-radius: 14px; }
+.cfg-included h3 { font-size: 1.35rem; }
+.cfg-included > .small { margin-top: 4px; }
+.cfg-included ul { list-style: none; margin: 14px 0 0; padding: 0; }
+.cfg-included li { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 4px 18px; padding: 11px 0; border-top: 1px solid var(--line); }
+.cfg-included li b { font-weight: 600; color: var(--ink); font-size: 0.95rem; }
+.cfg-included li span { color: var(--ink-2); font-size: 0.92rem; }
+@media (max-width: 640px) { .cfg-included li { grid-template-columns: 1fr; } .cfg-included { padding: 18px 16px; } }
+
+/* the model's picture, framed like the site's figures */
+.cfg-fig { margin: 0; background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 10px; }
+.cfg-view { position: relative; width: 100%; aspect-ratio: 4 / 3; max-height: calc(100svh - 400px); min-height: 230px; border-radius: 10px; overflow: hidden; background: var(--paper-3); }
+.cfg-scene { position: absolute; inset: 0; width: 100%; height: 100%; }
+.cfg-still { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity 0.7s var(--ease); }
+.cfg-still.gone { opacity: 0; pointer-events: none; }
+.cfg-open { position: absolute; inset: 0; display: grid; place-items: center; background: linear-gradient(to top, rgba(20, 38, 61, 0.45), rgba(20, 38, 61, 0) 65%); }
+.cfg-open .btn { box-shadow: 0 8px 24px rgba(20, 38, 61, 0.3); }
+.cfg-loading { position: absolute; left: 10px; bottom: 10px; margin: 0; padding: 5px 12px; border-radius: 999px; background: rgba(246, 248, 250, 0.94); font-size: 0.8rem; color: var(--ink-2); }
+.cfg-failed { position: absolute; left: 10px; right: 10px; bottom: 10px; padding: 12px 14px; border-radius: 10px; background: rgba(20, 38, 61, 0.88); color: #fff; font-size: 0.85rem; display: grid; gap: 4px; }
+.cfg-fig figcaption { display: flex; justify-content: space-between; align-items: center; gap: 8px 14px; flex-wrap: wrap; padding: 10px 4px 2px; font-size: 0.82rem; color: var(--ink-3); }
+.cfg-fig .seg button { padding: 5px 12px; font-size: 0.82rem; }
+
+/* the energy figures: serif numbers on rules, as in the site's number rows */
+.cfg-energy { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+.cfg-energy-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.cfg-energy-head h3 { font-size: 1.25rem; }
+.cfg-energy-head .small { margin-left: auto; }
+.cfg-nums { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px 18px; margin: 14px 0 0; }
+.cfg-nums .v { white-space: nowrap; }
+.cfg-nums div { border-top: 1px solid var(--line); padding-top: 8px; }
+.cfg-nums dt { font-size: 0.8rem; color: var(--ink-3); }
+.cfg-nums dd { margin: 2px 0 0; font-size: 0.85rem; color: var(--ink-2); }
+.cfg-nums b { font-family: var(--font-serif), Georgia, serif; font-weight: 300; font-size: 1.9rem; line-height: 1.05; color: var(--ink); font-variant-numeric: tabular-nums; }
+.cfg-nums small { display: block; font-size: 0.75rem; color: var(--ink-3); margin-top: 2px; }
+.cfg-pricemodel { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 14px; }
+.cfg-pricemodel .seg button { padding: 5px 11px; font-size: 0.8rem; }
+.cfg-method { margin-top: 12px; }
+.cfg-method summary { cursor: pointer; font-size: 0.88rem; font-weight: 500; color: var(--fjord-deep); }
+.cfg-method p { margin-top: 6px; }
+.cfg-energy > .small { margin-top: 8px; }
+
+/* on a phone the energy figures ride at the bottom right of the steps, folded to one line */
+.cfg-dock { display: none; }
+.cfg-dock-body { padding: 16px 16px 4px; }
+.cfg-dock-toggle { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 46px; padding: 10px 16px; background: none; border: 0; border-radius: 16px; cursor: pointer; text-align: left; font-size: 0.92rem; font-weight: 500; color: var(--ink); }
+.cfg-dock-toggle i { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--sun); box-shadow: 0 0 0 3px var(--sun-pale); }
+.cfg-dock-line { display: grid; gap: 1px; min-width: 0; }
+.cfg-dock-line em { font-style: normal; font-weight: 400; font-size: 0.75rem; color: var(--ink-3); }
+.cfg-dock-toggle svg { flex: none; margin-left: auto; }
+.cfg-dock-toggle svg.up { transform: rotate(180deg); }
+.cfg-dock-toggle:focus-visible { outline-offset: -3px; }
+
+/* the summary, set like the document bank */
+.cfg-summary { display: flex; flex-direction: column; gap: 22px; margin-top: 28px; }
+.cfg-status:not(:empty) { margin-top: 12px; display: grid; gap: 10px; }
+.cfg-copy { display: grid; gap: 6px; font-size: 0.9rem; color: var(--ink-2); }
+.cfg-copy input { font: inherit; font-size: 0.9rem; padding: 10px 12px; border: 1px solid #7f8c99; border-radius: 10px; background: #fff; color: var(--ink); }
+.cfg-login { padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.cfg-login .cta-row { margin-top: 10px; }
+.cfg-block { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+.cfg-block h3 { font-size: 1.3rem; }
+.cfg-block .kv div { grid-template-columns: 130px 1fr; }
+.cfg-block .cfg-plotline { margin-top: 10px; }
+.cfg-block-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.cfg-sum { margin-top: 6px; }
+.cfg-sum .grp { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 14px -20px 0; padding: 8px 20px; background: var(--paper-2); font-weight: 600; font-size: 0.78rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-3); }
+.cfg-sum .grp .linkish { text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 0.85rem; }
+.cfg-sum dl { margin: 0; }
+.cfg-sum .row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 16px; padding: 10px 0; border-top: 1px solid var(--line); }
+.cfg-sum dl .row:first-child { border-top: 0; }
+.cfg-sum dt { grid-column: 1; font-size: 0.8rem; color: var(--ink-3); }
+.cfg-sum dd { grid-column: 1; margin: 0; color: var(--ink); }
+.cfg-sum dd.p { grid-column: 2; grid-row: 1 / span 2; align-self: center; text-align: right; }
+.cfg-sum dd.p .tag { margin: 0; }
+.cfg-sum .num { font-family: var(--font-serif), Georgia, serif; font-size: 1.1rem; }
+.cfg-money dl { margin: 0; }
+.cfg-money dl > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 16px; padding: 10px 0; border-top: 1px solid var(--line); }
+.cfg-money dl > div:first-child { border-top: 0; }
+.cfg-money dt { color: var(--ink-2); }
+.cfg-money dd { margin: 0; text-align: right; color: var(--ink); }
+.cfg-money dd small { display: block; font-size: 0.8rem; color: var(--ink-3); max-width: 34ch; margin-left: auto; }
+.cfg-money .sum dt { font-weight: 600; color: var(--ink); }
+.cfg-money .sum dd { font-family: var(--font-serif), Georgia, serif; font-size: 1.6rem; font-weight: 300; }
+.cfg-money > p { margin-top: 8px; }
+.cfg-inc { list-style: none; margin: 10px 0 0; padding: 0; columns: 2 220px; column-gap: 28px; }
+.cfg-inc li { padding: 6px 0; border-top: 1px solid var(--line); color: var(--ink-2); font-size: 0.92rem; break-inside: avoid; }
+.cfg-notes { border-left: 2px solid var(--ink); padding-left: 18px; display: grid; gap: 8px; color: var(--ink-2); font-size: 0.95rem; max-width: 64ch; }
+.cfg-send { padding: clamp(18px, 3vw, 28px); background: #fff; border: 1px solid var(--line); border-radius: 16px; }
+.cfg-send h3 { font-size: 1.5rem; outline: none; scroll-margin-top: 66px; }
+.cfg-send > .small { margin: 6px 0 18px; max-width: 60ch; }
+.cfg-send .cta-row { margin-top: 4px; align-items: center; }
+.cfg-consents { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; min-width: 0; }
+.cfg-consents legend { padding: 0; margin-bottom: 6px; font-size: 0.88rem; font-weight: 500; color: var(--ink-2); }
+.cfg-done { padding: 22px 24px; background: #fff; border: 1px solid var(--line); border-left: 3px solid var(--pine); border-radius: 14px; outline: none; }
+.cfg-done .lede { margin-top: 4px; }
+
+@media (max-width: 899px) {
+  .cfg-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  /* on a phone the picture comes first */
+  .cfg-side { position: static; order: -1; }
+  .cfg-energy { display: none; }
+  .cfg-dock { display: block; position: sticky; bottom: 12px; z-index: 8; margin: 28px 0 0 auto; width: fit-content; max-width: 100%; }
+  .cfg-dock:has([aria-expanded="true"]) { width: 100%; }
+  .cfg-dock > section { background: #fff; border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 10px 30px -10px rgba(20, 38, 61, 0.35); overflow: hidden; }
+}
+@media (max-width: 640px) {
+  .cfg-block, .cfg-energy { padding: 16px; }
+  .cfg-sum .grp { margin-inline: -16px; padding-inline: 16px; }
+  .cfg-block .kv div { grid-template-columns: 110px 1fr; }
+}
+
+/* the printed summary: only the sheet, on A4 (components/configurator/PrintSheet.tsx) */
+.cfg-print { display: none; }
+@media print {
+  @page { size: A4; margin: 12mm 13mm 13mm; }
+  html, body { background: #fff !important; }
+  body:has(> main > .cfg-print) > :not(main) { display: none !important; }
+  main:has(> .cfg-print) > :not(.cfg-print) { display: none !important; }
+  .cfg-print { display: block; color: #14263d; font-family: var(--font-sans), "Segoe UI", Helvetica, Arial, sans-serif; font-size: 9pt; line-height: 1.32; }
+  .cfgp-head { border-bottom: 1.5pt solid #14263d; padding-bottom: 6pt; }
+  .cfgp-brand { font-size: 8.5pt; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #4a5a6e; }
+  .cfgp-head h1 { font-family: var(--font-serif), Georgia, serif; font-weight: 300; font-size: 19pt; line-height: 1.05; margin: 2pt 0 1pt; }
+  .cfgp-meta { color: #4a5a6e; }
+  .cfgp-sec { margin-top: 7pt; break-inside: avoid; }
+  .cfgp-sec h2 { font-family: var(--font-serif), Georgia, serif; font-weight: 400; font-size: 12.5pt; margin-bottom: 2pt; }
+  .cfgp-table { width: 100%; border-collapse: collapse; font-size: 9pt; }
+  .cfgp-table th, .cfgp-table td { text-align: left; vertical-align: top; padding: 1.1pt 6pt 1.1pt 0; border-bottom: 0.5pt solid #c9d3dc; font-weight: 400; color: #14263d; text-transform: none; letter-spacing: 0; font-size: 9pt; }
+  .cfgp-table th[scope="row"] { color: #4a5a6e; width: 36%; }
+  .cfgp-choices tr { break-inside: avoid; }
+  .cfgp-group th { font-weight: 600; padding-top: 3.5pt; border-bottom: 1pt solid #14263d; }
+  .cfgp-price { text-align: right !important; white-space: nowrap; }
+  .cfgp-total th, .cfgp-total td { font-weight: 600; border-bottom: 0; }
+  .cfgp-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18pt; align-items: start; }
+  .cfgp-note { color: #4a5a6e; font-size: 8.5pt; margin-top: 3pt; }
+  .cfgp-list { margin: 0; padding-left: 12pt; }
+  .cfgp-list li { margin-top: 1.5pt; }
+  .cfgp-notes p { margin-top: 1.5pt; font-size: 8pt; }
+  .cfgp-foot { margin-top: 7pt; padding-top: 4pt; border-top: 0.5pt solid #c9d3dc; font-size: 8.5pt; color: #4a5a6e; }
+  .cfgp-url { word-break: break-all; }
+}
