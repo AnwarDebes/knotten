@@ -1,7 +1,7 @@
 import { promises as fs } from "fs";
 import path from "path";
 import { CONTACT } from "./facts";
-import { mutate, readJSON, STORAGE, writeJSON } from "./server/kv";
+import { mutate, readJSON, STORAGE } from "./server/kv";
 
 /**
  * The project's working records: leads, plot status and prices, news, settings and the activity
@@ -89,8 +89,12 @@ function complete(s: Partial<Store> & { users?: unknown }): Store {
   return { ...SEED, ...rest, settings: { ...SEED.settings, ...(rest.settings ?? {}), kpi: { ...(rest.settings?.kpi ?? {}) } } };
 }
 
+/**
+ * The records before anything is stored: the seed, plus any leads the old form wrote. A read never writes;
+ * the first change stores the records (pages built side by side all read at once, and a write from every
+ * build worker would clash).
+ */
 async function firstRun(): Promise<Store> {
-  // first run: take over any leads the old form wrote
   const store: Store = { ...SEED, leads: [...EXAMPLE_LEADS] };
   if (STORAGE === "file") {
     try {
@@ -98,11 +102,10 @@ async function firstRun(): Promise<Store> {
       store.leads.push(...old.map((l, i) => ({ id: `lead-${Date.parse(l.created) || i}`, status: "new" as const, notes: [], ...l })));
     } catch { /* nothing to migrate */ }
   }
-  await writeJSON("crm", store);
   return store;
 }
 
-/** Pages built side by side can all find the store missing at once; they share one first run. */
+/** Pages read side by side; they share one first run. */
 let firstRunning: Promise<Store> | null = null;
 
 export async function readStore(): Promise<Store> {
