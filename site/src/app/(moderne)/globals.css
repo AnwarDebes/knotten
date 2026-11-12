@@ -369,7 +369,7 @@ canvas { display: block; outline: none; }
 .pt-tabs a { padding: 9px 12px; font-size: 14px; color: var(--ink-2); text-decoration: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .pt-tabs a:hover { color: var(--ink); }
 .pt-tabs a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--fjord); font-weight: 500; }
-.scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.scroll-x { position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .table-tight th, .table-tight td { padding: .5rem .55rem; font-size: 14px; }
 @media (max-width: 1023px) {
   .pt { grid-template-columns: minmax(0, 1fr); }

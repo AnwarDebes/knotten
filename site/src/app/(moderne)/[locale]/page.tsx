@@ -60,15 +60,15 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
       {/* 1. the journey is the front page */}
       <section id="modell" className="wrap pt-3 md:pt-6">
         <div className="grid gap-5 lg:grid-cols-[1fr_auto] items-end mb-5 md:mb-7">
-          <div>
-            <Words as="h1" className="words-now display text-[clamp(40px,6.6vw,104px)] max-w-[13ch]" text={no ? "Planlagt som Norges mest energivennlige boligfelt." : "Planned as Norway's most energy-friendly housing development."} />
-            <StatusLine locale={locale} text={settings.release_note[locale]} className="mt-5 md:mt-6 rise-in rise-in-2" />
-          </div>
-          <p className="lede max-w-[38ch] lg:pb-3 rise-in rise-in-2">
+          <Words as="h1" className="words-now display text-[clamp(40px,6.6vw,104px)] max-w-[13ch]" text={no ? "Planlagt som Norges mest energivennlige boligfelt." : "Planned as Norway's most energy-friendly housing development."} />
+          <div className="grid gap-4 max-w-[25rem] lg:pb-3">
+            <p className="lede max-w-[38ch] rise-in rise-in-2">
             {no
               ? `Rundt ${FACT.plots} boliger på Knotten over Sniksfjorden i Lindesnes, i modellen lagt i ${word(FACT.rows)} rekker over sørhellingen og på knausen. Ønsket er sjøutsikt fra alle tomtene, men det er ikke sikkert at det går fra alle. Reisen under går fra fjorden og helt inn i stua.`
               : `About ${FACT.plots} homes on Knotten above Sniksfjorden in Lindesnes, laid out in the model in ${word(FACT.rows, "en")} rows across the south face and on the knoll. The aim is a sea view from every plot, but it is not certain every plot will get one. The journey below runs from the fjord all the way into the living room.`}
-          </p>
+            </p>
+            <StatusLine locale={locale} text={settings.release_note[locale]} className="rise-in rise-in-2" />
+          </div>
         </div>
         <div className="grid gap-4 lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_340px] items-stretch">
           <div className="rise-in rise-in-2"><Stage plots={plots} locale={locale} hero /></div>
