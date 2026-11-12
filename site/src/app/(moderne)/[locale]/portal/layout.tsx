@@ -5,6 +5,8 @@ import { loadPlots } from "@/lib/data";
 import { readStore } from "@/lib/store";
 import PortalFrame, { type NavGroup } from "@/components/portal/PortalFrame";
 import { initials } from "@/components/portal/ui";
+import { memberHome } from "@/lib/server/portal";
+import { redirect } from "next/navigation";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const en = (await params).locale === "en";
@@ -23,6 +25,8 @@ export default async function PortalLayout({ children, params }: { children: Rea
   const no = locale === "no";
   const session = await getSession();
   if (!session) return <div className="wrap py-16">{children}</div>;
+  // a buyer's own account has Min side, not the portal (the pages check it too)
+  if (session.kind === "member") redirect(await memberHome(locale));
   const p = (path: string) => `/${locale}/portal${path}`;
   const admin = isAdmin(session);
   const newLeads = admin ? (await readStore()).leads.filter((x) => x.status === "new" && !x.excluded && x.source !== "eksempel").length : 0;

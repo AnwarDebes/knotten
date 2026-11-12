@@ -3,6 +3,8 @@ import path from "path";
 import { CONTACT } from "./facts";
 import { RELEASE_NOTE } from "./content/status";
 import { mutate, readJSON, STORAGE } from "./server/kv";
+import type { ConsentEvent } from "./consent";
+import { withConsentLog } from "./leadConsent";
 
 /**
  * The project's working records: leads, plot status and prices, news, settings and the activity
@@ -18,9 +20,16 @@ export type Lead = {
   phone: string;
   purpose: "buy" | "invest" | "partner" | "curious";
   plots: string[];
+  /** The three flags are read from consent_log (lib/leadConsent.ts) every time the records are read. */
   consent_updates: boolean;
   consent_investor: boolean;
   consent_research: boolean;
+  /** Every consent decision, in order: the exact text by id, the privacy version, when and where (append only). */
+  consent_log?: ConsentEvent[];
+  /** The last time the person and the project were in touch; a lead is deleted 24 months after it (/api/cron/cleanup). */
+  last_contact?: string;
+  /** The language the person wrote in. */
+  locale?: "no" | "en";
   source: string;
   created: string;
   status: LeadStatus;
@@ -106,7 +115,8 @@ function complete(s: Partial<Store> & { users?: unknown }): Store {
   void _legacy;
   const saved: Partial<Settings> = rest.settings ?? {};
   const release_note = !saved.release_note || saved.release_note.no === FIRST_RELEASE_NOTE ? SEED.settings.release_note : saved.release_note;
-  return { ...SEED, ...rest, settings: { ...SEED.settings, ...saved, release_note, kpi: { ...(saved.kpi ?? {}) }, company: { ...SEED.settings.company, ...(saved.company ?? {}) } } };
+  // leads from before the consent log get one: their old flags become events marked "legacy" (lib/leadConsent.ts)
+  return { ...SEED, ...rest, leads: (rest.leads ?? SEED.leads).map(withConsentLog), settings: { ...SEED.settings, ...saved, release_note, kpi: { ...(saved.kpi ?? {}) }, company: { ...SEED.settings.company, ...(saved.company ?? {}) } } };
 }
 
 /**
@@ -135,9 +145,13 @@ export async function readStore(): Promise<Store> {
   return complete(await firstRunning);
 }
 
-/** Read, change, write, one at a time. Returns what the mutator returns. */
+/**
+ * Read, change, write, without losing a change made by someone else at the same moment (lib/server/kv.ts). `fn`
+ * may run again on fresh records after such a clash, so it should only change the records it is given. The first
+ * change starts from the same records a read shows (the seed and any leads from the first form).
+ */
 export async function updateStore<T>(by: string, what: string, fn: (s: Store) => T | Promise<T>): Promise<T> {
-  return mutate<Store, T>("crm", () => ({ ...SEED, leads: [...EXAMPLE_LEADS] }), async (raw) => {
+  return mutate<Store, T>("crm", firstRun, async (raw) => {
     const s = complete(raw);
     const out = await fn(s);
     s.activity = [{ at: new Date().toISOString(), by, what }, ...s.activity].slice(0, 200);

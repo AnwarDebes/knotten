@@ -1,4 +1,5 @@
 import { createHash, createHmac, randomBytes, scrypt, timingSafeEqual, type ScryptOptions } from "crypto";
+import { isCommonPassword } from "./common-passwords";
 
 /**
  * Passwords are stored as scrypt hashes (Node's built-in implementation): a random salt per
@@ -44,13 +45,15 @@ export function humanCode() {
   return `${chars.slice(0, 4)}-${chars.slice(4)}`;
 }
 
-/** Password rules: long rather than complicated, and not one of the passwords everyone tries first. */
-const COMMON = new Set(["passord123", "password123", "1234567890", "qwertyuiop", "knotten123", "sommer2026", "vinter2026", "lindesnes1"]);
+/**
+ * Password rules: long rather than complicated, and not one of the passwords people try first (a list of a few
+ * thousand in Norwegian and English, with the usual digits and look-alike letters around them; common-passwords.ts).
+ */
 export function passwordProblem(pw: string, email = "", lang: "no" | "en" = "no") {
   const no = lang === "no";
   if (pw.length < 10) return no ? "Passordet må ha minst 10 tegn." : "The password needs at least 10 characters.";
   if (pw.length > 200) return no ? "Passordet er for langt." : "The password is too long.";
-  if (COMMON.has(pw.toLowerCase())) return no ? "Passordet er for vanlig. Velg et annet." : "That password is too common. Choose another.";
+  if (isCommonPassword(pw)) return no ? "Passordet er for vanlig. Velg et annet, gjerne en setning du husker." : "That password is too common. Choose another, a sentence you remember works well.";
   const local = email.split("@")[0]?.toLowerCase();
   if (local && local.length > 3 && pw.toLowerCase().includes(local)) return no ? "Passordet kan ikke inneholde e-postadressen." : "The password cannot contain the email address.";
   if (new Set(pw).size < 5) return no ? "Passordet har for få ulike tegn." : "The password has too few different characters.";

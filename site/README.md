@@ -63,7 +63,7 @@ One login for everyone who works with the project. Three roles, as the project o
 
 How it is built:
 
-- Accounts and sessions: `src/lib/server/accounts.ts`, `src/lib/auth.ts`. Passwords are scrypt hashes; the session cookie is httpOnly and signed (HMAC); a changed password or "log out everywhere" ends all older sessions; five wrong passwords lock an address for 15 minutes. Invitations last 7 days and password links 24 hours; only their hashes are stored.
+- Accounts and sessions: `src/lib/server/accounts.ts`, `src/lib/auth.ts`. Passwords are scrypt hashes; the session cookie is httpOnly and signed (HMAC); a changed password or "log out everywhere" ends all older sessions; attempts are counted before the password is checked (5 per address and network, 20 per address and 30 per network in 15 minutes); the password list refuses a few thousand common passwords in Norwegian and English. Invitations last 7 days and password links 24 hours; only their hashes are stored.
 - Every portal page checks access itself (`src/lib/server/portal.ts`), and every server action checks the acting person (`actor()` in `src/lib/auth.ts`). The sidebar is not a lock.
 - Records: `src/lib/store.ts` (leads, plots, news, settings), `src/lib/server/records.ts` (documents, questions, workspace, consents, meters), all through `src/lib/server/kv.ts`.
 - Files: `src/lib/server/files.ts`; downloads go only through `/api/files/[id]`, which checks access and logs.
@@ -74,37 +74,89 @@ How it is built:
 - Backup: `/api/backup` gives administrators everything stored as one JSON file (accounts without passwords; document files are listed, not included).
 - The public document bank (both designs) links its internal documents to `/no/portal/dokumenter?dok=key`, through the login.
 
+## Buyer accounts and Min side
+
+Buyers make their own accounts. These are "members" (`kind: "member"` on the account; a missing `kind` means a project stakeholder invited into the portal). A member has no areas and never enters the portal: `portalPage()` and the portal layout send them to Min side, `can()` is false for them on every area, `actor()` and the portal's own actions refuse them, and the document audience "all" means every stakeholder, never a member (`canSeeDoc` in `src/lib/server/records.ts`).
+
+| Page | Klassisk | Moderne |
+|---|---|---|
+| Sign-up | `/registrer` (`?tomt=7` or `?plot=plot-07` chooses plots) | `/no/registrer`, `/en/registrer` |
+| Min side | `/min-side` | `/no/min-side`, `/en/min-side` |
+| Data export | `/api/min-side/eksport` (JSON, own session, refused when another site sends the browser) | same |
+
+The Klassisk components (`src/components/klassisk/members`) take a `locale` prop and carry English, so an English Klassisk can use them as they are. The Moderne ones are in `src/components/members`. Both post to the same server actions in `src/lib/server/members.ts`; the records behind them are in `src/lib/server/member-store.ts` (record set `members`: followed plots, the consent log, the purpose from sign-up, the link to the person's own lead). Addresses for both designs come from `src/lib/member-paths.ts`, the words from `src/lib/member-text.ts`.
+
+**How sign-up works depends on email.** `signupByEmail()` in `src/lib/server/member-store.ts` decides it, and the page and the action always agree:
+
+- **With email** (`MAIL_FROM` with Resend or SMTP, and the site's address, `SITE_URL` in production): a self-invitation. The form asks for no password. A pending account is made with the consents that were ticked, and a link (kind `verify`, 48 hours) is emailed. The link opens the password page in the design and language of the sign-up; opening it changes nothing (mail scanners may open links), choosing the password confirms the address, activates the account, writes the sign-up to the leads (`recordLead`, source `registrering`, `verified`) and sends a welcome email. The answer on the form is always "Sjekk e-posten din", whatever the address's state, and the work is done after the answer, so neither the words nor the timing tell whether an address has an account: an address with an account gets "you already have an account" by email instead, a pending sign-up gets its link again (3 sign-ups per address a day, 5 per network an hour), an invited stakeholder gets the invitation again. Unconfirmed sign-ups are deleted after 7 days by `/api/cron/cleanup`, with what they kept.
+- **Without email (the fallback, and the owner's choice for now):** the form also asks for a password, the account is active at once and the person is logged in. The address is *not* confirmed (`email_verified_at` stays unset) and Min side says "E-posten din er ikke bekreftet ennå". The choices (plots, news, plot alerts) are stored on the account, but the lead gets the consents only once the address is confirmed, and nothing at all is emailed to an unconfirmed address (`mayEmail()`); any future newsletter or plot alert must check the same. Without email the site cannot keep secret whether an address has an account, so a taken address is refused in plain words. When email is switched on later, Min side offers "Send bekreftelseslenke" to confirm the address; an administrator's password link confirms it too.
+- **Without storage** (Vercel without a database) every form and action answers with the storage message, and the sign-up page shows it instead of the form.
+
+Logging in sends a member to Min side in the design and language of the login page (or to the page they came for), and a stakeholder to the portal. A pending member who types the right password gets a fresh link. The greeting cookie carries `kind: "member"`, so a header can link to Min side instead of the portal.
+
+Min side, in both designs: **Mine tomter** (followed plots with the status and price set in the admin's Plots and prices; a follow is also written to the person's lead with source `min side`), **Lagrede hus** (saved configurations, each opening the configurator with its state), **Varsler** (news and plot alerts; every switch appends a consent event with the text id and the privacy version), **Profil** (name, phone, the language and design for emails and links; a new email address gets a link and the old address a notice, and the person's own lead moves to the new address), **Passord og innlogging** (change password, log out everywhere), **Mine data** (the JSON export) and **Slett konto** (confirmed with the password: the account, its links, saved houses, follows and consent log go; the person's own lead goes too unless they untick it; the security log loses the address; a confirmation email goes to a confirmed address).
+
+Emails to buyers (`src/lib/server/emails.ts`) are plain text in Norwegian and English and carry nothing a visitor typed, not even the name: confirmation, "you already have an account", welcome, new address (to the new one), address changed (to the old one), password changed, new password, account deleted.
+
+For plot pages: `followPlot(plotId)`, `unfollowPlot(plotId)` and `followState(plotId)` in `src/lib/server/members.ts`, and ready buttons `src/components/members/FollowPlotButton.tsx` (Moderne) and `src/components/klassisk/members/FollowPlotButton.tsx` (Klassisk). A visitor gets a link to sign-up with the plot chosen.
+
+In the admin, Users and access lists project accounts and buyer accounts apart. A buyer account can be disabled, deleted (with its saved houses and follows; the lead stays) or made a resident of a plot, which turns it into a project account with the My home area.
+
 ## Where data is kept
+
+`src/lib/server/kv.ts` chooses the storage when the server starts:
 
 | Mode | When | Records | Files |
 |---|---|---|---|
-| file | running on a computer or a normal server | `data/crm.json` (leads, plots, news, settings) and `data/private/*.json` | `data/private/files/` |
-| kv | `KV_REST_API_URL` and `KV_REST_API_TOKEN` set (Vercel's Redis/Upstash integration) | Redis, keys `knotten:*` | Vercel Blob, private (`BLOB_READ_WRITE_TOKEN`) |
-| temp | on Vercel without KV | `/tmp`, forgotten when the server sleeps: for a demonstration only | none |
+| kv | one complete pair is set: `KV_REST_API_URL` and `KV_REST_API_TOKEN`, or `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (Vercel's Redis/Upstash integration sets them) | Redis over HTTPS, keys `<KV_PREFIX>:*` | Vercel Blob, private (`BLOB_READ_WRITE_TOKEN`) |
+| file | no database and not on Vercel: a computer or one normal server process | `data/crm.json` (leads, plots, news, settings) and `data/private/*.json` | `data/private/files/` |
+| temp | on Vercel without a database | nothing is kept: the site fails closed (below) | none |
 
-`data/private/` holds password hashes, the session secret, uploaded files and statistics. It is in `.gitignore` and must never be committed.
+How it stays correct:
+
+- **No lost changes.** Every record set is one JSON document with a version beside it (`<prefix>:ver:<key>`). `mutate()` reads both, applies the change and saves only if the version is unchanged, in one Lua script (Upstash's REST API runs `EVAL`; it has no `WATCH`). If another server got there first, it reads again and retries (up to 16 times within 8 seconds, with random waits). Changes from the same server wait for each other first. The change function can therefore run more than once and must only change the value it is given.
+- **Small atomic keys** (`<prefix>:x:*`) for what changes with every attempt: `incr(key, ttlSec)` (an `INCRBY` that starts its expiry with the first count), `setNX(key, value, ttlSec?)`, `getDel(key)`, `getValue(key)` and `ttl(key)`. Login, setup, password-reset and form limits count each attempt this way *before* a password or code is checked (`src/lib/server/limit.ts`), so a burst in parallel cannot slip past a limit.
+- **The first seed wins.** The accounts' record set (with the session secret) is created with `SET NX`, so every server signs sessions with the same secret even when several start at once.
+- **A failed read never wipes data.** In file mode only a missing file counts as empty; any other failure (a damaged file, no access) is an error and nothing is written. On Windows, a file held open by an indexer or antivirus is retried before giving up.
+- **Fail closed without a database on Vercel (temp mode).** Reads give each record set's starting point, so the public pages render. Every write throws `StorageUnavailableError`; the forms and actions answer "Lagring er ikke satt opp ennå. Prøv igjen senere eller send en e-post." (English on English pages), the login pages say so instead of showing a setup that cannot be saved, and Settings shows storage in red.
+- **Previews never touch production.** `KV_PREFIX` (default `knotten`, or `knotten-preview` when `VERCEL_ENV` is `preview`) starts every key. Give preview deployments their own database as well if you can.
+
+Accounts stay in one record set (`auth`) changed by compare-and-set, rather than one key per account: every page that lists accounts keeps working unchanged, and logins no longer rewrite it for failed attempts (those are the atomic counters above). Account records already carry `kind` (missing means a project stakeholder), the status `pending` and `email_verified_at` for buyers' own accounts.
+
+Leads keep an append-only consent log (`consent_log`, events from `src/lib/consent.ts`); the three yes/no flags are read from it. Leads saved before the log are given one when read: each flag that was on becomes an event with the text and privacy version `legacy`, source `admin` and the lead's creation time. A registration with an address that is already known changes nothing on that lead (anyone can type someone else's email); the new details are kept as a note.
+
+Retention: `/api/cron/cleanup` (daily, `vercel.json`, with the `CRON_SECRET` bearer like the weekly summary) deletes leads 24 months after the last contact, accounts still `pending` after 7 days, and expired links.
+
+`data/private/` holds password hashes, the session secret, uploaded files, counters and, in tests, the email outbox. It is in `.gitignore` and must never be committed.
+
+`/api/health` answers `{ ok, storage, mail, siteUrl, turnstile, model, region, version }` (plus `authSecret`, `cron` and `env`) without any secret, and 503 when records cannot be kept. Use it after every deployment.
+
+To test the Redis path without a database: run a small HTTP server that answers Upstash's REST commands (`GET`, `SET` with `NX`/`EX`, `MGET`, `INCRBY`, `EXPIRE`, `TTL`, `GETDEL`, `PING`, the statistics' `HINCRBY`/`HGETALL`/`SADD`, and `EVAL` of the four scripts in `kv.ts`, which name themselves on their first line) and point `KV_REST_API_URL` at it.
 
 ## Deploying (Vercel)
 
-1. Import the repository in Vercel with `site` as the root directory.
-2. Storage: add a Redis database (Upstash) from the Vercel marketplace and a Blob store, and connect both to the project. Their variables are set automatically.
-3. Environment variables:
+1. Import the repository in Vercel with `site` as the root directory. Set the function region to Frankfurt (`fra1`) and create the database in the same region.
+2. Storage: add a Redis database (Upstash) from the Vercel marketplace and a Blob store, and connect both to the project. Their variables are set automatically. Without the database the site runs, but nothing can be saved (temp mode above).
+3. Environment variables (`.env.example` lists every one the app reads):
 
 | Variable | Needed | What |
 |---|---|---|
-| `AUTH_SECRET` | yes | at least 32 random characters; signs the sessions (`openssl rand -base64 48`) |
-| `SITE_URL` | yes | the public address, e.g. `https://knotten.no`; used in invitation links, robots.txt and the sitemap |
+| `AUTH_SECRET` | yes | at least 32 random characters; signs the sessions (`openssl rand -base64 48`). A shorter value is ignored, and Settings says so |
+| `SITE_URL` | yes | the public address, e.g. `https://knotten.no`. Links in emails use only this (or Vercel's production domain, `VERCEL_PROJECT_PRODUCTION_URL`), never the address a request claims; also robots.txt and the sitemap |
 | `KV_REST_API_URL`, `KV_REST_API_TOKEN` | yes | set by the Redis integration (or `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`) |
+| `KV_PREFIX` | no | the start of every Redis key; default `knotten`, and `knotten-preview` on preview deployments |
 | `BLOB_READ_WRITE_TOKEN` | for documents | set by the Blob integration; without it uploads are switched off |
-| `RESEND_API_KEY`, `MAIL_FROM` | recommended | email for invitations, password links and alerts about new leads and questions, e.g. `Knotten <post@knotten.no>` (the domain must be verified in Resend); without them the portal shows the links to copy |
-| `CRON_SECRET` | for the weekly summary | a long random text; Vercel Cron sends it with each call, so nobody else can trigger the email |
+| `MAIL_FROM` and `RESEND_API_KEY` or `SMTP_URL` | recommended | email for invitations, password links, "your password was changed" and alerts about new leads, e.g. `Knotten <post@knotten.no>`. Resend needs the sender's domain verified; `SMTP_URL` is any mail server, e.g. `smtps://user:password@smtp.example.com:465`. Without email the portal shows the links to copy and queues password requests for the administrators; a failed send is queued the same way and shown in Settings |
+| `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | recommended | Cloudflare Turnstile on the interest forms; the server checks each answer. Without them the forms rely on the hidden field, the time check and the limits per network and address |
+| `CRON_SECRET` | yes | a long random text; Vercel Cron sends it to the weekly summary and the nightly cleanup, so nobody else can start them |
 | `ANTHROPIC_API_KEY`, `KNOTTEN_AI_MODEL` | optional | lets Knotten AI hand questions the data does not cover to a hosted language model (the key, and the model's name in `KNOTTEN_AI_MODEL`). Without both, the assistant answers from the data only |
-| `KNOTTEN_SETUP_CODE` | optional | a code of your own for the first-time setup; otherwise one is made and written to the server log |
+| `KNOTTEN_SETUP_CODE` | optional | a code of your own for the first-time setup; otherwise one is made, shared by all servers, and written to the server log. Remove it after the setup |
+| `MAIL_DEV_OUTBOX` | tests only | `1` writes every email as an `.eml` file to `data/private/outbox` instead of sending it (never on Vercel) |
 
-4. Deploy, open `/no/login` and complete the first-time setup with the setup code. The first account is the super administrator (the project owner's email is suggested). Everyone else is invited from Users and access.
-5. Settings in the portal shows which services are in place. Vercel takes at most 4.5 MB per upload; larger documents need a normal server.
+4. Deploy, open `/no/login` (or `/logg-inn`) and complete the first-time setup with the setup code. The first account is the super administrator (the project owner's email is suggested). Everyone else is invited from Users and access.
+5. Open `/api/health` and Settings in the portal: they show which services are in place. Vercel takes at most 4.5 MB per upload; larger documents need a normal server.
 
-On a normal server: `npm run build && npm run start`, set the same variables except KV and Blob, and keep `data/` on persistent disk with a backup.
+On a normal server: `npm run build && npm run start`, set the same variables except KV and Blob, and keep `data/` on persistent disk with a backup. File mode is for one server process; run several processes only with the Redis variables set. Behind your own proxy, make sure it overwrites `X-Forwarded-For`: the limits per network read its first entry.
 
 ## The 3D model (`src/components/Stage.tsx`, `src/components/scene/*`, data in `public/twin`)
 

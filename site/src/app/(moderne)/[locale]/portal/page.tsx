@@ -3,7 +3,7 @@ import { AREA_LABEL, ROLE_LABEL, can, isAdmin } from "@/lib/auth";
 import type { Area } from "@/lib/auth-shared";
 import { portalPage } from "@/lib/server/portal";
 import { readStore } from "@/lib/store";
-import { loadAuth } from "@/lib/server/accounts";
+import { authSecretSource, loadAuth } from "@/lib/server/accounts";
 import { canSeeDoc, canSeeThread, docs, localizeWorkspace, threads, workspace } from "@/lib/server/records";
 import { INTERNAL_DOCS } from "@/lib/docRegister";
 import { STORAGE } from "@/lib/server/kv";
@@ -43,9 +43,9 @@ export default async function PortalHome({ params }: { params: Promise<{ locale:
     const waiting = leads.filter((l) => l.status === "new").length;
     const month = new Date().toISOString().slice(0, 7);
     checklist = [
-      { done: STORAGE === "kv" || (STORAGE === "file" && !process.env.VERCEL), text: no ? (STORAGE === "temp" ? "Koble til en database (Redis/KV): uten den glemmes endringer når serveren sover" : "Lagring er permanent") : STORAGE === "temp" ? "Connect a database (Redis/KV): without it changes are forgotten when the server sleeps" : "Storage is permanent", href: `${base}/admin/innstillinger` },
-      { done: !!process.env.AUTH_SECRET || process.env.NODE_ENV !== "production", text: no ? "Sett AUTH_SECRET i produksjon" : "Set AUTH_SECRET in production", href: `${base}/admin/innstillinger` },
-      { done: MAIL_ON, text: no ? "E-post for invitasjoner og varsler (Resend)" : "Email for invitations and alerts (Resend)", href: `${base}/admin/innstillinger` },
+      { done: STORAGE === "kv" || (STORAGE === "file" && !process.env.VERCEL), text: no ? (STORAGE === "temp" ? "Koble til en database (Redis/KV): uten den kan ingenting lagres" : "Lagring er permanent") : STORAGE === "temp" ? "Connect a database (Redis/KV): without it nothing can be saved" : "Storage is permanent", href: `${base}/admin/innstillinger` },
+      { done: authSecretSource() === "env" || (process.env.NODE_ENV !== "production" && authSecretSource() === "stored"), text: no ? "Sett AUTH_SECRET (minst 32 tegn) i produksjon" : "Set AUTH_SECRET (at least 32 characters) in production", href: `${base}/admin/innstillinger` },
+      { done: MAIL_ON, text: no ? "E-post for invitasjoner og varsler (Resend eller SMTP)" : "Email for invitations and alerts (Resend or SMTP)", href: `${base}/admin/innstillinger` },
       { done: FILES_ON, text: no ? "Fillagring for dokumenter (Vercel Blob)" : "File storage for documents (Vercel Blob)", href: `${base}/admin/innstillinger` },
       { done: auth.accounts.length > 1, text: no ? "Inviter prosjektgruppen, investorer, kommunen og UiA" : "Invite the project group, investors, the municipality and UiA", href: `${base}/admin/brukere` },
       { done: INTERNAL_DOCS.every((r) => docState.docs.some((d) => d.register === r.key)), text: no ? `Last opp dokumentene nettsiden viser til (${INTERNAL_DOCS.filter((r) => docState.docs.some((d) => d.register === r.key)).length} av ${INTERNAL_DOCS.length})` : `Upload the documents the website refers to (${INTERNAL_DOCS.filter((r) => docState.docs.some((d) => d.register === r.key)).length} of ${INTERNAL_DOCS.length})`, href: `${base}/dokumenter#forventet` },

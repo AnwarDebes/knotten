@@ -1,8 +1,9 @@
 import { pageTitle, portalPage } from "@/lib/server/portal";
 import { readStore } from "@/lib/store";
 import { ASSUMPTIONS, ASSUMPTIONS_VERSION } from "@/lib/facts";
-import { STORAGE } from "@/lib/server/kv";
-import { MAIL_ON } from "@/lib/server/mail";
+import { KV_PREFIX, STORAGE } from "@/lib/server/kv";
+import { configuredOrigin, MAIL_ON, MAIL_PROVIDER, readMailLog } from "@/lib/server/mail";
+import { authSecretSource } from "@/lib/server/accounts";
 import { FILES_ON, MAX_BYTES, prettySize } from "@/lib/server/files";
 import { saveSettings, sendDigestNow } from "../actions";
 import { saveCompany } from "./actions";
@@ -14,7 +15,7 @@ import { buildDigest } from "@/lib/server/digest";
 import { ActionForm } from "@/components/portal/forms";
 import Icon from "@/components/portal/Icon";
 import NoAccess from "@/components/portal/NoAccess";
-import { PageHead, Section } from "@/components/portal/ui";
+import { PageHead, Section, when } from "@/components/portal/ui";
 
 export const dynamic = "force-dynamic";
 export const generateMetadata = pageTitle("Innstillinger", "Settings");
@@ -34,23 +35,32 @@ export default async function Settings({ params }: { params: Promise<{ locale: s
   const prod = process.env.NODE_ENV === "production";
   const callsToday = MODEL_ON ? await modelCallsToday() : 0;
   const co = settings.company;
-  const services: { name: string; ok: boolean; state: string; how: string }[] = no
+  const secret = authSecretSource();
+  const origin = configuredOrigin();
+  const mail = await readMailLog();
+  const lastFail = mail.failures[0];
+  const sender = MAIL_PROVIDER === "resend" ? "Resend" : MAIL_PROVIDER === "smtp" ? "SMTP" : no ? "utboks på disk (test)" : "outbox on disk (test)";
+  const turnstile = !!(process.env.TURNSTILE_SECRET_KEY && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
+  // severe: the site loses or refuses data until it is fixed (shown in red, not amber)
+  const services: { name: string; ok: boolean; severe?: boolean; state: string; how: string }[] = no
     ? [
-        { name: "Lagring av data", ok: STORAGE !== "temp", state: STORAGE === "kv" ? "Database (Redis/KV)" : STORAGE === "file" ? "Filer på serveren (site/data)" : "Midlertidig: glemmes når serveren sover", how: "På Vercel: koble en Redis-database (Upstash) til prosjektet. Variablene KV_REST_API_URL og KV_REST_API_TOKEN settes da automatisk." },
-        { name: "Innloggingsnøkkel", ok: !!process.env.AUTH_SECRET || !prod, state: process.env.AUTH_SECRET ? "AUTH_SECRET er satt" : "Nøkkel lagret sammen med kontoene", how: "Sett AUTH_SECRET til en lang, tilfeldig tekst (minst 32 tegn) i produksjon." },
-        { name: "E-post", ok: MAIL_ON, state: MAIL_ON ? `Sender fra ${process.env.MAIL_FROM}` : "Ikke satt opp: lenker vises for kopiering", how: "Opprett en konto hos Resend, bekreft domenet, og sett RESEND_API_KEY og MAIL_FROM." },
+        { name: "Lagring av data", ok: STORAGE !== "temp", severe: STORAGE === "temp", state: STORAGE === "kv" ? `Database (Redis/KV), nøkler ${KV_PREFIX}:*` : STORAGE === "file" ? "Filer på serveren (site/data)" : "Ikke satt opp: ingenting kan lagres. Skjemaene sier fra, og innlogging er ikke mulig.", how: "På Vercel: koble en Redis-database (Upstash) til prosjektet. KV_REST_API_URL og KV_REST_API_TOKEN (eller UPSTASH_REDIS_REST_URL og UPSTASH_REDIS_REST_TOKEN) settes da automatisk." },
+        { name: "Innloggingsnøkkel", ok: secret === "env" || (!prod && secret === "stored"), severe: secret === "short", state: secret === "env" ? "AUTH_SECRET er satt" : secret === "short" ? "AUTH_SECRET er for kort (under 32 tegn) og brukes ikke" : "Nøkkel lagret sammen med kontoene", how: "Sett AUTH_SECRET til en lang, tilfeldig tekst på minst 32 tegn i produksjon." },
+        { name: "E-post", ok: MAIL_ON && MAIL_PROVIDER !== "outbox" && !(lastFail && (!mail.last_ok || lastFail.at > mail.last_ok)), severe: !!lastFail && (!mail.last_ok || lastFail.at > mail.last_ok), state: !MAIL_ON ? "Ikke satt opp: lenker vises for kopiering" : lastFail && (!mail.last_ok || lastFail.at > mail.last_ok) ? `Sending feilet ${when(lastFail.at, locale)}: ${lastFail.error}` : `Sender med ${sender}${process.env.MAIL_FROM ? ` fra ${process.env.MAIL_FROM}` : ""}${mail.last_ok ? `, sist sendt ${when(mail.last_ok, locale)}` : ""}`, how: "Opprett en konto hos Resend og bekreft domenet (RESEND_API_KEY), eller bruk en SMTP-server (SMTP_URL), og sett MAIL_FROM. Send en prøve under for å sjekke." },
         { name: "Fillagring", ok: FILES_ON, state: FILES_ON ? `På plass, inntil ${prettySize(MAX_BYTES)} per fil` : "Ikke satt opp: opplasting er slått av", how: "På Vercel: koble en Blob-lagring til prosjektet (BLOB_READ_WRITE_TOKEN). Filene lagres private." },
-        { name: "Ukentlig sammendrag", ok: cron || !settings.weekly_digest, state: cron ? "Planlagt mandag morgen (Vercel Cron)" : settings.weekly_digest ? "Slått på, men ikke planlagt" : "Slått av", how: "Sett CRON_SECRET i Vercel (en lang, tilfeldig tekst). Tidsplanen står i vercel.json; e-post må også være satt opp." },
-        { name: "Nettadresse i lenker", ok: !!process.env.SITE_URL || !prod, state: process.env.SITE_URL ?? "Hentes fra forespørselen", how: "Sett SITE_URL, for eksempel https://knotten.no, så lenker i e-post alltid peker riktig." },
+        { name: "Ukentlig sammendrag og opprydding", ok: cron, state: cron ? "Planlagt (Vercel Cron): sammendrag mandag morgen, opprydding hver natt" : settings.weekly_digest ? "Ikke planlagt: verken sammendrag eller opprydding går" : "Ikke planlagt: oppryddingen går ikke", how: "Sett CRON_SECRET i Vercel (en lang, tilfeldig tekst). Tidsplanen står i vercel.json; sammendraget trenger også e-post." },
+        { name: "Nettadresse i lenker", ok: !!origin || !prod, severe: prod && !origin, state: origin ?? (prod ? "Ikke satt: lenker i e-post kan ikke lages" : "Hentes fra forespørselen (bare under utvikling)"), how: "Sett SITE_URL, for eksempel https://knotten.no, så lenker i e-post alltid peker riktig." },
+        { name: "Spamvern på skjemaene", ok: turnstile, state: turnstile ? "Cloudflare Turnstile er på" : "Skjult felt, tidskontroll og grenser per nettverk og adresse; Turnstile er av", how: "Sett TURNSTILE_SECRET_KEY og NEXT_PUBLIC_TURNSTILE_SITE_KEY fra en Cloudflare-konto." },
         { name: "Knotten AI", ok: true, state: MODEL_ON ? `Språkmodell på: ${callsToday} av ${DAILY_LIMIT} svar brukt i dag. Over grensen svarer Knotten AI bare fra dataene.` : "Svarer fra prosjektets data (ingen språkmodell satt opp)", how: "Grensen per dag settes med KNOTTEN_AI_DAILY_LIMIT." },
       ]
     : [
-        { name: "Data storage", ok: STORAGE !== "temp", state: STORAGE === "kv" ? "Database (Redis/KV)" : STORAGE === "file" ? "Files on the server (site/data)" : "Temporary: forgotten when the server sleeps", how: "On Vercel: connect a Redis database (Upstash) to the project. KV_REST_API_URL and KV_REST_API_TOKEN are then set automatically." },
-        { name: "Login key", ok: !!process.env.AUTH_SECRET || !prod, state: process.env.AUTH_SECRET ? "AUTH_SECRET is set" : "Key stored with the accounts", how: "Set AUTH_SECRET to a long random text (at least 32 characters) in production." },
-        { name: "Email", ok: MAIL_ON, state: MAIL_ON ? `Sending from ${process.env.MAIL_FROM}` : "Not set up: links are shown to copy", how: "Create a Resend account, verify the domain, and set RESEND_API_KEY and MAIL_FROM." },
+        { name: "Data storage", ok: STORAGE !== "temp", severe: STORAGE === "temp", state: STORAGE === "kv" ? `Database (Redis/KV), keys ${KV_PREFIX}:*` : STORAGE === "file" ? "Files on the server (site/data)" : "Not set up: nothing can be saved. The forms say so, and logging in is not possible.", how: "On Vercel: connect a Redis database (Upstash) to the project. KV_REST_API_URL and KV_REST_API_TOKEN (or UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN) are then set automatically." },
+        { name: "Login key", ok: secret === "env" || (!prod && secret === "stored"), severe: secret === "short", state: secret === "env" ? "AUTH_SECRET is set" : secret === "short" ? "AUTH_SECRET is too short (under 32 characters) and is not used" : "Key stored with the accounts", how: "Set AUTH_SECRET to a long random text of at least 32 characters in production." },
+        { name: "Email", ok: MAIL_ON && MAIL_PROVIDER !== "outbox" && !(lastFail && (!mail.last_ok || lastFail.at > mail.last_ok)), severe: !!lastFail && (!mail.last_ok || lastFail.at > mail.last_ok), state: !MAIL_ON ? "Not set up: links are shown to copy" : lastFail && (!mail.last_ok || lastFail.at > mail.last_ok) ? `Sending failed ${when(lastFail.at, locale)}: ${lastFail.error}` : `Sending with ${sender}${process.env.MAIL_FROM ? ` from ${process.env.MAIL_FROM}` : ""}${mail.last_ok ? `, last sent ${when(mail.last_ok, locale)}` : ""}`, how: "Create a Resend account and verify the domain (RESEND_API_KEY), or use an SMTP server (SMTP_URL), and set MAIL_FROM. Send a test below to check." },
         { name: "File storage", ok: FILES_ON, state: FILES_ON ? `In place, up to ${prettySize(MAX_BYTES, false)} per file` : "Not set up: uploads are off", how: "On Vercel: connect a Blob store to the project (BLOB_READ_WRITE_TOKEN). Files are stored private." },
-        { name: "Weekly summary", ok: cron || !settings.weekly_digest, state: cron ? "Scheduled Monday morning (Vercel Cron)" : settings.weekly_digest ? "Switched on, but not scheduled" : "Switched off", how: "Set CRON_SECRET in Vercel (a long random text). The schedule is in vercel.json; email must be set up too." },
-        { name: "Address in links", ok: !!process.env.SITE_URL || !prod, state: process.env.SITE_URL ?? "Taken from the request", how: "Set SITE_URL, for example https://knotten.no, so links in emails always point right." },
+        { name: "Weekly summary and cleanup", ok: cron, state: cron ? "Scheduled (Vercel Cron): summary on Monday mornings, cleanup every night" : settings.weekly_digest ? "Not scheduled: neither the summary nor the cleanup runs" : "Not scheduled: the cleanup does not run", how: "Set CRON_SECRET in Vercel (a long random text). The schedule is in vercel.json; the summary also needs email." },
+        { name: "Address in links", ok: !!origin || !prod, severe: prod && !origin, state: origin ?? (prod ? "Not set: links in emails cannot be made" : "Taken from the request (only during development)"), how: "Set SITE_URL, for example https://knotten.no, so links in emails always point right." },
+        { name: "Spam protection on the forms", ok: turnstile, state: turnstile ? "Cloudflare Turnstile is on" : "Hidden field, time check and limits per network and address; Turnstile is off", how: "Set TURNSTILE_SECRET_KEY and NEXT_PUBLIC_TURNSTILE_SITE_KEY from a Cloudflare account." },
         { name: "Knotten AI", ok: true, state: MODEL_ON ? `Language model on: ${callsToday} of ${DAILY_LIMIT} answers used today. Over the limit Knotten AI answers from the data only.` : "Answers from the project's data (no language model set up)", how: "The daily limit is set with KNOTTEN_AI_DAILY_LIMIT." },
       ];
   // what the public pages still lack before launch: listed here until it is filled in, never shown on the site itself
@@ -104,8 +114,8 @@ export default async function Settings({ params }: { params: Promise<{ locale: s
           <div className="panel divide-y divide-[var(--line)]">
             {services.map((s) => (
               <div key={s.name} className="p-4 grid gap-1">
-                <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-medium text-[14.5px]">{s.name}</span><span className={`chip ${s.ok ? "chip-pine" : "chip-amber"}`}>{s.ok ? (no ? "I orden" : "In order") : (no ? "Må settes opp" : "Needs setting up")}</span></div>
-                <div className="text-[13.5px] text-ink-2">{s.state}</div>
+                <div className="flex flex-wrap items-center justify-between gap-2"><span className="font-medium text-[14.5px]">{s.name}</span><span className={`chip ${s.ok ? "chip-pine" : s.severe ? "bg-[rgba(197,75,48,.14)] text-[#8a2f1d]" : "chip-amber"}`}>{s.ok ? (no ? "I orden" : "In order") : s.severe ? (no ? "Må rettes nå" : "Fix now") : (no ? "Må settes opp" : "Needs setting up")}</span></div>
+                <div className={`text-[13.5px] ${s.severe ? "text-[#8a2f1d] font-medium" : "text-ink-2"}`}>{s.state}</div>
                 {!s.ok && <div className="text-[13px] text-muted">{s.how}</div>}
               </div>
             ))}

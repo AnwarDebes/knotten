@@ -2,6 +2,7 @@ import Link from "next/link";
 import { pageTitle, portalPage } from "@/lib/server/portal";
 import { readStore, LEAD_LABEL, LEAD_STATUSES } from "@/lib/store";
 import { plotNo } from "@/lib/format";
+import { leadsCsv } from "@/lib/server/leads";
 import { addLead, addLeadNote, deleteLead, setLeadStatus, toggleExcluded } from "../actions";
 import NoAccess from "@/components/portal/NoAccess";
 import { ConfirmButton } from "@/components/portal/forms";
@@ -11,6 +12,7 @@ import { leadsWithConfig } from "@/lib/server/configurations";
 export const dynamic = "force-dynamic";
 export const generateMetadata = pageTitle("Interessenter", "Leads");
 
+const CONSENT_NAME: Record<string, { no: string; en: string }> = { updates: { no: "nyheter", en: "news" }, plot_alerts: { no: "tomtevarsler", en: "plot alerts" }, investor: { no: "investering", en: "investing" }, research: { no: "forskning", en: "research" } };
 const PURPOSE: Record<string, { no: string; en: string }> = { buy: { no: "kjøpe bolig", en: "buy a home" }, invest: { no: "investere", en: "invest" }, partner: { no: "samarbeide", en: "partner" }, curious: { no: "følge med", en: "follow along" } };
 
 /** Every person who has registered interest, with status, notes, consents and reply time. */
@@ -22,7 +24,8 @@ export default async function Leads({ params, searchParams }: { params: Promise<
   const withConfig = await leadsWithConfig();
   const needle = q.toLowerCase();
   const leads = [...store.leads].reverse().filter((x) => (!status || x.status === status) && (!needle || `${x.name} ${x.email} ${x.phone} ${x.plots.join(" ")}`.toLowerCase().includes(needle)));
-  const csv = [["created", "name", "email", "phone", "purpose", "plots", "status", "replied", "counted", "consent_updates", "consent_investor", "consent_research", "source"].join(";"), ...store.leads.map((x) => [x.created, x.name, x.email, x.phone, x.purpose, x.plots.join(" "), x.status, x.replied ?? "", !x.excluded, x.consent_updates, x.consent_investor, x.consent_research, x.source].map((v) => `"${String(v).replace(/"/g, "'")}"`).join(";"))].join("\n");
+  // escaped for Excel: a value that starts like a formula is never run as one (lib/server/leads.ts)
+  const csv = leadsCsv(store.leads);
   const hours = (a: string, b: string) => (Date.parse(b) - Date.parse(a)) / 3600e3;
   const ago = (h: number) => (h < 1 ? (no ? "under en time" : "under an hour") : h < 48 ? `${Math.round(h)} ${no ? "timer" : "hours"}` : `${Math.round(h / 24)} ${no ? "dager" : "days"}`);
   return (
@@ -88,7 +91,12 @@ export default async function Leads({ params, searchParams }: { params: Promise<
               </div>
               <div className="grid content-start gap-3 text-[14px]">
                 <div><span className="text-muted">{no ? "Kilde: " : "Source: "}</span>{x.source}</div>
-                <div><span className="text-muted">{no ? "Samtykke: " : "Consent: "}</span>{[x.consent_updates && (no ? "oppdateringer" : "updates"), x.consent_investor && (no ? "kan kontaktes om investering" : "may be contacted about investing"), x.consent_research && (no ? "anonym statistikk til UiA" : "anonymous statistics to UiA")].filter(Boolean).join(", ")}</div>
+                <div><span className="text-muted">{no ? "Samtykke: " : "Consent: "}</span>{[x.consent_updates && (no ? "nyheter på e-post" : "news by email"), x.consent_investor && (no ? "kan kontaktes om investering" : "may be contacted about investing"), x.consent_research && (no ? "forskningen med UiA" : "the research with UiA")].filter(Boolean).join(", ") || (no ? "bare kontakt om henvendelsen" : "contact about the request only")}</div>
+                {(x.consent_log?.length ?? 0) > 0 && (
+                  <ul className="grid gap-0.5 text-[12.5px] text-muted">
+                    {x.consent_log!.map((c, i) => <li key={i}>{when(c.at, locale)}: {CONSENT_NAME[c.purpose]?.[locale] ?? c.purpose} {c.granted ? (no ? "ja" : "yes") : (no ? "nei" : "no")} ({c.text_id === "legacy" ? (no ? "fra før samtykkeloggen" : "from before the consent log") : `${c.text_id}, ${c.privacy_version}`}, {c.source})</li>)}
+                  </ul>
+                )}
                 <div className="flex flex-wrap items-center gap-2 mt-1">
                   <a className="btn btn-sm btn-ghost btn-plain no-underline" href={`mailto:${x.email}?subject=${encodeURIComponent("Knotten")}`}>{no ? "Send e-post" : "Send email"}</a>
                   {x.phone && <a className="btn btn-sm btn-ghost btn-plain no-underline" href={`tel:${x.phone.replace(/\s/g, "")}`}>{no ? "Ring" : "Call"}</a>}

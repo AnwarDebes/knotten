@@ -1,4 +1,4 @@
-import { getSession } from "@/lib/auth";
+import { fromOtherSite, getSession } from "@/lib/auth";
 import { canSeeDoc, docs } from "@/lib/server/records";
 import { openFile } from "@/lib/server/files";
 import { recordEvent } from "@/lib/server/stats";
@@ -9,6 +9,8 @@ import { recordEvent } from "@/lib/server/stats";
  */
 export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const { id } = await ctx.params;
+  // a download is counted and logged, so it answers only to the site's own pages (and typed or bookmarked links)
+  if (fromOtherSite(req)) return new Response("Dokumentet kan bare lastes ned fra portalen.", { status: 403 });
   const session = await getSession();
   if (!session) return new Response("Logg inn for å laste ned dokumentet.", { status: 401 });
   const all = await docs.read();
@@ -23,7 +25,7 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
     const d = st.docs.find((x) => x.id === id);
     if (d) d.downloads += 1;
     st.log = [{ at: new Date().toISOString(), who: session.email, doc: id, title: doc.title, version: v }, ...st.log].slice(0, 500);
-  });
+  }).catch(() => undefined);
   await recordEvent("doc_download");
   const ascii = file.name.replace(/[^\x20-\x7e]/g, "_").replace(/"/g, "");
   return new Response(body as BodyInit, {

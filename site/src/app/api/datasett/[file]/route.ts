@@ -1,13 +1,15 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { can, getSession, isAdmin } from "@/lib/auth";
+import { can, fromOtherSite, getSession, isAdmin } from "@/lib/auth";
 import { DATASETS } from "@/lib/datasets";
 import { incrementMany } from "@/lib/server/kv";
 import { recordEvent } from "@/lib/server/stats";
 
 /** A dataset download from the research room: counted per dataset, then served as a file. */
-export async function GET(_: Request, ctx: { params: Promise<{ file: string }> }) {
+export async function GET(req: Request, ctx: { params: Promise<{ file: string }> }) {
   const { file } = await ctx.params;
+  // downloads are counted, so they answer only to the site's own pages (and typed or bookmarked links)
+  if (fromOtherSite(req)) return new Response("Datasettet kan bare lastes ned fra portalen.", { status: 403 });
   const ds = DATASETS.find((d) => d.file === file);
   if (!ds) return new Response("Ukjent datasett.", { status: 404 });
   const session = await getSession();

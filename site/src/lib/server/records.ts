@@ -59,7 +59,13 @@ export type Doc = {
 type DocsState = { docs: Doc[]; log: { at: string; who: string; doc: string; title: string; version: number }[] };
 export const docs = store<DocsState>("docs", () => ({ docs: [], log: [] }));
 
+/**
+ * May this session download the document? Administrators see everything. The audience "all" means every project
+ * stakeholder the project invited, never a buyer's own account (anyone can sign up for one), so a member sees no
+ * portal documents at all.
+ */
 export function canSeeDoc(s: Session, d: Doc) {
+  if (s.kind === "member") return false;
   if (isAdmin(s)) return true;
   if (d.plot && d.plot !== s.plot) return false;
   return d.audience.includes("all") || d.audience.some((a) => a !== "all" && s.areas.includes(a));

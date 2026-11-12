@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { can, getSession, isAdmin } from "@/lib/auth";
+import { can, fromOtherSite, getSession, isAdmin } from "@/lib/auth";
 import { loadPlots } from "@/lib/data";
 import { project } from "@/lib/geo";
 import { recordEvent } from "@/lib/server/stats";
@@ -14,6 +14,8 @@ const read = async <T,>(name: string) => JSON.parse(await fs.readFile(path.join(
  * clearing. EPSG:25832 by default (UTM 32N, what Norwegian planning uses), or ?crs=4326.
  */
 export async function GET(req: Request) {
+  // downloads are counted, so they answer only to the site's own pages (and typed or bookmarked links)
+  if (fromOtherSite(req)) return new Response("Kartdataene kan bare lastes ned fra portalen.", { status: 403 });
   const session = await getSession();
   if (!session || !(isAdmin(session) || can(session, "municipality") || can(session, "project") || can(session, "research"))) {
     return new Response("Logg inn med tilgang til kommunerommet.", { status: 401 });

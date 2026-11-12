@@ -95,7 +95,7 @@ export default async function Documents({ params, searchParams }: { params: Prom
               <div key={r.key} className="p-4 md:p-5 grid gap-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-medium flex-1 min-w-[16ch]">{r.title[locale]}</span>
-                  <span className="text-[12.5px] text-muted">{r.audience.map((a) => (a === "all" ? (no ? "alle med konto" : "everyone with an account") : AREA_LABEL[a][locale].toLowerCase())).join(", ")}</span>
+                  <span className="text-[12.5px] text-muted">{r.audience.map((a) => (a === "all" ? (no ? "alle prosjektkontoer" : "every project account") : AREA_LABEL[a][locale].toLowerCase())).join(", ")}</span>
                   <span className={`chip ${d ? "chip-pine" : "chip-amber"}`}>{d ? (no ? `Lagt inn, v${d.version}` : `Uploaded, v${d.version}`) : (no ? "Mangler" : "Missing")}</span>
                 </div>
                 <p className="text-[13.5px] text-muted">{r.what[locale]}</p>

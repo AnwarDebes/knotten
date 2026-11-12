@@ -14,8 +14,8 @@ export async function GET(req: Request) {
   if (!secret || !safeEqual(auth, `Bearer ${secret}`)) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   const { settings } = await readStore();
   if (!settings.weekly_digest) return NextResponse.json({ sent: false, reason: "switched off in the settings" });
-  if (!MAIL_ON) return NextResponse.json({ sent: false, reason: "email is not set up (RESEND_API_KEY, MAIL_FROM)" });
+  if (!MAIL_ON) return NextResponse.json({ sent: false, reason: "email is not set up (RESEND_API_KEY or SMTP_URL, and MAIL_FROM)" });
   const digest = await buildDigest(settings.digest_lang ?? "no");
-  const sent = await sendMail(settings.contact_email, digest.subject, digest.text);
-  return NextResponse.json({ sent, to: settings.contact_email });
+  const result = await sendMail(settings.contact_email, digest.subject, digest.text);
+  return NextResponse.json({ sent: result.ok, to: settings.contact_email, ...(result.error ? { error: result.error } : {}) });
 }

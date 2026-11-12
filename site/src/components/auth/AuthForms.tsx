@@ -1,19 +1,19 @@
 "use client";
 import { keepValues } from "@/components/keepValues";
-import { useActionState, useState } from "react";
+import { useActionState, useId, useState } from "react";
 import { changePassword, choosePassword, login, requestReset, setup, updateProfile, type FormState } from "@/app/(moderne)/[locale]/login/actions";
 
 type L = "no" | "en";
 const S = {
   no: {
-    email: "E-post", password: "Passord", show: "Vis", hide: "Skjul", remember: "Husk meg på denne enheten", submit: "Logg inn", busy: "Logger inn",
+    email: "E-post", password: "Passord", show: "Vis", hide: "Skjul", pwWord: "passordet", remember: "Husk meg på denne enheten", submit: "Logg inn", busy: "Logger inn",
     forgot: "Glemt passord?", back: "Tilbake til innlogging", resetIntro: "Skriv inn e-postadressen du bruker i portalen.", resetSubmit: "Be om nytt passord", sending: "Sender",
     code: "Oppsettskode", codeHelp: "Står i serverloggen ved første oppstart, eller i miljøvariabelen KNOTTEN_SETUP_CODE.", name: "Fullt navn", newPw: "Nytt passord", confirm: "Gjenta passordet",
     pwHelp: "Minst 10 tegn. En setning du husker er bedre enn et kort, komplisert ord.", create: "Opprett og logg inn", choose: "Lagre passord og logg inn", current: "Nåværende passord",
     change: "Endre passord", save: "Lagre", org: "Organisasjon", saving: "Lagrer",
   },
   en: {
-    email: "Email", password: "Password", show: "Show", hide: "Hide", remember: "Remember me on this device", submit: "Log in", busy: "Logging in",
+    email: "Email", password: "Password", show: "Show", hide: "Hide", pwWord: "the password", remember: "Remember me on this device", submit: "Log in", busy: "Logging in",
     forgot: "Forgot your password?", back: "Back to log in", resetIntro: "Enter the email address you use in the portal.", resetSubmit: "Request a new password", sending: "Sending",
     code: "Setup code", codeHelp: "Printed in the server log at first start, or set in the KNOTTEN_SETUP_CODE environment variable.", name: "Full name", newPw: "New password", confirm: "Repeat the password",
     pwHelp: "At least 10 characters. A sentence you remember beats a short, complicated word.", create: "Create and log in", choose: "Save password and log in", current: "Current password",
@@ -30,25 +30,34 @@ function Message({ state }: { state: FormState }) {
   );
 }
 
-function Field({ label, children, help }: { label: string; children: React.ReactNode; help?: string }) {
+/** A plain field: the label names the input; a hint sits under it, outside the label, and describes it. */
+function Field({ label, children, help, helpId }: { label: string; children: React.ReactNode; help?: string; helpId?: string }) {
   return (
-    <label className="grid gap-1.5 text-[14px] font-medium text-ink">
-      {label}
-      {children}
-      {help && <span className="text-[12.5px] font-normal text-muted leading-snug">{help}</span>}
-    </label>
+    <div className="grid gap-1.5">
+      <label className="grid gap-1.5 text-[14px] font-medium text-ink">
+        {label}
+        {children}
+      </label>
+      {help && <span id={helpId} className="text-[12.5px] font-normal text-muted leading-snug">{help}</span>}
+    </div>
   );
 }
 
-function PasswordInput({ name, autoComplete, lang, required = true }: { name: string; autoComplete: string; lang: L; required?: boolean }) {
+/** A password with a show button. The label names only the input; the button and the hint are separate. */
+function PasswordField({ label, name, autoComplete, lang, help }: { label: string; name: string; autoComplete: string; lang: L; help?: string }) {
   const [shown, setShown] = useState(false);
+  const id = useId();
   return (
-    <span className="relative block">
-      <input className="input pr-16" name={name} type={shown ? "text" : "password"} autoComplete={autoComplete} required={required} minLength={name === "password" && autoComplete === "new-password" ? 10 : undefined} />
-      <button type="button" onClick={() => setShown((v) => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-full text-[12.5px] font-medium text-muted hover:text-ink hover:bg-[rgba(23,40,58,.06)]" aria-pressed={shown}>
-        {shown ? S[lang].hide : S[lang].show}
-      </button>
-    </span>
+    <div className="grid gap-1.5">
+      <label htmlFor={id} className="text-[14px] font-medium text-ink">{label}</label>
+      <span className="relative block">
+        <input id={id} className="input pr-16" name={name} type={shown ? "text" : "password"} autoComplete={autoComplete} required aria-describedby={help ? `${id}-help` : undefined} minLength={autoComplete === "new-password" ? 10 : undefined} />
+        <button type="button" onClick={() => setShown((v) => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-full text-[12.5px] font-medium text-muted hover:text-ink hover:bg-[rgba(23,40,58,.06)]" aria-controls={id}>
+          {shown ? S[lang].hide : S[lang].show}<span className="sr-only"> {S[lang].pwWord}</span>
+        </button>
+      </span>
+      {help && <span id={`${id}-help`} className="text-[12.5px] font-normal text-muted leading-snug">{help}</span>}
+    </div>
   );
 }
 
@@ -61,10 +70,11 @@ export function LoginForm({ locale, next }: { locale: L; next?: string }) {
     <form action={action} onSubmit={keepValues(action)} className="grid gap-5" noValidate={false}>
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="lang" value={locale} />
+      <input type="hidden" name="design" value="moderne" />
       <input type="hidden" name="next" value={next ?? ""} />
       <Message state={state} />
       <Field label={t.email}><input className="input" name="email" type="email" autoComplete="username" inputMode="email" required autoFocus /></Field>
-      <Field label={t.password}><PasswordInput name="password" autoComplete="current-password" lang={locale} /></Field>
+      <PasswordField label={t.password} name="password" autoComplete="current-password" lang={locale} />
       <div className="flex flex-wrap items-center justify-between gap-3 text-[14px]">
         <label className="inline-flex items-center gap-2 cursor-pointer select-none"><input type="checkbox" name="remember" className="w-4 h-4 accent-[var(--fjord)]" />{t.remember}</label>
         <button type="button" onClick={() => setReset(true)} className="text-fjord underline underline-offset-4 hover:text-ink">{t.forgot}</button>
@@ -81,6 +91,7 @@ function ResetForm({ locale, onBack }: { locale: L; onBack: () => void }) {
     <form action={action} onSubmit={keepValues(action)} className="grid gap-5">
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="lang" value={locale} />
+      <input type="hidden" name="design" value="moderne" />
       <p className="text-[15px] text-ink-2">{t.resetIntro}</p>
       <Message state={state} />
       {!state?.ok && <Field label={t.email}><input className="input" name="email" type="email" autoComplete="username" required autoFocus /></Field>}
@@ -93,20 +104,22 @@ function ResetForm({ locale, onBack }: { locale: L; onBack: () => void }) {
 export function SetupForm({ locale, email, name, devCode }: { locale: L; email: string; name: string; devCode?: string }) {
   const t = S[locale];
   const [state, action, pending] = useActionState(setup, undefined);
+  const codeHelp = useId();
   return (
     <form action={action} onSubmit={keepValues(action)} className="grid gap-5">
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="lang" value={locale} />
+      <input type="hidden" name="design" value="moderne" />
       <Message state={state} />
-      <Field label={t.code} help={devCode ? `${t.codeHelp} ${locale === "no" ? "Lokalt (utvikling)" : "Locally (development)"}: ${devCode}` : t.codeHelp}>
-        <input className="input font-mono tracking-[.12em] uppercase" name="code" autoComplete="one-time-code" required placeholder="XXXX-XXXX" />
+      <Field label={t.code} helpId={codeHelp} help={devCode ? `${t.codeHelp} ${locale === "no" ? "Lokalt (utvikling)" : "Locally (development)"}: ${devCode}` : t.codeHelp}>
+        <input className="input font-mono tracking-[.12em] uppercase" name="code" autoComplete="one-time-code" required placeholder="XXXX-XXXX" aria-describedby={codeHelp} />
       </Field>
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label={t.name}><input className="input" name="name" autoComplete="name" defaultValue={name} required /></Field>
         <Field label={t.email}><input className="input" name="email" type="email" autoComplete="username" defaultValue={email} required /></Field>
       </div>
-      <Field label={t.newPw} help={t.pwHelp}><PasswordInput name="password" autoComplete="new-password" lang={locale} /></Field>
-      <Field label={t.confirm}><PasswordInput name="confirm" autoComplete="new-password" lang={locale} /></Field>
+      <PasswordField label={t.newPw} help={t.pwHelp} name="password" autoComplete="new-password" lang={locale} />
+      <PasswordField label={t.confirm} name="confirm" autoComplete="new-password" lang={locale} />
       <button className="btn btn-plain w-full !py-3.5" type="submit" disabled={pending}>{pending ? `${t.saving} …` : t.create}</button>
     </form>
   );
@@ -119,12 +132,12 @@ export function ChoosePasswordForm({ locale, token, email }: { locale: L; token:
     <form action={action} onSubmit={keepValues(action)} className="grid gap-5">
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="lang" value={locale} />
+      <input type="hidden" name="design" value="moderne" />
       <input type="hidden" name="token" value={token} />
-      <input type="hidden" name="email" value={email} />
       <input type="text" name="username" autoComplete="username" defaultValue={email} className="sr-only" tabIndex={-1} aria-hidden readOnly />
       <Message state={state} />
-      <Field label={t.newPw} help={t.pwHelp}><PasswordInput name="password" autoComplete="new-password" lang={locale} /></Field>
-      <Field label={t.confirm}><PasswordInput name="confirm" autoComplete="new-password" lang={locale} /></Field>
+      <PasswordField label={t.newPw} help={t.pwHelp} name="password" autoComplete="new-password" lang={locale} />
+      <PasswordField label={t.confirm} name="confirm" autoComplete="new-password" lang={locale} />
       <button className="btn btn-plain w-full !py-3.5" type="submit" disabled={pending}>{pending ? `${t.saving} …` : t.choose}</button>
     </form>
   );
@@ -138,9 +151,9 @@ export function ChangePasswordForm({ locale, email }: { locale: L; email: string
       <input type="hidden" name="lang" value={locale} />
       <input type="text" name="username" autoComplete="username" defaultValue={email} className="sr-only" tabIndex={-1} aria-hidden readOnly />
       <Message state={state} />
-      <Field label={t.current}><PasswordInput name="current" autoComplete="current-password" lang={locale} /></Field>
-      <Field label={t.newPw} help={t.pwHelp}><PasswordInput name="password" autoComplete="new-password" lang={locale} /></Field>
-      <Field label={t.confirm}><PasswordInput name="confirm" autoComplete="new-password" lang={locale} /></Field>
+      <PasswordField label={t.current} name="current" autoComplete="current-password" lang={locale} />
+      <PasswordField label={t.newPw} help={t.pwHelp} name="password" autoComplete="new-password" lang={locale} />
+      <PasswordField label={t.confirm} name="confirm" autoComplete="new-password" lang={locale} />
       <button className="btn btn-sm justify-self-start" type="submit" disabled={pending}>{pending ? `${t.saving} …` : t.change}</button>
     </form>
   );

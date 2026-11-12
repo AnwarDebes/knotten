@@ -14,11 +14,21 @@ export const AREAS = ["investor", "resident", "energy", "project", "municipality
 export type Area = (typeof AREAS)[number];
 
 /**
+ * Two kinds of accounts. A "stakeholder" is someone the project invited into the portal (an investor, the
+ * municipality, a resident, the project group); every account made before buyers could sign up is one. A "member"
+ * is a buyer's own account, made on the sign-up page: it has no areas, never enters the portal, and lives on
+ * Min side instead.
+ */
+export type AccountKind = "stakeholder" | "member";
+
+/**
  * What the server knows about the person behind a valid session. `preview` is set while an
  * administrator looks at the portal as someone else (an investor, the municipality); the session
- * then carries only that person's access, and changes are switched off.
+ * then carries only that person's access, and changes are switched off. `kind` is "member" for a
+ * buyer's own account (then `verified` says whether the email address is confirmed); missing means a
+ * stakeholder.
  */
-export type Session = { id: string; email: string; name: string; role: AccountRole; areas: Area[]; plot?: string; org?: string; preview?: { id: string; realRole: AccountRole } };
+export type Session = { id: string; email: string; name: string; role: AccountRole; areas: Area[]; plot?: string; org?: string; kind?: AccountKind; verified?: boolean; preview?: { id: string; realRole: AccountRole } };
 
 /** The signed, httpOnly session cookie (set and checked in lib/auth.ts). */
 export const AUTH_COOKIE = "knotten_auth";
@@ -36,14 +46,15 @@ export const PREVIEWS = [
 
 /** The readable cookie the header uses to greet the person. It decides nothing; access is checked on the server. */
 export const WHO_COOKIE = "knotten_who";
-export type Who = { name: string; role: AccountRole };
+/** `kind` is "member" for a buyer's own account, so a header can link to Min side instead of the portal. */
+export type Who = { name: string; role: AccountRole; kind?: "member" };
 
 export function parseWho(raw: string | undefined): Who | null {
   if (!raw) return null;
   try {
     const w = JSON.parse(decodeURIComponent(raw)) as Partial<Who>;
     if (w.role !== "user" && w.role !== "admin" && w.role !== "superadmin") return null;
-    return { role: w.role, name: String(w.name ?? "").slice(0, 80) };
+    return { role: w.role, name: String(w.name ?? "").slice(0, 80), ...(w.kind === "member" ? { kind: "member" as const } : {}) };
   } catch {
     return null;
   }
@@ -51,9 +62,12 @@ export function parseWho(raw: string | undefined): Who | null {
 
 export const isAdmin = (s: Pick<Session, "role"> | null | undefined) => s?.role === "admin" || s?.role === "superadmin";
 
-/** Can this session open the area? Administrators open everything; a user opens the areas given to them. */
-export function can(s: Pick<Session, "role" | "areas"> | null | undefined, area: Area | "admin" | "superadmin") {
-  if (!s) return false;
+/**
+ * Can this session open the area? Administrators open everything; a user opens the areas given to them. A buyer's
+ * own account (a member) opens none, whatever else the record says.
+ */
+export function can(s: (Pick<Session, "role" | "areas"> & { kind?: AccountKind }) | null | undefined, area: Area | "admin" | "superadmin") {
+  if (!s || s.kind === "member") return false;
   if (area === "superadmin") return s.role === "superadmin";
   if (area === "admin") return isAdmin(s);
   return isAdmin(s) || s.areas.includes(area);

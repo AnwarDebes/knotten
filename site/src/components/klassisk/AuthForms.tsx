@@ -1,29 +1,41 @@
 "use client";
 import { keepValues } from "@/components/keepValues";
-import { useActionState, useState } from "react";
+import { useActionState, useId, useState } from "react";
 import { choosePassword, login, requestReset, setup, type FormState } from "@/app/(moderne)/[locale]/login/actions";
 
-/** The login forms in the Klassisk look. The same server actions as the Moderne design; Norwegian only. */
+/**
+ * The login forms in the Klassisk look. The same server actions as the Moderne design; Norwegian only. Every form
+ * says it is Klassisk (`design`), so password links and the logout lead back to the Klassisk pages.
+ */
 function Message({ state }: { state: FormState }) {
   if (!state?.error && !state?.ok) return null;
   return <div className={`full auth-msg${state.error ? " err" : " ok"}`} role={state.error ? "alert" : "status"}>{state.error ?? state.ok}</div>;
 }
 
+/** A password with a show button: the label names only the input; the button and the hint are separate. */
 function Password({ name, autoComplete, label, help }: { name: string; autoComplete: string; label: string; help?: string }) {
   const [shown, setShown] = useState(false);
+  const id = useId();
   return (
-    <label className="full">
-      {label}
+    <div className="full field">
+      <label htmlFor={id}>{label}</label>
       <span className="pw">
-        <input name={name} type={shown ? "text" : "password"} autoComplete={autoComplete} required />
-        <button type="button" onClick={() => setShown((v) => !v)} aria-pressed={shown}>{shown ? "Skjul" : "Vis"}</button>
+        <input id={id} name={name} type={shown ? "text" : "password"} autoComplete={autoComplete} required aria-describedby={help ? `${id}-help` : undefined} />
+        <button type="button" onClick={() => setShown((v) => !v)} aria-controls={id}>{shown ? "Skjul" : "Vis"}<span className="sr"> passordet</span></button>
       </span>
-      {help && <span className="small">{help}</span>}
-    </label>
+      {help && <span className="small" id={`${id}-help`}>{help}</span>}
+    </div>
   );
 }
 
 const HELP = "Minst 10 tegn. En setning du husker er bedre enn et kort, komplisert ord.";
+const Hidden = () => (
+  <>
+    <input type="hidden" name="locale" value="no" />
+    <input type="hidden" name="lang" value="no" />
+    <input type="hidden" name="design" value="klassisk" />
+  </>
+);
 
 export function KLoginForm({ next }: { next?: string }) {
   const [state, action, pending] = useActionState(login, undefined);
@@ -31,8 +43,7 @@ export function KLoginForm({ next }: { next?: string }) {
   if (reset) return <KResetForm onBack={() => setReset(false)} />;
   return (
     <form className="form auth-form" action={action} onSubmit={keepValues(action)}>
-      <input type="hidden" name="locale" value="no" />
-      <input type="hidden" name="lang" value="no" />
+      <Hidden />
       <input type="hidden" name="next" value={next ?? ""} />
       <Message state={state} />
       <label className="full">E-post<input type="email" name="email" autoComplete="username" inputMode="email" required autoFocus /></label>
@@ -50,8 +61,7 @@ function KResetForm({ onBack }: { onBack: () => void }) {
   const [state, action, pending] = useActionState(requestReset, undefined);
   return (
     <form className="form auth-form" action={action} onSubmit={keepValues(action)}>
-      <input type="hidden" name="locale" value="no" />
-      <input type="hidden" name="lang" value="no" />
+      <Hidden />
       <p className="full small">Skriv inn e-postadressen du bruker i portalen.</p>
       <Message state={state} />
       {!state?.ok && <label className="full">E-post<input type="email" name="email" autoComplete="username" required autoFocus /></label>}
@@ -63,15 +73,17 @@ function KResetForm({ onBack }: { onBack: () => void }) {
 
 export function KSetupForm({ email, name, devCode }: { email: string; name: string; devCode?: string }) {
   const [state, action, pending] = useActionState(setup, undefined);
+  const codeHelp = useId();
   return (
     <form className="form auth-form" action={action} onSubmit={keepValues(action)}>
-      <input type="hidden" name="locale" value="no" />
-      <input type="hidden" name="lang" value="no" />
+      <Hidden />
       <Message state={state} />
-      <label className="full">
-        Oppsettskode<input name="code" autoComplete="one-time-code" required placeholder="XXXX-XXXX" style={{ fontFamily: "ui-monospace, monospace", letterSpacing: ".12em", textTransform: "uppercase" }} />
-        <span className="small">Står i serverloggen ved første oppstart, eller i miljøvariabelen KNOTTEN_SETUP_CODE.{devCode ? ` Lokalt (utvikling): ${devCode}` : ""}</span>
-      </label>
+      <div className="full field">
+        <label>
+          Oppsettskode<input name="code" autoComplete="one-time-code" required placeholder="XXXX-XXXX" aria-describedby={codeHelp} style={{ fontFamily: "ui-monospace, monospace", letterSpacing: ".12em", textTransform: "uppercase" }} />
+        </label>
+        <span className="small" id={codeHelp}>Står i serverloggen ved første oppstart, eller i miljøvariabelen KNOTTEN_SETUP_CODE.{devCode ? ` Lokalt (utvikling): ${devCode}` : ""}</span>
+      </div>
       <label>Fullt navn<input name="name" autoComplete="name" defaultValue={name} required /></label>
       <label>E-post<input type="email" name="email" autoComplete="username" defaultValue={email} required /></label>
       <Password name="password" autoComplete="new-password" label="Nytt passord" help={HELP} />
@@ -85,10 +97,8 @@ export function KChoosePasswordForm({ token, email }: { token: string; email: st
   const [state, action, pending] = useActionState(choosePassword, undefined);
   return (
     <form className="form auth-form" action={action} onSubmit={keepValues(action)}>
-      <input type="hidden" name="locale" value="no" />
-      <input type="hidden" name="lang" value="no" />
+      <Hidden />
       <input type="hidden" name="token" value={token} />
-      <input type="hidden" name="email" value={email} />
       <input type="text" name="username" autoComplete="username" defaultValue={email} className="sr" tabIndex={-1} aria-hidden readOnly />
       <Message state={state} />
       <Password name="password" autoComplete="new-password" label="Nytt passord" help={HELP} />

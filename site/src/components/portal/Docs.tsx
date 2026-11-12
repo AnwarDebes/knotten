@@ -29,7 +29,7 @@ export function DocList({ items, session, locale, empty, highlight }: { items: D
               {d.description && <p className="text-[14px] text-ink-2 mt-1">{d.description}</p>}
               <div className="text-[12.5px] text-muted mt-1">
                 {prettySize(d.file.size, no)} · {when(d.uploaded, locale, false)} · {d.by}
-                {admin && <> · {no ? "synlig for" : "visible to"} {d.audience.map((a) => (a === "all" ? (no ? "alle med konto" : "everyone with an account") : AREA_LABEL[a][locale].toLowerCase())).join(", ")} · {d.downloads} {no ? "nedlastinger" : "downloads"}</>}
+                {admin && <> · {no ? "synlig for" : "visible to"} {d.audience.map((a) => (a === "all" ? (no ? "alle prosjektkontoer" : "every project account") : AREA_LABEL[a][locale].toLowerCase())).join(", ")} · {d.downloads} {no ? "nedlastinger" : "downloads"}</>}
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -70,7 +70,7 @@ export function UploadForm({ session, locale, audience = ["all"], category = "ot
         <legend className="font-medium text-ink-2 mb-1">{no ? "Hvem kan se dokumentet" : "Who can see it"}</legend>
         <div className="flex flex-wrap gap-x-4 gap-y-1.5">
           {options.map((a) => (
-            <label key={a} className="flex items-center gap-2 text-[14px]"><input type="checkbox" name="audience" value={a} defaultChecked={audience.includes(a)} />{a === "all" ? (no ? "Alle med konto" : "Everyone with an account") : AREA_LABEL[a][locale]}</label>
+            <label key={a} className="flex items-center gap-2 text-[14px]"><input type="checkbox" name="audience" value={a} defaultChecked={audience.includes(a)} />{a === "all" ? (no ? "Alle prosjektkontoer (ikke kjøperkontoer)" : "Every project account (not buyer accounts)") : AREA_LABEL[a][locale]}</label>
           ))}
         </div>
         <span className="text-[12.5px] text-muted">{no ? "Administratorer ser alltid alle dokumenter." : "Administrators always see every document."}</span>

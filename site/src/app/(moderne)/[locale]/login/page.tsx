@@ -11,6 +11,10 @@ import { LoginForm, SetupForm } from "@/components/auth/AuthForms";
 import ClearWho from "@/components/auth/ClearWho";
 import { logout } from "./actions";
 import { isLocale } from "@/lib/i18n";
+import { STORAGE } from "@/lib/server/kv";
+import { STORAGE_MESSAGE } from "@/lib/errors";
+import { MT } from "@/lib/member-text";
+import { minSidePath, registerPath } from "@/lib/member-paths";
 
 export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -18,18 +22,24 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 }
 
 /** The way into the project portal: one calm screen, the view from Knotten on one side, the form on the other. */
-export default async function Login({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ next?: string }> }) {
+export default async function Login({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ next?: string; slettet?: string; bekreftet?: string }> }) {
   const { locale: l } = await params;
   if (!isLocale(l)) notFound();
-  const { next } = await searchParams;
+  const { next, slettet, bekreftet } = await searchParams;
   const locale = (l === "en" ? "en" : "no") as Locale;
   const no = locale === "no";
   const other = no ? "en" : "no";
   const session = await getSession();
   if (session && next) redirect(safeNext(next, locale));
-  const firstRun = !session && (await needsSetup());
+  // without storage nobody can have an account yet: say so instead of showing forms that cannot work
+  const noStorage = !session && STORAGE === "temp";
+  const firstRun = !session && !noStorage && (await needsSetup());
   const code = firstRun ? await setupCode() : undefined;
   const owner = firstRun ? (await loadAuth()).accounts.find((a) => a.role === "superadmin") : undefined;
+  const m = MT[locale];
+  const member = session?.kind === "member";
+  // after a buyer deleted the account, or confirmed an address from a link while logged out
+  const notice = slettet ? m.deletedNotice : bekreftet ? m.confirmedNotice : "";
 
   return (
     <section className="grid lg:grid-cols-[1.08fr_1fr] min-h-[calc(100svh-37px)]">
@@ -59,12 +69,18 @@ export default async function Login({ params, searchParams }: { params: Promise<
               <div className="grid gap-6">
                 <div>
                   <h1 className="display text-[clamp(34px,4vw,46px)]">{no ? "Du er logget inn" : "You are logged in"}</h1>
-                  <p className="mt-3 text-[16px] text-ink-2">{session.name}, {ROLE_LABEL[session.role][locale].toLowerCase()}. {session.email}</p>
+                  <p className="mt-3 text-[16px] text-ink-2">{session.name}, {member ? (no ? "kjøperkonto" : "buyer account") : ROLE_LABEL[session.role][locale].toLowerCase()}. {session.email}</p>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <Link className="btn no-underline" href={`/${locale}/portal`}>{no ? "Gå til portalen" : "Go to the portal"}</Link>
-                  <form action={logout}><input type="hidden" name="to" value={`/${locale}/login`} /><button className="btn btn-ghost btn-plain" type="submit">{no ? "Logg ut" : "Log out"}</button></form>
+                  {member ? <Link className="btn no-underline" href={minSidePath("moderne", locale)}>{m.toMinSide}</Link> : <Link className="btn no-underline" href={`/${locale}/portal`}>{no ? "Gå til portalen" : "Go to the portal"}</Link>}
+                  <form action={logout}><input type="hidden" name="to" value={`/${locale}/login`} /><input type="hidden" name="locale" value={locale} /><input type="hidden" name="design" value="moderne" /><button className="btn btn-ghost btn-plain" type="submit">{no ? "Logg ut" : "Log out"}</button></form>
                 </div>
+              </div>
+            ) : noStorage ? (
+              <div className="grid gap-6">
+                <h1 className="display text-[clamp(36px,4.2vw,50px)]">{no ? "Logg inn" : "Log in"}</h1>
+                <div role="status" className="rounded-[12px] px-4 py-3 text-[14.5px] leading-snug bg-[rgba(197,75,48,.09)] text-[#8a2f1d] border border-[rgba(197,75,48,.25)]">{STORAGE_MESSAGE[locale]}</div>
+                <p className="text-[14px] text-muted">{no ? `Skriv til ${CONTACT.email} om du trenger noe fra prosjektet nå.` : `Write to ${CONTACT.email} if you need something from the project now.`}</p>
               </div>
             ) : firstRun ? (
               <div className="grid gap-7">
@@ -79,11 +95,16 @@ export default async function Login({ params, searchParams }: { params: Promise<
               <div className="grid gap-7">
                 <div>
                   <h1 className="display text-[clamp(36px,4.2vw,50px)]">{no ? "Logg inn" : "Log in"}</h1>
-                  <p className="mt-3 text-[15.5px] text-ink-2">{no ? "Prosjektportalen for Knotten. Bruk e-postadressen du ble invitert med." : "The project portal for Knotten. Use the email address you were invited with."}</p>
+                  <p className="mt-3 text-[15.5px] text-ink-2">{no ? "Min side for kjøpere, og prosjektportalen for dem prosjektet har invitert. Bruk e-postadressen kontoen er laget med." : "My page for buyers, and the project portal for the people the project has invited. Use the email address the account was made with."}</p>
                 </div>
+                {notice && <div role="status" className="rounded-[12px] px-4 py-3 text-[14.5px] leading-snug bg-[rgba(79,113,86,.12)] text-[#2f4f38] border border-[rgba(79,113,86,.25)]">{notice}</div>}
                 <LoginForm locale={locale} next={next} />
                 <div className="hairline" />
                 <p className="text-[14px] text-muted">
+                  {m.newHere} <Link href={registerPath("moderne", locale)} className="text-fjord">{m.createAccount}</Link>
+                  {no ? " for å følge tomtene og lagre husene du setter sammen." : " to follow the plots and save the houses you put together."}
+                </p>
+                <p className="text-[14px] text-muted -mt-4">
                   {no ? "Har du ikke tilgang ennå? " : "No access yet? "}
                   <Link href={`/${locale}/kontakt`} className="text-fjord">{no ? "Be om tilgang" : "Request access"}</Link>
                   {no ? `, eller skriv til ${CONTACT.email}.` : `, or write to ${CONTACT.email}.`}

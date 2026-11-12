@@ -10,6 +10,7 @@ import { DOC_CATEGORIES, THREAD_AREAS, docs, meters, parseMeterCsv, residents, r
 import { recordEvent } from "@/lib/server/stats";
 import { internalDoc } from "@/lib/docRegister";
 import { MAIL_ON, sendMail, siteOrigin } from "@/lib/server/mail";
+import { ProblemError } from "@/lib/errors";
 
 /**
  * What people do inside the portal: share documents, ask and answer, keep the project's task
@@ -24,10 +25,13 @@ const say = (fd: FormData, no: string, eng: string) => (en(fd) ? eng : no);
 const refresh = () => revalidatePath("/", "layout");
 const who = (s: Session) => s.name || s.email;
 
-/** The person acting, or null when they may not act here (no access, or an administrator's "view as" preview). */
+/**
+ * The person acting, or null when they may not act here (no access, an administrator's "view as" preview, or a
+ * buyer's own account, which acts on Min side and never in the portal).
+ */
 async function tryActor(area: Area | "admin" | "superadmin" | "any") {
   const s = await getSession();
-  if (!s || s.preview || (area !== "any" && !can(s, area))) return null;
+  if (!s || s.preview || s.kind === "member" || (area !== "any" && !can(s, area))) return null;
   return s;
 }
 
@@ -356,7 +360,7 @@ export async function clearReadings(fd: FormData) {
 /** An administrator looks at the portal as an investor, the municipality, a researcher, the project group or a resident. */
 export async function startPreview(fd: FormData) {
   const real = await getRealSession();
-  if (!real || !isAdmin(real)) throw new Error("forbidden");
+  if (!real || !isAdmin(real)) throw new ProblemError("forbidden");
   const id = str(fd, "id", 20);
   const p = PREVIEWS.find((x) => x.id === id);
   const locale = str(fd, "lang") === "en" ? "en" : "no";
