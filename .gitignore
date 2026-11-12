@@ -1,0 +1,46 @@
+# dependencies and build output
+node_modules/
+.next/
+out/
+build/
+coverage/
+*.tsbuildinfo
+site/next-env.d.ts
+.vercel/
+/package-lock.json
+/package.json
+
+# environment and keys
+.env*
+!.env.example
+*.pem
+
+# the site's runtime records: accounts, password hashes, uploads, statistics and the local CRM file
+site/data/private/
+site/data/leads.json
+site/data/crm.json
+site/data/*.tmp
+
+# logs and crash output
+*.log
+*.err
+*.mbtree
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# pipeline download cache (re-created by pipeline/twin_fetch.py)
+source/twin/
+
+# Blender files, if a scene is kept locally
+*.blend
+*.blend1
+*.blend@
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
