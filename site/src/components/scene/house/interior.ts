@@ -10,13 +10,14 @@
 import * as THREE from "three";
 import type { Plot } from "@/lib/types";
 import {
-  HOUSE, ITEMS, OPENINGS, PARTITIONS, ROOMS, STAIR, keep, levelZ, stairBottom, vaultAt,
+  HOUSE, ROOMS, STAIR, keep, levelZ, stairBottom, vaultAt,
   type DoorSpec, type HouseFit, type Item, type Level, type Opening, type Partition, type Rect, type RoomId, type Side,
 } from "@/lib/house/plan";
+import { MODEL_PLAN, type Plan } from "@/lib/house/variants";
 import { Builders, type Builder, type V3 } from "./kit";
 import { houseMatrix } from "./frame";
 import { FRAME, L, facing, holeOf } from "./exterior";
-import { drawItem } from "./furniture";
+import { drawItem, type ItemLook } from "./furniture";
 
 const H = HOUSE;
 const I = H.iw, J = H.id;
@@ -31,6 +32,7 @@ export type DoorPart = { id: string; level: Level; hinge: [number, number]; leaf
 export type Hotspot = { id: string; u: number; v: number; z: number; level: Level; room: RoomId };
 
 export type InteriorBuild = {
+  plan: Plan;
   geos: Record<string, THREE.BufferGeometry>;
   doors: DoorPart[];
   lamps: Lamp[];
@@ -42,9 +44,15 @@ export type InteriorBuild = {
   lower: boolean;
 };
 
+/**
+ * A buyer's choices for the inside (null and "model": as in the model): the plan's variant, wall and floor
+ * colours as #rrggbb, wider floor boards, kitchen fronts and worktop, the bathroom's tiles.
+ */
+export type InteriorLook = ItemLook & { plan: Plan; wall: string | null; floor: string | null; plank: "model" | "wide"; bath: "model" | "large" | "dark"; bathColour: string | null };
+
 /** Which face of a box in plan an inner surface belongs to, for picking floor colours by room. */
-export function roomAt(u: number, v: number, level: Level, lower: boolean): RoomId | null {
-  for (const r of ROOMS) {
+export function roomAt(u: number, v: number, level: Level, lower: boolean, rooms = ROOMS): RoomId | null {
+  for (const r of rooms) {
     if (r.level !== level || (!lower && r.lowerOnly) || r.id === "stair") continue;
     if (u >= r.rect.u0 - 1e-3 && u <= r.rect.u1 + 1e-3 && v >= r.rect.v0 - 1e-3 && v <= r.rect.v1 + 1e-3) return r.id;
   }
@@ -132,8 +140,8 @@ export function ceilingAt(u: number, v: number, level: Level): number {
  * The partition walls: both faces, the top, door openings with their frames (architraves) and leaves
  * (the leaves are DoorParts, drawn apart so they can swing).
  */
-function partitions(B: Builders, lower: boolean, walls: WalkWall[], doors: DoorPart[], m: THREE.Matrix4, seed: number) {
-  for (const p of PARTITIONS) {
+function partitions(B: Builders, lower: boolean, walls: WalkWall[], doors: DoorPart[], m: THREE.Matrix4, seed: number, plan: Plan = MODEL_PLAN, look?: InteriorLook) {
+  for (const p of plan.partitions) {
     if (!keep(p, lower)) continue;
     const r = p.rect;
     const alongU = r.u1 - r.u0 > r.v1 - r.v0;
@@ -146,10 +154,13 @@ function partitions(B: Builders, lower: boolean, walls: WalkWall[], doors: DoorP
     const faces: { c: number; n: V3 }[] = alongU ? [{ c: r.v0, n: [0, 0, 1] }, { c: r.v1, n: [0, 0, -1] }] : [{ c: r.u0, n: [-1, 0, 0] }, { c: r.u1, n: [1, 0, 0] }];
     for (const f of faces) {
       // which room this face looks into decides its finish (tiles only on the bathroom side)
-      const probe = alongU ? roomAt((s0 + s1) / 2, f.c + (f.n[2] < 0 ? 0.05 : -0.05), p.level, lower) : roomAt(f.c + (f.n[0] > 0 ? 0.05 : -0.05), (s0 + s1) / 2, p.level, lower);
+      const probe = alongU ? roomAt((s0 + s1) / 2, f.c + (f.n[2] < 0 ? 0.05 : -0.05), p.level, lower, plan.rooms) : roomAt(f.c + (f.n[0] > 0 ? 0.05 : -0.05), (s0 + s1) / 2, p.level, lower, plan.rooms);
       const wet = probe === "bath" || probe === "bath2";
       const b = wet ? B.get("tileWall") : B.get("wall");
       void wb;
+      // the buyer's tiles: 60 x 60 on the walls, or dark ones
+      const tiles = wet && look && look.bath !== "model";
+      if (tiles) { b.uvScale = look.bath === "large" ? [1, 0.5] : null; if (look.bathColour) b.tint(look.bathColour); }
       const pt = (s: number, z: number): V3 => (alongU ? L(s, f.c, z) : L(f.c, s, z));
       const xs = [s0, s1, ...holes.flatMap((h) => [h.s0, h.s1])].filter((x) => x >= s0 && x <= s1).sort((a, c) => a - c);
       for (let i = 0; i < xs.length - 1; i++) {
@@ -160,6 +171,7 @@ function partitions(B: Builders, lower: boolean, walls: WalkWall[], doors: DoorP
         const ta = top(a), tc = top(c);
         if (Math.max(ta, tc) - zb > 1e-3) gridFacing(b, f.n, pt(a, zb), pt(c, zb), pt(c, tc), pt(a, ta));
       }
+      if (tiles) { b.uvScale = null; b.tint("#ffffff"); }
     }
     // the door openings' linings, frames and leaves
     for (const d of p.doors) {
@@ -276,19 +288,29 @@ function stair(B: Builders, walls: WalkWall[], stairs: WalkStair[]) {
  * Build the inside of one house. Returns the meshes per material (with the light per vertex still to
  * be added, see lighting.ts), the inner doors, the lamps, and the walk's floors, walls and obstacles.
  */
-export function buildInterior(p: Plot, fit: HouseFit, index: number): InteriorBuild {
+export function buildInterior(p: Plot, fit: HouseFit, index: number, look?: InteriorLook): InteriorBuild {
   const lower = fit.lower;
+  const plan = look?.plan ?? MODEL_PLAN;
+  const shell = lower && plan.lower === "shell";
   const B = new Builders();
   const m = houseMatrix(p, fit.mirror);
   B.at(m);
   const walls: WalkWall[] = [], boxes: WalkBox[] = [], floors: WalkFloor[] = [], stairs: WalkStair[] = [], doors: DoorPart[] = [], lamps: Lamp[] = [], hotspots: Hotspot[] = [];
   const seed = index * 0.618;
-  const openings = OPENINGS.filter((o) => keep(o, lower));
+  const openings = plan.openings.filter((o) => keep(o, lower));
+  // the buyer's colours, as tints of the white the model draws its walls and oak floors in (the floor's colour
+  // relative to the model's oiled oak, the walls' relative to the model's white)
+  const wallTint = look?.wall ? ratio(look.wall, WALL_WHITE) : null;
+  const oakTint = look?.floor ? ratio(look.floor, OAK) : null;
+  if (wallTint) B.get("wall").tint(wallTint);
+  if (oakTint) B.get("oak").tint(oakTint);
+  // wider boards: the pattern drawn larger (2.4 m by 240 mm instead of 2.1 m by 180 mm)
+  if (look?.plank === "wide") B.get("oak").uvScale = [2.1 / 2.4, 0.18 / 0.24];
 
   // ---------------- floors, room by room (the stair opening left out of the hall and the living room)
   const floorKey = (r: { floor: string }) => (r.floor === "oak" ? "oak" : r.floor === "tile" ? "tileFloor" : "stoneFloor");
   const sOpen = { u0: STAIR.u0 - 0.06, u1: STAIR.u1 + 0.06, v0: STAIR.top, v1: STAIR.openTo + 0.06 };
-  for (const r of ROOMS) {
+  for (const r of plan.rooms) {
     if (!keep(r, lower) || r.id === "stair") continue;
     const z = levelZ(r.level);
     const rects: Rect[] = [];
@@ -303,8 +325,10 @@ export function buildInterior(p: Plot, fit: HouseFit, index: number): InteriorBu
         if (v1 < R.v1) rects.push({ u0: o.u0, u1: o.u1, v0: v1, v1: R.v1 });
       } else rects.push(R);
     } else rects.push(r.rect);
-    const fb = B.get(floorKey(r));
-    if (r.floor === "stone") fb.tint("#6d6a66"); else if (r.floor === "tile") fb.tint(r.id === "bath" || r.id === "bath2" ? "#77797a" : "#8a8a86");
+    // (the unfinished lower floor is a bare screed)
+    const screed = shell && r.level === "lower";
+    const fb = screed ? B.get("matte").tint("#8f8d88") : B.get(floorKey(r));
+    if (screed) { /* tinted above */ } else if (r.floor === "stone") fb.tint("#6d6a66"); else if (r.floor === "tile") fb.tint(r.id === "bath" || r.id === "bath2" ? (look?.bathColour ?? "#77797a") : "#8a8a86");
     for (const R of rects) {
       gridFacing(fb, [0, 1, 0], L(R.u0, R.v0, z), L(R.u1, R.v0, z), L(R.u1, R.v1, z), L(R.u0, R.v1, z), 0.25);
       floors.push({ level: r.level, rect: R, z, room: r.id });
@@ -324,14 +348,14 @@ export function buildInterior(p: Plot, fit: HouseFit, index: number): InteriorBu
     } else base(0, "main", { u0: -I, u1: I, v0: -J, v1: J });
   }
   // the floor runs on under the partitions and into the door openings (no gaps in the floor's light)
-  for (const p0 of PARTITIONS) {
+  for (const p0 of plan.partitions) {
     if (!keep(p0, lower)) continue;
     const z = levelZ(p0.level);
     const r = p0.rect;
     for (const d of p0.doors) {
       const alongU = r.u1 - r.u0 > r.v1 - r.v0;
       const R: Rect = alongU ? { u0: d.at - d.w / 2, u1: d.at + d.w / 2, v0: r.v0, v1: r.v1 } : { u0: r.u0, u1: r.u1, v0: d.at - d.w / 2, v1: d.at + d.w / 2 };
-      const room = ROOMS.find((x) => x.id === d.room)!;
+      const room = plan.rooms.find((x) => x.id === d.room)!;
       gridFacing(B.get(floorKey(room)), [0, 1, 0], L(R.u0, R.v0, z + 0.001), L(R.u1, R.v0, z + 0.001), L(R.u1, R.v1, z + 0.001), L(R.u0, R.v1, z + 0.001), 0.25);
       floors.push({ level: p0.level, rect: R, z, room: d.room });
     }
@@ -366,28 +390,33 @@ export function buildInterior(p: Plot, fit: HouseFit, index: number): InteriorBu
     } else innerWall(wall, side, -e, e, 0, topMain, holes);
     if (lower && (side !== "back")) {
       const s0 = side === "front" ? -I : H.lowerBack + H.wall;
+      // (the unfinished lower floor: bare boards, unpainted)
+      if (shell) wall.tint("#bdb9b0");
       innerWall(wall, side, s0, side === "front" ? I : J, H.lower, () => H.lowerCeiling, holesOn(side, "lower"));
+      if (shell) wall.tint(wallTint ?? "#ffffff");
     }
   }
   if (lower) {
     // the lower floor's back wall (cast against the ground), facing the rooms, with the opening to the stair shaft
     const v = H.lowerBack + H.wall;
+    if (shell) wall.tint("#a9a6a0");
     for (const [a, b] of [[-I, STAIR.u0], [STAIR.u1, I]]) gridFacing(wall, [0, 0, -1], L(a, v, H.lower), L(b, v, H.lower), L(b, v, H.lowerCeiling), L(a, v, H.lowerCeiling));
+    if (shell) wall.tint(wallTint ?? "#ffffff");
   }
   for (const o of openings) innerReveal(B, o);
 
   // ---------------- partitions, inner doors, the stair
-  partitions(B, lower, walls, doors, m, seed);
+  partitions(B, lower, walls, doors, m, seed, plan, look);
   if (lower) stair(B, walls, stairs);
 
   // skirting boards along the walls of every room (12 mm proud, 6 cm high)
   const skirt = B.get("paintwood").tint("#f1efe9");
-  for (const r of ROOMS) {
-    if (!keep(r, lower) || r.id === "stair") continue;
+  for (const r of plan.rooms) {
+    if (!keep(r, lower) || r.id === "stair" || (shell && r.level === "lower")) continue;
     const z = levelZ(r.level), R = r.rect;
     const doorGaps = (side: "u0" | "u1" | "v0" | "v1") => {
       const gaps: [number, number][] = [];
-      for (const p0 of PARTITIONS) for (const d of p0.doors) if (keep(p0, lower) && (d.room === r.id || roomOfOtherSide(p0, d) === r.id)) gaps.push([d.at - d.w / 2 - 0.07, d.at + d.w / 2 + 0.07]);
+      for (const p0 of plan.partitions) for (const d of p0.doors) if (keep(p0, lower) && (d.room === r.id || roomOfOtherSide(p0, d, plan) === r.id)) gaps.push([d.at - d.w / 2 - 0.07, d.at + d.w / 2 + 0.07]);
       for (const o of openings) if (o.room === r.id && (o.kind === "entry" || o.kind === "slide" || o.kind === "garden")) gaps.push([o.c - o.w / 2, o.c + o.w / 2]);
       void side;
       return gaps;
@@ -435,9 +464,9 @@ export function buildInterior(p: Plot, fit: HouseFit, index: number): InteriorBu
   }
 
   // ---------------- furniture, fixtures and installations
-  for (const item of ITEMS) {
+  for (const item of plan.items) {
     if (!keep(item, lower)) continue;
-    const r = drawItem(B, item, m, seed, lower, fit.mirror);
+    const r = drawItem(B, item, m, seed, lower, fit.mirror, look);
     if (r.lamp) lamps.push(...r.lamp);
     if (r.box) boxes.push(r.box);
     if (item.id) hotspots.push({ id: item.id, u: item.at[0], v: item.at[1], z: levelZ(item.level) + (r.hotZ ?? item.size[2] + (item.z ?? 0) + 0.15), level: item.level, room: item.room });
@@ -447,15 +476,26 @@ export function buildInterior(p: Plot, fit: HouseFit, index: number): InteriorBu
   hotspots.push({ id: "windows", u: 1.1, v: J - 0.15, z: 1.6, level: "main", room: "living" });
   hotspots.push({ id: "wall", u: -3.7, v: J - 0.1, z: 2.55, level: "main", room: "living" });
 
-  return { geos: B.geometries(), doors, lamps, walls, boxes, floors, stairs, hotspots, lower };
+  return { plan, geos: B.geometries(), doors, lamps, walls, boxes, floors, stairs, hotspots, lower };
+}
+
+/** The model's white walls and oiled oak (the swatches the configurator shows for them; the oak linear). */
+const WALL_WHITE = "#f7f6f2";
+const OAK = new THREE.Color(0.6, 0.39, 0.21);
+const _a = new THREE.Color(), _b = new THREE.Color();
+/** A colour as a tint of a reference (both linear): drawn over the reference's surface, it gives the colour. */
+function ratio(hex: string, ref: string | THREE.Color) {
+  _a.set(hex);
+  if (typeof ref === "string") _b.set(ref); else _b.copy(ref);
+  return new THREE.Color(_a.r / _b.r, _a.g / _b.g, _a.b / _b.b);
 }
 
 /** The room on the other side of a door in a partition (the room it does not open into). */
-function roomOfOtherSide(p: Partition, d: DoorSpec): RoomId | null {
+function roomOfOtherSide(p: Partition, d: DoorSpec, plan: Plan = MODEL_PLAN): RoomId | null {
   const r = p.rect;
   const alongU = r.u1 - r.u0 > r.v1 - r.v0;
   const lower = true;
-  const probe = (off: number) => (alongU ? roomAt(d.at, (r.v0 + r.v1) / 2 + off, p.level, lower) : roomAt((r.u0 + r.u1) / 2 + off, d.at, p.level, lower));
+  const probe = (off: number) => (alongU ? roomAt(d.at, (r.v0 + r.v1) / 2 + off, p.level, lower, plan.rooms) : roomAt((r.u0 + r.u1) / 2 + off, d.at, p.level, lower, plan.rooms));
   const a = probe(-0.15), b = probe(0.15);
   return a === d.room ? b : a;
 }

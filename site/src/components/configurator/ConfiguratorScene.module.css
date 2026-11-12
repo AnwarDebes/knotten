@@ -1,0 +1,96 @@
+/* The configurator's 3D frame: self-contained styles, so it sits the same way in both designs (each with its own tokens). */
+.root {
+  --ink: #17283a;
+  --ink-2: #3a4d60;
+  --muted: #5a6975;
+  --fjord: #2f6688;
+  --pine: #4f7156;
+  --amber: #e2a23b;
+  --amber-deep: #c5872a;
+  --line: rgba(23, 40, 58, 0.14);
+  --card: rgba(255, 255, 255, 0.94);
+  --radius: 18px;
+  --chip-radius: 999px;
+  margin: 0;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.root * { box-sizing: border-box; }
+
+/* Moderne: Geist body (inherited), 24 px frame, the stage's sky tone behind the canvas */
+.moderne { --radius: 24px; }
+/* Klassisk: its own navy and fjord, card radii 14 to 18 px */
+.klassisk {
+  --ink: #14263d;
+  --ink-2: #4a5a6e;
+  --muted: #5c6979;
+  --fjord: #2f5f85;
+  --pine: #3f6a52;
+  --amber: #e3a33b;
+  --amber-deep: #c98a26;
+  --line: #d4dce4;
+  --radius: 16px;
+}
+
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  min-height: 320px;
+  max-height: min(78svh, 820px);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #c3cfd8;
+  border: 1px solid var(--line);
+  transition: box-shadow 0.25s;
+}
+.stage canvas { display: block; }
+.focused { box-shadow: 0 0 0 2px var(--fjord); }
+.walk.focused { cursor: grab; }
+
+.poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; transition: opacity 0.6s; }
+
+.open { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; z-index: 2; background: linear-gradient(to top, rgba(23, 40, 58, 0.28), rgba(23, 40, 58, 0)); }
+.card { max-width: 40ch; background: var(--card); border-radius: 14px; padding: 16px 18px; box-shadow: 0 8px 26px rgba(23, 40, 58, 0.16); display: grid; gap: 10px; justify-items: center; text-align: center; color: var(--ink); }
+.card p { margin: 0; font-size: 14px; color: var(--ink-2); }
+
+/* the main action: amber, as the designs keep it for the sun and the primary call */
+.main {
+  appearance: none; border: 0; cursor: pointer; font: inherit; font-weight: 600; font-size: 16px;
+  background: var(--amber); color: #17283a; border-radius: var(--chip-radius); padding: 12px 24px; min-height: 44px;
+  transition: background 0.15s;
+}
+.main:hover { background: var(--amber-deep); }
+
+.status { position: absolute; left: 12px; bottom: 12px; background: var(--card); border-radius: var(--chip-radius); padding: 7px 13px; font-size: 13.5px; color: var(--ink-2); }
+.hint { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); background: rgba(23, 40, 58, 0.66); color: #fff; font-size: 12.5px; padding: 5px 11px; border-radius: var(--chip-radius); pointer-events: none; white-space: nowrap; max-width: calc(100% - 24px); overflow: hidden; text-overflow: ellipsis; }
+.chipNote { position: absolute; left: 12px; top: 12px; background: var(--card); color: var(--ink); font-size: 13px; padding: 6px 12px; border-radius: var(--chip-radius); pointer-events: none; }
+.where { position: absolute; left: 12px; top: 12px; background: var(--card); color: var(--ink); font-size: 14px; font-weight: 600; padding: 6px 12px; border-radius: var(--chip-radius); pointer-events: none; }
+.klassisk .where { font-family: var(--font-serif, inherit); font-weight: 400; font-size: 16px; }
+.note { position: absolute; right: 12px; top: 52px; max-width: min(320px, calc(100% - 24px)); background: var(--card); color: var(--ink); border-left: 3px solid var(--pine); font-size: 13px; padding: 8px 11px; border-radius: 10px; }
+
+.controls { position: absolute; left: 12px; right: 12px; bottom: 12px; display: grid; gap: 6px; justify-items: start; pointer-events: none; }
+.group { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px; background: var(--card); border-radius: 14px; box-shadow: 0 6px 20px rgba(23, 40, 58, 0.12); pointer-events: auto; max-width: 100%; }
+.chip {
+  appearance: none; font: inherit; font-size: 13.5px; line-height: 1.2; cursor: pointer;
+  border: 1px solid var(--line); background: #fff; color: var(--ink);
+  border-radius: var(--chip-radius); padding: 8px 12px; min-height: 36px;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+.chip:hover { border-color: var(--fjord); }
+.chip[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+.chip:focus-visible, .main:focus-visible { outline: 2px solid var(--fjord); outline-offset: 2px; }
+.walkHint { margin: 0; background: var(--card); color: var(--ink-2); font-size: 12.5px; padding: 5px 10px; border-radius: 10px; pointer-events: none; max-width: 100%; }
+
+@media (max-width: 640px) {
+  .stage { aspect-ratio: 4 / 5; min-height: 300px; }
+  .chip { font-size: 13px; padding: 7px 10px; }
+  .note { top: auto; bottom: 64px; right: 12px; left: 12px; max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .poster, .stage, .chip, .main { transition: none; }
+}
+
+.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }

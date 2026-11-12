@@ -27,6 +27,9 @@ import { walkState, type WalkStart } from "./house/walkState";
 import { forestCull, TwinForest } from "./twin/TwinForest";
 import { EnergyOverlay } from "./Overlay";
 import { ViewCorridor } from "./ViewCorridor";
+import type { HouseOptions } from "@/lib/house/options";
+import type { CustomBuild, SiteData } from "./house/custom";
+import { builtGroundHeight } from "./twin/twinData";
 
 // The heavy parts of the model, memoised: the page re-renders the scene for every change of its own state (each move of
 // the wipe, each hour of a playback), and these parts take none of it (their props stay the same), so React skips them.
@@ -74,6 +77,25 @@ export type SceneProps = {
   locale?: "no" | "en";
   /** On foot: start at a house's door, on its terrace or in its living room, and walk anywhere. */
   walk?: { plot: string; start: WalkStart } | null;
+  /** The house configurator: one plot's house with the buyer's choices, seen from round it, from the plot, or inside. */
+  configure?: ConfigureScene | null;
+};
+
+/** The configurator's camera places round the house: from the garden, at the entrance, from the air, by the terrace. */
+export type ConfigurePreset = "garden" | "entrance" | "air" | "terrace";
+
+/**
+ * The configure mode. `plot` null shows the whole field. `view`: "exterior" orbits the house (no pan, 6 to 60 m,
+ * never under the ground), "plot" stands on the plot looking at the view as the plot pages do, "interior" walks
+ * in its rooms. `site` (roads, footpath, boundary) lets a carport be placed; `onBuild` hears what was built.
+ */
+export type ConfigureScene = {
+  plot: string | null;
+  options: HouseOptions;
+  view: "exterior" | "plot" | "interior";
+  preset: ConfigurePreset;
+  site: SiteData | null;
+  onBuild?: (b: CustomBuild | null) => void;
 };
 
 type Goal = { pos: THREE.Vector3; target: THREE.Vector3; fov: number; min: number; max: number; polarMin: number; polarMax: number };
@@ -171,6 +193,78 @@ function CameraRig({ preset, plot, inside, controls, presets, idle, frozen }: { 
       c.autoRotateSpeed = 0.16;
       if (c.autoRotate) c.update();
     }
+  });
+  return null;
+}
+
+/** The orbit's target (the house's centre, 2.5 m over the floor) and a preset's camera place, in scene axes. */
+export function configureGoal(plot: Plot, preset: ConfigurePreset, aspect = 1.6) {
+  const f = (plot.house.facing_deg * Math.PI) / 180, ca = Math.cos(f), sa = Math.sin(f);
+  const target = new THREE.Vector3(plot.local.x, plot.local.z_floor + 2.5, -plot.local.y);
+  // (direction in the house's frame: u along the house, v towards the view; elevation; distance)
+  const P: Record<ConfigurePreset, [number, number, number, number]> = {
+    garden: [0.42, 0.91, 11, 21],
+    entrance: [0.45, -0.89, 15, 16],
+    air: [-0.5, 0.86, 48, 40],
+    terrace: [-0.55, 0.83, -5, 11.5],
+  };
+  const [du, dv, el, d0] = P[preset];
+  // a tall (portrait) picture keeps the house's width in view: the camera steps back (within the orbit's 60 m)
+  const dist = Math.min(60, d0 * Math.max(1, 1.5 / aspect));
+  const l = Math.hypot(du, dv);
+  const dx = (du * ca + dv * sa) / l, dz = (du * sa - dv * ca) / l;
+  const e = (el * Math.PI) / 180;
+  const pos = new THREE.Vector3(target.x + dx * Math.cos(e) * dist, target.y + Math.sin(e) * dist, target.z + dz * Math.cos(e) * dist);
+  return { pos, target };
+}
+
+/**
+ * The configurator's camera round the house: a short flight to each preset, then an orbit about the house's
+ * centre (6 to 60 m, from a little below the centre's height to nearly straight down, no pan) that never goes under the ground.
+ */
+function ConfigureRig({ plot, preset, controls }: { plot: Plot; preset: ConfigurePreset; controls: React.RefObject<OrbitControlsImpl | null> }) {
+  const { camera } = useThree();
+  const anim = useRef<{ from: THREE.Vector3; fromT: THREE.Vector3; fromFov: number; to: THREE.Vector3; toT: THREE.Vector3; t0: number; dur: number } | null>(null);
+  const first = useRef(true);
+  useEffect(() => {
+    const c = controls.current;
+    const cam = camera as THREE.PerspectiveCamera;
+    const g = configureGoal(plot, preset, cam.aspect);
+    if (c) { c.minDistance = 1; c.maxDistance = 1e6; c.minPolarAngle = 0; c.maxPolarAngle = Math.PI; }
+    // the first view, and every view with reduced motion, is a cut rather than a flight
+    if (first.current || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      first.current = false;
+      cam.position.copy(g.pos);
+      cam.fov = 42;
+      cam.updateProjectionMatrix();
+      if (c) c.target.copy(g.target);
+      anim.current = null;
+    } else {
+      const far = cam.position.distanceTo(g.pos);
+      anim.current = { from: cam.position.clone(), fromT: c ? c.target.clone() : g.target.clone(), fromFov: cam.fov, to: g.pos, toT: g.target, t0: performance.now(), dur: Math.min(2600, 900 + far * 6) };
+    }
+    if (c && !anim.current) { c.minDistance = 6; c.maxDistance = 60; c.minPolarAngle = 0.12; c.maxPolarAngle = Math.PI / 2 + 0.2; c.update(); }
+  }, [plot, preset, camera, controls]);
+  useFrame(() => {
+    const c = controls.current;
+    const cam = camera as THREE.PerspectiveCamera;
+    const a = anim.current;
+    if (a) {
+      const t = Math.min(1, (performance.now() - a.t0) / a.dur);
+      const e = 1 - Math.pow(1 - t, 3);
+      cam.position.lerpVectors(a.from, a.to, e);
+      cam.fov = a.fromFov + (42 - a.fromFov) * e;
+      cam.updateProjectionMatrix();
+      if (c) { c.target.lerpVectors(a.fromT, a.toT, e); c.update(); } else cam.lookAt(a.toT);
+      if (t >= 1) {
+        anim.current = null;
+        if (c) { c.minDistance = 6; c.maxDistance = 60; c.minPolarAngle = 0.12; c.maxPolarAngle = Math.PI / 2 + 0.2; c.update(); }
+      }
+      return;
+    }
+    // never under the ground: on a slope the orbit can swing the camera into the hill behind the house
+    const ground = builtGroundHeight(cam.position.x, -cam.position.z);
+    if (cam.position.y < ground + 1.4) { cam.position.y = ground + 1.4; c?.update(); }
   });
   return null;
 }
@@ -295,7 +389,30 @@ export default function KnottenScene(props: SceneProps) {
   const month = dateOverride?.month ?? props.month;
   const hour = dateOverride?.hour ?? props.hour;
   const weather = dateOverride?.clouds !== undefined ? { clouds: dateOverride.clouds, wind: 2 } : props.weather;
-  const { state, wipe, plots, selectedPlot, inside = false, preset, frame, outage, quality = "full", paused = false, interactive = true, calm = false, onPick, onReady, onContextLost } = props;
+  const { state, wipe, plots, inside = false, preset, frame, outage, quality = "full", paused = false, interactive = true, calm = false, onPick, onContextLost } = props;
+  // ---- the configure mode: the configured house's plot, which of its views, and when it is on screen
+  const cfg = props.configure ?? null;
+  const cfgIndex = cfg?.plot ? plots.findIndex((p) => p.id === cfg.plot) : -1;
+  const cfgPlot = cfgIndex >= 0 ? plots[cfgIndex] : null;
+  const cfgOrbit = !!cfgPlot && cfg?.view === "exterior";
+  const selectedPlot = cfg ? (cfgPlot && cfg.view === "plot" ? cfgPlot.id : null) : props.selectedPlot;
+  const cfgWalk = useMemo(() => (cfgPlot && cfg?.view === "interior" ? { plot: cfgPlot.id, start: "living" as WalkStart } : null), [cfgPlot, cfg?.view]);
+  const cfgOptions = cfg?.options, cfgSite = cfg?.site ?? null, cfgOnBuild = cfg?.onBuild;
+  const customReq = useMemo(() => (cfgOptions && cfgIndex >= 0 ? { index: cfgIndex, options: cfgOptions, site: cfgSite } : null), [cfgOptions, cfgIndex, cfgSite]);
+  const [custom, setCustom] = useState<{ req: typeof customReq; build: CustomBuild | null } | null>(null);
+  const onCustom = useCallback((b: CustomBuild | null) => { setCustom({ req: customReq, build: b }); cfgOnBuild?.(b); }, [customReq, cfgOnBuild]);
+  const customBuild = custom && custom.req === customReq ? custom.build : null;
+  // in the configure mode the model says it is ready once its first frame shows the configured house
+  const [warmed, setWarmed] = useState(false);
+  const onWarm = useCallback(() => setWarmed(true), []);
+  const onReady = cfg ? onWarm : props.onReady;
+  const told = useRef(false);
+  const propsOnReady = props.onReady;
+  useEffect(() => {
+    if (!cfg || told.current || !warmed || !custom || custom.req !== customReq) return;
+    told.current = true;
+    propsOnReady?.();
+  }, [cfg, warmed, custom, customReq, propsOnReady]);
   const controls = useRef<OrbitControlsImpl | null>(null);
   const clearedGroup = useRef<THREE.Group>(null);
   const proposalGroup = useRef<THREE.Group>(null);
@@ -313,7 +430,7 @@ export default function KnottenScene(props: SceneProps) {
   const showOverlay = state === "lived" && !!frame;
   // on foot: the house being walked through (it changes as the visitor walks up to another one)
   const [walkOverride, setWalkOverride] = useState<{ plot: string; start: WalkStart } | null | undefined>(undefined);
-  const walkProp = walkOverride !== undefined ? walkOverride : props.walk;
+  const walkProp = walkOverride !== undefined ? walkOverride : cfg ? cfgWalk : props.walk;
   const walking = !!walkProp;
   const [visitIndex, setVisitIndex] = useState<number>(-1);
   const walkPlot = walkProp?.plot ?? null;
@@ -349,10 +466,10 @@ export default function KnottenScene(props: SceneProps) {
         <Forest ref={clearedGroup} month={month} quality={quality} shadows={shadows} />
         <group ref={proposalGroup}>
           <group onClick={(e) => { const a = (e.object as THREE.Mesh).geometry?.getAttribute("aHouse"); const idx = a && e.face ? Math.round(a.getX(e.face.a)) : -1; if (idx >= 0 && plots[idx]) { e.stopPropagation(); onPick?.(plots[idx].id); } }}>
-            <Houses plots={plots} shadows={shadows} modules={modulesFor(PV_KWP_PER_HOME)} registry={registry} visit={visitId} />
+            <Houses plots={plots} shadows={shadows} modules={modulesFor(props.sim?.kwp ?? PV_KWP_PER_HOME)} registry={registry} visit={visitId} custom={customReq} onCustom={cfg ? onCustom : undefined} />
           </group>
           <PlannedBuildings />
-          {interiorIndex >= 0 && <HouseInterior plots={plots} index={interiorIndex} locale={props.locale ?? "no"} />}
+          {interiorIndex >= 0 && <HouseInterior plots={plots} index={interiorIndex} locale={props.locale ?? "no"} custom={customBuild} />}
           {props.sim ? (
             <SimLayer plots={plots} frame={props.sim} park={props.simPark ?? null} showPark={!!props.showPark} showWind={!!props.showWind} />
           ) : showOverlay && frame && <EnergyOverlay frame={frame} plots={plots} outage={!!outage} registry={registry} />}
@@ -365,9 +482,10 @@ export default function KnottenScene(props: SceneProps) {
       <ContextGuard onLost={onContextLost} />
       <DepthRange walking={walking || inside} />
       <DebugHook controls={controls} setDate={setDateOverride} setWalk={setWalkOverride} groups={{ cleared: clearedGroup, proposal: proposalGroup, today: todayGround, graded: gradedGround }} />
-      <OrbitControls ref={controls} makeDefault enabled={!walking} enableDamping dampingFactor={0.08} enablePan={!plot && interactive} enableZoom={interactive && !inside} enableRotate={interactive} />
+      <OrbitControls ref={controls} makeDefault enabled={!walking} enableDamping dampingFactor={0.08} enablePan={!plot && !cfgOrbit && interactive} enableZoom={interactive && !inside} enableRotate={interactive} />
       <TouchScroll interactive={interactive} />
-      <CameraRig preset={preset} plot={plot} inside={inside} controls={controls} presets={presets} idle={!interactive && !calm} frozen={walking} />
+      <CameraRig preset={preset} plot={plot} inside={inside} controls={controls} presets={presets} idle={!interactive && !calm && !cfg} frozen={walking || cfgOrbit} />
+      {cfgOrbit && cfgPlot && cfg && <ConfigureRig plot={cfgPlot} preset={cfg.preset} controls={controls} />}
       <StateRenderer state={state} wipe={wipe} cleared={clearedGroup} proposal={proposalGroup} ground={{ today: todayGround, graded: gradedGround }} warm={warm} />
     </Canvas>
     </SceneBoundary>

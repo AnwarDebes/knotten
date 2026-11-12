@@ -51,7 +51,7 @@ export const PITCH_DEG = (Math.atan((HOUSE.ridge - HOUSE.eave) / HOUSE.hd) * 180
 
 export type Rect = { u0: number; u1: number; v0: number; v1: number };
 
-export type RoomId = "tech" | "bath" | "hall" | "bedroom" | "living" | "family" | "bed2" | "bed3" | "bath2" | "store" | "stair";
+export type RoomId = "tech" | "bath" | "hall" | "bedroom" | "living" | "family" | "bed2" | "bed3" | "bath2" | "store" | "stair" | "hall2";
 export type Room = {
   id: RoomId;
   level: Level;
@@ -163,7 +163,8 @@ export type ItemKind =
   | "kitchenBase" | "kitchenTall" | "island" | "stool" | "pendant" | "shelf"
   | "table" | "chair" | "sofa" | "armchair" | "coffeetable" | "rug" | "sideboard" | "bookcase" | "floorlamp" | "plant" | "art"
   | "bed" | "nightstand" | "wardrobe" | "desk" | "officechair" | "bench" | "hooks" | "coatcupboard"
-  | "energyscreen" | "thermostat" | "smoke" | "extinguisher" | "downlight" | "skis" | "boxes" | "tv";
+  | "energyscreen" | "thermostat" | "smoke" | "extinguisher" | "downlight" | "skis" | "boxes" | "tv"
+  | "stove";
 
 /** `z` is the height of the item's bottom above its floor; `ceil` hangs it from the ceiling above it. */
 export type Item = { kind: ItemKind; level: Level; room: RoomId; at: [number, number]; rot: 0 | 1 | 2 | 3; size: [number, number, number]; z?: number; ceil?: boolean; variant?: number; lowerOnly?: boolean; oneLevelOnly?: boolean; id?: string };

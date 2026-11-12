@@ -44,6 +44,8 @@ export class Builder {
   nm = new THREE.Matrix3();
   flip = false;
   color = new THREE.Color(1, 1, 1);
+  /** UVs scaled for the parts that follow (a pattern drawn larger, such as wider floor boards); null: in metres */
+  uvScale: [number, number] | null = null;
 
   /** A per-vertex attribute every vertex gets (for example the house index), with its current value. */
   attr(name: string, value: number[]) {
@@ -75,7 +77,8 @@ export class Builder {
     _n.set(nx, ny, nz).applyMatrix3(this.nm).normalize();
     this.pos.push3(_v.x, _v.y, _v.z);
     this.nrm.push3(_n.x, _n.y, _n.z);
-    this.uv.push2(u, v);
+    if (this.uvScale) this.uv.push2(u * this.uvScale[0], v * this.uvScale[1]);
+    else this.uv.push2(u, v);
     this.col.push3(this.color.r, this.color.g, this.color.b);
     for (const e of this.extra.values()) for (const k of e.value) e.buf.push1(k);
     return this.count() - 1;

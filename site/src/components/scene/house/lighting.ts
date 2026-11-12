@@ -13,7 +13,7 @@
  */
 import * as THREE from "three";
 import type { Plot } from "@/lib/types";
-import { HOUSE, OPENINGS, ROOMS, STAIR, holeRect, keep, vaultAt, type HouseFit, type Level, type RoomId } from "@/lib/house/plan";
+import { HOUSE, ROOMS, STAIR, holeRect, keep, vaultAt, type HouseFit, type Level, type Room, type RoomId } from "@/lib/house/plan";
 import { fromScene } from "./frame";
 import { roomAt, type InteriorBuild, type Lamp } from "./interior";
 
@@ -22,10 +22,17 @@ type Aperture = { q: P3[]; tau: number; area: number };
 
 const I = HOUSE.iw, J = HOUSE.id;
 const RHO = 0.55;   // average reflectance of the room (white walls and ceiling, oak floor)
-const SENSOR = new Set<string>(["tech", "bath", "bath2", "hall", "store", "stair"]);
+const SENSOR = new Set<string>(["tech", "bath", "bath2", "hall", "store", "stair", "hall2"]);
+
+/**
+ * The room's surfaces as the buyer chose them: `rho` gives a zone's average reflectance (the model's
+ * white walls and oak floor give RHO), so the light bounced round a darker room is less; `lowerShade`
+ * scales the sky the lower floor's openings see past a deeper terrace above them.
+ */
+export type LightLook = { rho?: (zone: RoomId) => number; lowerShade?: number };
 
 /** Corners of an opening's aperture on the inner face of its wall, in the house frame. */
-function apertureOf(o: (typeof OPENINGS)[number]): P3[] {
+function apertureOf(o: Parameters<typeof holeRect>[0]): P3[] {
   const h = holeRect(o);
   if (o.kind === "entry") {
     // only the door's glass strip lets light in
@@ -79,15 +86,15 @@ export function formFactor(n: P3, poly: P3[]) {
 /** The light zones: rooms, with the hall open to the living room and the stair between two floors. */
 type Zone = RoomId;
 
-function zoneOf(u: number, v: number, z: number, lower: boolean): { zone: Zone; level: Level } {
+function zoneOf(u: number, v: number, z: number, lower: boolean, rooms: Room[] = ROOMS): { zone: Zone; level: Level } {
   const level: Level = lower && z < -0.32 ? "lower" : "main";
   // the stair shaft below the main floor
   if (lower && z < -0.05 && u > STAIR.u0 - 0.02 && u < STAIR.u1 + 0.02 && v < HOUSE.lowerBack + HOUSE.wall) return { zone: "stair", level: "lower" };
-  const r = roomAt(u, v, level, lower);
+  const r = roomAt(u, v, level, lower, rooms);
   if (r) return { zone: r, level };
   // on a wall or just outside a room's rectangle: the nearest room
   let best: Zone = level === "main" ? "living" : "family", bd = 1e9;
-  for (const R of ROOMS) {
+  for (const R of rooms) {
     if (R.level !== level || (!lower && R.lowerOnly) || R.id === "stair") continue;
     const du = Math.max(R.rect.u0 - u, 0, u - R.rect.u1), dv = Math.max(R.rect.v0 - v, 0, v - R.rect.v1);
     const d = Math.hypot(du, dv);
@@ -97,8 +104,8 @@ function zoneOf(u: number, v: number, z: number, lower: boolean): { zone: Zone; 
 }
 
 /** Surface area of a zone (floor, ceiling, walls), for the light bounced round it. */
-function zoneArea(z: Zone, lower: boolean) {
-  const R = ROOMS.find((r) => r.id === z);
+export function zoneArea(z: Zone, lower: boolean, rooms: Room[] = ROOMS) {
+  const R = rooms.find((r) => r.id === z);
   if (!R) return 30;
   const w = R.rect.u1 - R.rect.u0, d = R.rect.v1 - R.rect.v0;
   const h = R.ceiling === "vault" ? (vaultAt(0) + vaultAt(J)) / 2 : R.level === "lower" ? HOUSE.lowerCeiling - HOUSE.lower : HOUSE.flat;
@@ -106,20 +113,22 @@ function zoneArea(z: Zone, lower: boolean) {
   return 2 * w * d + 2 * (w + d) * h;
 }
 
-export function bakeLight(build: InteriorBuild, p: Plot, fit: HouseFit) {
+export function bakeLight(build: InteriorBuild, p: Plot, fit: HouseFit, look?: LightLook) {
   const lower = build.lower;
   const t0 = performance.now();
+  const rooms = build.plan.rooms;
+  const rhoOf = (z: Zone) => look?.rho?.(z) ?? RHO;
   // ---- apertures per zone
   const aps = new Map<Zone, Aperture[]>();
   const add = (z: Zone, a: Aperture) => { const l = aps.get(z) ?? []; l.push(a); aps.set(z, l); };
-  for (const o of OPENINGS) {
+  for (const o of build.plan.openings) {
     if (!keep(o, lower)) continue;
     const q = apertureOf(o);
     const area = len(cross(sub(q[1], q[0]), sub(q[3], q[0])));
     // triple glazing passes about 70 % of daylight; frosted glass less; under the terrace the lower
     // floor's openings see the deck above them rather than the sky
     let tau = o.frosted ? 0.45 : 0.62;
-    if (o.level === "lower") tau *= 0.55;
+    if (o.level === "lower") { tau *= 0.55; if (look?.lowerShade !== undefined) tau *= look.lowerShade; }
     add(o.room as Zone, { q, tau, area });
   }
   // the hall sees the living room through its open front: a "window" onto a room about a tenth as bright as the sky
@@ -133,16 +142,17 @@ export function bakeLight(build: InteriorBuild, p: Plot, fit: HouseFit) {
   const irc = new Map<Zone, number>();
   for (const [z, list] of aps) {
     const flux = list.reduce((s, a) => s + a.tau * a.area * 0.5, 0);
-    irc.set(z, (flux * RHO) / (zoneArea(z, lower) * (1 - RHO)));
+    const rho = rhoOf(z);
+    irc.set(z, (flux * rho) / (zoneArea(z, lower, rooms) * (1 - rho)));
   }
   // ---- lamps per zone, and their bounce
   const lampsIn = new Map<Zone, Lamp[]>();
   for (const l of build.lamps) {
-    const z = zoneOf(l.u, l.v, l.z, lower).zone;
+    const z = zoneOf(l.u, l.v, l.z, lower, rooms).zone;
     const arr = lampsIn.get(z) ?? []; arr.push(l); lampsIn.set(z, arr);
   }
   const lampBounce = new Map<Zone, number>();
-  for (const [z, ls] of lampsIn) lampBounce.set(z, (ls.reduce((s, l) => s + l.power, 0) * 2.2 * RHO) / (zoneArea(z, lower) * (1 - RHO)));
+  for (const [z, ls] of lampsIn) { const rho = rhoOf(z); lampBounce.set(z, (ls.reduce((s, l) => s + l.power, 0) * 2.2 * rho) / (zoneArea(z, lower, rooms) * (1 - rho))); }
   // lamps that reach a zone: its own, and a little of the neighbours'
   const lampsFor = (z: Zone): [Lamp, number][] => {
     const own = (lampsIn.get(z) ?? []).map((l) => [l, 1] as [Lamp, number]);
@@ -167,7 +177,7 @@ export function bakeLight(build: InteriorBuild, p: Plot, fit: HouseFit) {
       const dn = -nz;
       const hn: P3 = [(nx * ca - dn * sa) * ms, nx * sa + dn * ca, ny];
       const pt: P3 = [hp.u, hp.v, hp.z];
-      const probe = zoneOf(hp.u + hn[0] * 0.06, hp.v + hn[1] * 0.06, hp.z + hn[2] * 0.06, lower);
+      const probe = zoneOf(hp.u + hn[0] * 0.06, hp.v + hn[1] * 0.06, hp.z + hn[2] * 0.06, lower, rooms);
       const z = probe.zone;
       // daylight
       let s = irc.get(z) ?? 0.004;
@@ -192,7 +202,7 @@ export function bakeLight(build: InteriorBuild, p: Plot, fit: HouseFit) {
       const hz = hp.z - floorZ;
       let o = 1;
       if (isShell) {
-        const room = ROOMS.find((r) => r.id === z);
+        const room = rooms.find((r) => r.id === z);
         const R = room?.rect;
         if (hn[2] > 0.7 && R) {
           // floor: darker towards the walls and under furniture

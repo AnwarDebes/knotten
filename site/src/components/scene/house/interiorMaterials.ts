@@ -14,7 +14,8 @@
  * the floor exactly where the window throws it, and no light leaks through a wall.
  */
 import * as THREE from "three";
-import { HOUSE, PARTITIONS, OPENINGS, keep, levelZ, holeRect } from "@/lib/house/plan";
+import { HOUSE, keep, levelZ, holeRect } from "@/lib/house/plan";
+import { MODEL_PLAN, type Plan } from "@/lib/house/variants";
 import { twinUniforms } from "../twin/materials";
 
 export const MAX_WIN = 24;
@@ -36,23 +37,25 @@ export const interiorUniforms = {
   uPart: { value: Array.from({ length: MAX_PART }, () => new THREE.Vector4()) },      // u0, u1, v0, v1
   uPartZ: { value: Array.from({ length: MAX_PART }, () => new THREE.Vector2()) },     // z0, z1
   uLowerOn: { value: 0 },
+  uTerraceDepth: { value: HOUSE.terraceDepth },                                       // the deck over the lower floor's openings
 };
 
-/** Fill the uniforms for one house: its frame, its openings and its inner walls. */
-export function setInteriorHouse(x: number, y: number, floorZ: number, facingDeg: number, mirror: boolean, lower: boolean) {
+/** Fill the uniforms for one house: its frame, its openings and its inner walls (of the plan's variant). */
+export function setInteriorHouse(x: number, y: number, floorZ: number, facingDeg: number, mirror: boolean, lower: boolean, plan: Plan = MODEL_PLAN) {
   const f = (facingDeg * Math.PI) / 180;
   interiorUniforms.uHouse.value.set(x, -y, Math.cos(f), Math.sin(f));
   interiorUniforms.uHouseM.value.set(mirror ? -1 : 1, floorZ);
   interiorUniforms.uLowerOn.value = lower ? 1 : 0;
   const sideIndex = { front: 0, back: 1, left: 2, right: 3 } as const;
-  const wins = OPENINGS.filter((o) => keep(o, lower));
+  interiorUniforms.uTerraceDepth.value = plan.terraceDepth;
+  const wins = plan.openings.filter((o) => keep(o, lower));
   interiorUniforms.uNWin.value = Math.min(MAX_WIN, wins.length);
   wins.slice(0, MAX_WIN).forEach((o, i) => {
     const h = holeRect(o);
     interiorUniforms.uWin.value[i].set(h.s0, h.s1, h.z0, h.z1);
     interiorUniforms.uWinSide.value[i] = sideIndex[o.side];
   });
-  const parts = PARTITIONS.filter((p) => keep(p, lower));
+  const parts = plan.partitions.filter((p) => keep(p, lower));
   interiorUniforms.uNPart.value = Math.min(MAX_PART, parts.length);
   parts.slice(0, MAX_PART).forEach((p, i) => {
     interiorUniforms.uPart.value[i].set(p.rect.u0, p.rect.u1, p.rect.v0, p.rect.v1);
@@ -74,6 +77,7 @@ uniform int uNPart;
 uniform vec4 uPart[${MAX_PART}];
 uniform vec2 uPartZ[${MAX_PART}];
 uniform float uLowerOn;
+uniform float uTerraceDepth;
 const float HW = ${H.hw.toFixed(3)};
 const float HD = ${H.hd.toFixed(3)};
 const float IW = ${H.iw.toFixed(3)};
@@ -129,7 +133,7 @@ float sunThrough(vec3 p, vec3 s) {
     if (zo > EAVE - OV * ((RIDGE - EAVE) / HD) - 0.3 && zo < RIDGE + 0.5) return 0.0;
     // under the terrace (from the lower floor, the deck 3 m deep above the patio)
     if (side < 0.5 && p.z < -0.35) {
-      float tT = (HD + ${H.terraceDepth.toFixed(2)} - p.y) / s.y;
+      float tT = (HD + uTerraceDepth - p.y) / s.y;
       if (p.z + s.z * tT > -0.78) return 0.0;
     }
   } else {
@@ -319,6 +323,8 @@ export function interiorMaterials(screen: THREE.Texture) {
     // a mirror shows the room behind the visitor: a soft light reflection rather than the open sky
     mirror: lit(new THREE.MeshStandardMaterial({ color: "#c9cdcc", roughness: 0.12, metalness: 0.85, envMapIntensity: 0.35, emissive: "#8d8f8c", emissiveIntensity: 0.35 }), "mirror"),
     emissive: glow("#fff1d8", "bulb", 2.6),
+    // the fire behind a wood stove's glass
+    fire: glow("#ff7a2e", "fire", 2.4),
     led: glow("#42e08a", "led", 1.6),
     socbar: soc,
     screen: scr,

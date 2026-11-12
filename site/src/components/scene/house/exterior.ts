@@ -16,15 +16,22 @@
  * call per material covers all 30 houses and the energy layer can still light one house. Parts that
  * move (the front door, the sliding doors) are marked (aMove) so the house being visited can hide
  * them here and draw them moving.
+ *
+ * Every merged roof carries 18 module places (aSlot): the house's count (look.ts) decides how many
+ * show, so the energy model's module count reaches the roofs without a rebuild. A configured house is
+ * built on its own (buildCustomExterior) with the buyer's choices: mirrored, a deeper terrace, timber or
+ * steel balusters, no charger or two, a chimney, the rental unit's own door, a carport.
  */
 import * as THREE from "three";
 import type { Plot } from "@/lib/types";
 import { HOUSE, OPENINGS, keep, roofTop, levelZ, holeRect, type HouseFit, type Opening, type Side } from "@/lib/house/plan";
+import type { Railing } from "@/lib/house/options";
+import { CHIMNEY } from "@/lib/house/variants";
 import { Builders, type Builder, type V3 } from "./kit";
 import { houseMatrix } from "./frame";
 // stained and painted standing cladding (charcoal, weathered grey, white, natural larch, dark green, light grey)
 // and the trim paired with each: one list for the 3D kit and the configurator's "as in the model" choice
-import { FACADES, TRIM } from "@/lib/configurator/palette";
+import { FACADES, MAX_MODULES, MODEL_MODULES, TRIM } from "@/lib/configurator/palette";
 
 export { FACADES };
 export const MODULE = { w: 1.134, h: 1.762, wp: 430 };   // a 430 Wp module, portrait
@@ -100,9 +107,9 @@ export function holeOf(o: Opening): Hole {
 export type Movable = { id: string; kind: "swing" | "slide"; opening: Opening; hinge: number; dir: 1 | -1 };
 
 /** Which side of an opening is hinged, and which way a door opens, for this house type. */
-export function movablesOf(lower: boolean): Movable[] {
+export function movablesOf(lower: boolean, openings: Opening[] = OPENINGS): Movable[] {
   const out: Movable[] = [];
-  for (const o of OPENINGS) {
+  for (const o of openings) {
     if (!keep(o, lower)) continue;
     // the front door is hinged on the side away from the hall's bench and opens outwards (as in Norway)
     if (o.kind === "entry") out.push({ id: o.id, kind: "swing", opening: o, hinge: o.c + o.w / 2, dir: 1 });
@@ -242,11 +249,37 @@ export function drawMovable(B: Builders, m: Movable, floorY: number, seed: numbe
 /** Ground height relative to the main floor at a house-local point. */
 export type GroundFn = (u: number, v: number) => number;
 
+/** A carport with storage beside the house (house frame), from the placement check (site.ts). */
+export type Carport = {
+  u0: number; u1: number; v0: number; v1: number;
+  /** the slab's top above the main floor */
+  z: number;
+  /** the end the car drives in at: -1 the low-v end, 1 the high-v end */
+  open: -1 | 1;
+  /** modules on its roof */
+  pv: boolean;
+};
+
+/** What a house is built with beyond the model: the buyer's choices outside (every field defaults to the model). */
+export type ExteriorOptions = {
+  /** the openings (the rental unit adds its own front door) */
+  openings?: Opening[];
+  terraceDepth?: number;
+  /** the patio in front of a lower floor (it reaches under the stair of a deep terrace) */
+  patioDepth?: number;
+  railing?: Railing;
+  chargers?: 0 | 1 | 2;
+  chimney?: boolean;
+  carport?: Carport | null;
+  /** the merged roofs: all module places, the house's count chosen in the shader (otherwise exactly `modules`) */
+  slots?: boolean;
+};
+
 /**
  * Build the outside of one house into the shared builders (already placed in the house's frame).
  * `g` is the graded ground relative to the main floor.
  */
-export function buildHouseExterior(B: Builders, p: Plot, fit: HouseFit, index: number, g: GroundFn, modules: number) {
+export function buildHouseExterior(B: Builders, p: Plot, fit: HouseFit, index: number, g: GroundFn, modules: number, x: ExteriorOptions = {}) {
   const lower = fit.lower;
   const facade = new THREE.Color(FACADES[index % FACADES.length]);
   const trim = new THREE.Color(TRIM[index % TRIM.length]);
@@ -255,7 +288,8 @@ export function buildHouseExterior(B: Builders, p: Plot, fit: HouseFit, index: n
   const floorY = fit.floor_z;
   const seed = (index * 0.6180339) % 1;
 
-  const openings = OPENINGS.filter((o) => keep(o, lower));
+  const all = x.openings ?? OPENINGS;
+  const openings = all.filter((o) => keep(o, lower));
   const holesOn = (side: Side) => openings.filter((o) => o.side === side).map(holeOf);
 
   // ---------------- walls: cladding from its bottom edge to the roof, with the openings cut out
@@ -279,7 +313,7 @@ export function buildHouseExterior(B: Builders, p: Plot, fit: HouseFit, index: n
   for (const o of openings) drawOpening(B, o, seed + o.c * 0.13, floorY + levelZ(o.level));
   // the moving parts, closed (the visited house hides them here and draws them moving)
   B.attr("aMove", [1]);
-  for (const m of movablesOf(lower)) drawMovable(B, m, floorY + levelZ(m.opening.level), seed);
+  for (const m of movablesOf(lower, all)) drawMovable(B, m, floorY + levelZ(m.opening.level), seed);
   B.attr("aMove", [0]);
 
   // ---------------- the plinth: concrete from below the cladding down into the ground
@@ -299,16 +333,16 @@ export function buildHouseExterior(B: Builders, p: Plot, fit: HouseFit, index: n
   }
 
   // ---------------- the roof
-  buildRoof(B, index, modules, trim);
+  buildRoof(B, index, modules, trim, x);
 
   // ---------------- the terrace on the view side
-  buildTerrace(B, g, lower, patio, index);
+  buildTerrace(B, g, lower, patio, index, x);
 
   // ---------------- the entrance: landing, steps, canopy, lamp, house number, car charger
-  buildEntrance(B, g, p, index, trim);
+  buildEntrance(B, g, p, index, trim, x);
 
   // ---------------- the patio in front of the lower floor
-  if (lower) buildPatio(B, g, patio);
+  if (lower) buildPatio(B, g, patio, x);
 
   // ---------------- outdoor lamps on the view side (lit at night)
   const lampAt = (s: number, z: number, side: Side = "front") => {
@@ -321,10 +355,16 @@ export function buildHouseExterior(B: Builders, p: Plot, fit: HouseFit, index: n
   lampAt(-0.15, 2.25);
   lampAt(2.55, 2.25);
   if (lower) lampAt(-1.15, LZ + 2.2);
+  // the rental unit's own front door has its own lamp
+  const rental = lower ? openings.find((o) => o.id === "d-rental") : undefined;
+  if (rental) lampAt(rental.c + rental.w / 2 + 0.3, LZ + 2.2);
+
+  // ---------------- the carport with its storage room
+  if (x.carport) buildCarport(B, x.carport, g, trim, facade);
 }
 
 /** The roof: two slopes of standing-seam steel with their edges, gutters, downpipes and fittings. */
-function buildRoof(B: Builders, index: number, modules: number, trim: THREE.Color) {
+function buildRoof(B: Builders, index: number, modules: number, trim: THREE.Color, x: ExteriorOptions = {}) {
   const ov = H.overhang;
   const slope = (H.ridge - H.eave) / H.hd;
   const zEdge = H.eave - slope * ov;          // the roof surface at the eave edge
@@ -352,10 +392,10 @@ function buildRoof(B: Builders, index: number, modules: number, trim: THREE.Colo
   // the verges: the roof's gable edges, boxed in, and their soffits
   const paint = B.get("paint").tint(trim);
   for (const su of [-1, 1]) {
-    const x = su * eu;
+    const x0 = su * eu;
     for (const s of [-1, 1]) {
-      facing(paint, [su, 0, 0], L(x, s * ev, zEdge - rafter - 0.04), L(x, 0, H.ridge - rafter - 0.04), L(x, 0, H.ridge + 0.02), L(x, s * ev, zEdge + 0.02));
-      facing(paint, [0, -1, 0], L(su * H.hw, s * ev, zEdge - rafter), L(x, s * ev, zEdge - rafter), L(x, 0, H.ridge - rafter), L(su * H.hw, 0, H.ridge - rafter));
+      facing(paint, [su, 0, 0], L(x0, s * ev, zEdge - rafter - 0.04), L(x0, 0, H.ridge - rafter - 0.04), L(x0, 0, H.ridge + 0.02), L(x0, s * ev, zEdge + 0.02));
+      facing(paint, [0, -1, 0], L(su * H.hw, s * ev, zEdge - rafter), L(x0, s * ev, zEdge - rafter), L(x0, 0, H.ridge - rafter), L(su * H.hw, 0, H.ridge - rafter));
     }
   }
   // the ridge cap
@@ -371,43 +411,102 @@ function buildRoof(B: Builders, index: number, modules: number, trim: THREE.Colo
   hbox(hood, -4.36, -3.74, hv - 0.31, hv + 0.31, hz + 0.45, hz + 0.5);
   const pv = -2.7, pz = roofTop(pv);
   hood.cyl(-1.6, 2.7, 0.055, pz - 0.1, pz + 0.55, 10);
+  if (x.chimney) buildChimney(B);
 
   // ---------------- solar modules on rails, rows from the eaves up (same layout as the energy model)
-  if (modules <= 0) return;
+  if (modules <= 0 && !x.slots) return;
   const lenSlope = Math.hypot(ev, H.ridge - zEdge);
   const rows = Math.max(1, Math.floor((lenSlope - 0.45) / (MODULE.h + 0.02)));
   const perRow = Math.max(1, Math.floor((H.W + 2 * ov - 0.6) / (MODULE.w + 0.02)));
-  let left = Math.min(modules, rows * perRow);
   const cosA = ev / lenSlope, sinA = (H.ridge - zEdge) / lenSlope;
   // the roof plane's own frame in builder axes: x along u, y the roof's normal, z up the slope
   const frameM = new THREE.Matrix4().makeBasis(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, cosA, -sinA), new THREE.Vector3(0, sinA, cosA)).setPosition(0, zEdge, -ev);
   const pvB = B.get("pv");
-  const pvFrame = B.get("metal");
+  const pvFrame = B.get("pvframe");
   const savedP = pvB.m.clone(), savedF = pvFrame.m.clone();
   pvB.at(savedP.clone().multiply(frameM));
   pvFrame.at(savedF.clone().multiply(frameM));
   pvFrame.tint("#1b1e22");
-  for (let r = 0; r < rows && left > 0; r++) {
-    const inRow = Math.min(perRow, left);
-    left -= inRow;
+  // two rails under a row of `inRow` modules
+  const rails = (inRow: number, s0: number) => {
     const width = inRow * (MODULE.w + 0.02);
-    const s0 = 0.25 + r * (MODULE.h + 0.02), s1 = s0 + MODULE.h;
-    // two rails under the row
     for (const t of [0.25, 0.75]) pvFrame.box(-width / 2 - 0.08, 0.0, s0 + t * MODULE.h - 0.02, width / 2 + 0.08, 0.05, s0 + t * MODULE.h + 0.02);
-    for (let k = 0; k < inRow; k++) {
-      const u0 = -width / 2 + k * (MODULE.w + 0.02), u1 = u0 + MODULE.w;
-      const y0 = 0.05, y1 = 0.085;
-      // the glass top with the cells, its aluminium frame round the edge
-      pvB.quad([u0 + 0.015, y1, s0 + 0.015], [u1 - 0.015, y1, s0 + 0.015], [u1 - 0.015, y1, s1 - 0.015], [u0 + 0.015, y1, s1 - 0.015], [[0, 0], [1, 0], [1, 1], [0, 1]]);
-      pvFrame.box(u0, y0, s0, u1, y1, s0 + 0.015, ["ny"]);
-      pvFrame.box(u0, y0, s1 - 0.015, u1, y1, s1, ["ny"]);
-      pvFrame.box(u0, y0, s0 + 0.015, u0 + 0.015, y1, s1 - 0.015, ["ny"]);
-      pvFrame.box(u1 - 0.015, y0, s0 + 0.015, u1, y1, s1 - 0.015, ["ny"]);
+  };
+  // module k of a row of `inRow`, centred on the slope: the glass top with the cells, its aluminium frame round the edge
+  const drawModule = (inRow: number, k: number, s0: number, s1: number) => {
+    const width = inRow * (MODULE.w + 0.02);
+    const u0 = -width / 2 + k * (MODULE.w + 0.02), u1 = u0 + MODULE.w;
+    const y0 = 0.05, y1 = 0.085;
+    pvB.quad([u0 + 0.015, y1, s0 + 0.015], [u1 - 0.015, y1, s0 + 0.015], [u1 - 0.015, y1, s1 - 0.015], [u0 + 0.015, y1, s1 - 0.015], [[0, 0], [1, 0], [1, 1], [0, 1]]);
+    pvFrame.box(u0, y0, s0, u1, y1, s0 + 0.015, ["ny"]);
+    pvFrame.box(u0, y0, s1 - 0.015, u1, y1, s1, ["ny"]);
+    pvFrame.box(u0, y0, s0 + 0.015, u0 + 0.015, y1, s1 - 0.015, ["ny"]);
+    pvFrame.box(u1 - 0.015, y0, s0 + 0.015, u1, y1, s1 - 0.015, ["ny"]);
+  };
+  const rowSpan = (r: number) => { const s0 = 0.25 + r * (MODULE.h + 0.02); return [s0, s0 + MODULE.h] as const; };
+  const partial = MODEL_MODULES - perRow;
+  if (!x.slots) {
+    // exactly `modules`, each row centred
+    let left = Math.min(modules, rows * perRow);
+    for (let r = 0; r < rows && left > 0; r++) {
+      const inRow = Math.min(perRow, left);
+      left -= inRow;
+      const [s0, s1] = rowSpan(r);
+      rails(inRow, s0);
+      for (let k = 0; k < inRow; k++) drawModule(inRow, k, s0, s1);
+    }
+  } else if (rows === 2 && perRow % 2 === 1 && partial > 0 && partial % 2 === 1 && rows * perRow === MAX_MODULES) {
+    // 18 places. A place shows while the house's count lies in [lo, hi] (aSlot = lo * 32 + hi). The rows fill
+    // from the middle out, so every odd count of a row is centred as the exact layout above draws it, and the
+    // model's 16 (a full row and a row of 7) are the very same vertices as before.
+    const code = (lo: number, hi: number) => lo * 32 + hi;
+    const slot = (c: number) => { pvB.attr("aSlot", [c]); pvFrame.attr("aSlot", [c]); };
+    const rank = (k: number, n: number) => { const c = (n - 1) / 2, d = Math.abs(k - c); return d === 0 ? 1 : 2 * d + (k < c ? 0 : 1); };
+    const [a0, a1] = rowSpan(0);
+    slot(code(1, MAX_MODULES));
+    rails(perRow, a0);
+    for (let k = 0; k < perRow; k++) { slot(code(rank(k, perRow), MAX_MODULES)); drawModule(perRow, k, a0, a1); }
+    const [b0, b1] = rowSpan(1);
+    const off = (perRow - partial) / 2;
+    slot(code(perRow + 1, MODEL_MODULES));
+    rails(partial, b0);
+    slot(code(MODEL_MODULES + 1, MAX_MODULES));
+    rails(perRow, b0);
+    for (let k = 0; k < perRow; k++) {
+      slot(code(perRow + rank(k, perRow), MAX_MODULES));
+      // the places of the model's partial row are drawn as that row lays them out
+      if (k >= off && k < off + partial) drawModule(partial, k - off, b0, b1); else drawModule(perRow, k, b0, b1);
+    }
+  } else {
+    // (another roof than the model's: places row by row, each row laid out full)
+    const slot = (c: number) => { pvB.attr("aSlot", [c]); pvFrame.attr("aSlot", [c]); };
+    let n = 0;
+    for (let r = 0; r < rows; r++) {
+      const [s0, s1] = rowSpan(r);
+      slot(32 * (n + 1) + MAX_MODULES);
+      rails(perRow, s0);
+      for (let k = 0; k < perRow && n < MAX_MODULES; k++) { n++; slot(32 * n + MAX_MODULES); drawModule(perRow, k, s0, s1); }
     }
   }
   pvB.at(savedP);
   pvFrame.at(savedF);
   void index;
+}
+
+/** The steel chimney for a wood stove, on the north slope above the stove (variants.ts CHIMNEY). */
+function buildChimney(B: Builders) {
+  const { u, v } = CHIMNEY;
+  const z0 = roofTop(v) - 0.05, z1 = H.ridge + 0.85;
+  // insulated stainless steel, 220 mm, through a roof boot
+  B.get("metal").tint("#b8bcbf").cyl(u, -v, 0.11, z0, z1, 20);
+  B.get("metal").tint("#2a2e32").cyl(u, -v, 0.22, z0 - 0.06, z0 + 0.14, 20, true, 0.12);
+  // the rain cap on three rods
+  const cap = B.get("metal").tint("#9da2a6");
+  cap.cyl(u, -v, 0.18, z1 + 0.12, z1 + 0.2, 20, true, 0.03);
+  for (let k = 0; k < 3; k++) {
+    const a = (k * Math.PI * 2) / 3;
+    cap.tube([u + 0.08 * Math.cos(a), z1, -v + 0.08 * Math.sin(a)], [u + 0.08 * Math.cos(a), z1 + 0.13, -v + 0.08 * Math.sin(a)], 0.008, 4);
+  }
 }
 
 /** Corners of the eaves where the downpipes run down; the caller ends them on the ground. */
@@ -433,10 +532,56 @@ function buildDownpipes(B: Builders, g: GroundFn, lower: boolean, patio: number)
   }
 }
 
+/**
+ * Balusters instead of glass between two points of a walking surface (builder axes): a top rail, a bottom
+ * rail and upright balusters 110 mm apart (under the 100 mm gap a railing may leave between them). Timber
+ * is painted in the trim colour; steel is black, round bars between flat rails, with posts. `h` is the
+ * railing's height over the surface.
+ */
+function balusters(B: Builders, style: Railing, a: V3, b: V3, h: number, trim: THREE.Color) {
+  const dx = b[0] - a[0], dz = b[2] - a[2], len = Math.hypot(dx, dz);
+  if (len < 0.05) return;
+  const tx = dx / len, tz = dz / len;
+  const timber = style === "timber";
+  const bld = timber ? B.get("paint").tint(trim) : B.get("metal").tint("#24272a");
+  const yAt = (s: number) => a[1] + ((b[1] - a[1]) * s) / len;
+  // an upright of width w (along the run) and depth d (across) from y0 to y1, s along the run
+  const post = (s: number, w: number, d: number, y0: number, y1: number) => {
+    const cx = a[0] + tx * s, cz = a[2] + tz * s;
+    const hx = (Math.abs(tx) * w + Math.abs(tz) * d) / 2, hz = (Math.abs(tz) * w + Math.abs(tx) * d) / 2;
+    bld.box(cx - hx, y0, cz - hz, cx + hx, y1, cz + hz);
+  };
+  // a rail along the run (on a stair, a strip of short boxes following its slope)
+  const rail = (y: number, th: number, wd: number) => {
+    const n = Math.abs(b[1] - a[1]) > 0.02 ? Math.ceil(len / 0.25) : 1;
+    for (let i = 0; i < n; i++) {
+      const s0 = (len * i) / n, s1 = (len * (i + 1)) / n;
+      const x0 = a[0] + tx * s0, z0 = a[2] + tz * s0, x1 = a[0] + tx * s1, z1 = a[2] + tz * s1;
+      const ym = yAt((s0 + s1) / 2) + y;
+      const ox = (Math.abs(tz) * wd) / 2, oz = (Math.abs(tx) * wd) / 2;
+      bld.box(Math.min(x0, x1) - ox, ym - th / 2, Math.min(z0, z1) - oz, Math.max(x0, x1) + ox, ym + th / 2, Math.max(z0, z1) + oz);
+    }
+  };
+  if (timber) {
+    rail(h - 0.024, 0.048, 0.098);
+    rail(0.12, 0.036, 0.048);
+    for (let s = 0.03; s <= len - 0.03; s += 0.11) post(s, 0.048, 0.028, yAt(s) + 0.1, yAt(s) + h - 0.048);
+  } else {
+    rail(h - 0.006, 0.012, 0.06);
+    rail(0.08, 0.01, 0.04);
+    for (let s = 0.03; s <= len - 0.03; s += 0.11) bld.cyl(a[0] + tx * s, a[2] + tz * s, 0.008, yAt(s) + 0.085, yAt(s) + h - 0.012, 6, false);
+    const posts = Math.max(1, Math.round(len / 1.2));
+    for (let k = 0; k <= posts; k++) { const s = Math.min(len - 0.02, Math.max(0.02, (len * k) / posts)); post(s, 0.04, 0.04, yAt(s), yAt(s) + h); }
+  }
+}
+
 /** The terrace: decking on joists and a glulam beam, steel posts to the ground, a glass railing, a stair. */
-function buildTerrace(B: Builders, g: GroundFn, lower: boolean, patio: number, index: number) {
+function buildTerrace(B: Builders, g: GroundFn, lower: boolean, patio: number, index: number, x: ExteriorOptions = {}) {
+  const depth = x.terraceDepth ?? H.terraceDepth;
+  const railing = x.railing ?? "glass";
+  const trimC = new THREE.Color(TRIM[index % TRIM.length]);
   const u0 = -H.hw + H.terraceInset, u1 = H.hw - H.terraceInset;
-  const v0 = H.hd + 0.02, v1 = H.hd + H.terraceDepth;
+  const v0 = H.hd + 0.02, v1 = H.hd + depth;
   const top = -0.03;
   const deck = B.get("deck").tint(index % 3 === 1 ? "#8a7b68" : "#7b6046");
   // deck boards run along u; the shader draws the gaps from the UVs (metres)
@@ -450,22 +595,27 @@ function buildTerrace(B: Builders, g: GroundFn, lower: boolean, patio: number, i
   facing(wood, [0, -1, 0], L(u0, v0, top - 0.22), L(u1, v0, top - 0.22), L(u1, v1, top - 0.22), L(u0, v1, top - 0.22));
   for (let k = 0; k <= 16; k++) { const u = u0 + 0.1 + (k * (u1 - u0 - 0.2)) / 16; hbox(wood, u - 0.024, u + 0.024, v0, v1 - 0.03, top - 0.42, top - 0.22, ["py"]); }
   hbox(wood, u0, u1, v1 - 0.2, v1 - 0.085, top - 0.72, top - 0.42, ["py"]);
+  // a deep terrace has a second beam halfway, on posts of its own
+  const deep = depth > 3.5;
+  if (deep) hbox(wood, u0, u1, (v0 + v1) / 2 - 0.06, (v0 + v1) / 2 + 0.06, top - 0.72, top - 0.42, ["py"]);
   // steel posts down to the ground (or the patio), on small footings
   const met = B.get("metal").tint("#3d4246");
-  const postV = v1 - 0.14;
   const conc = B.get("concrete").tint("#8a8883");
-  for (let k = 0; k <= 4; k++) {
-    const u = u0 + 0.12 + (k * (u1 - u0 - 0.24)) / 4;
-    const foot = lower ? patio : g(u, postV);
-    if (top - 0.72 - foot < 0.15) continue;
-    hbox(met, u - 0.05, u + 0.05, postV - 0.05, postV + 0.05, foot, top - 0.72);
-    if (!lower) hbox(conc, u - 0.17, u + 0.17, postV - 0.17, postV + 0.17, foot - 0.3, foot + 0.12);
+  for (const postV of deep ? [v1 - 0.14, (v0 + v1) / 2] : [v1 - 0.14]) {
+    for (let k = 0; k <= 4; k++) {
+      const u = u0 + 0.12 + (k * (u1 - u0 - 0.24)) / 4;
+      const foot = lower ? patio : g(u, postV);
+      if (top - 0.72 - foot < 0.15) continue;
+      hbox(met, u - 0.05, u + 0.05, postV - 0.05, postV + 0.05, foot, top - 0.72);
+      if (!lower) hbox(conc, u - 0.17, u + 0.17, postV - 0.17, postV + 0.17, foot - 0.3, foot + 0.12);
+    }
   }
   // the glass railing (1.0 m over the deck, as TEK17 asks on a terrace), steel handrail on top
   const stairW = 1.0;
   const rg = B.get("railglass");
   const hr = B.get("metal").tint("#9aa1a7");
   const run = (a: V3, b: V3, n: V3) => {
+    if (railing !== "glass") { balusters(B, railing, a, b, 1.0, trimC); return; }
     facing(rg, n, [a[0], a[1] + 0.06, a[2]], [b[0], b[1] + 0.06, b[2]], [b[0], b[1] + 0.95, b[2]], [a[0], a[1] + 0.95, a[2]]);
     hr.tube([a[0], a[1] + 0.99, a[2]], [b[0], b[1] + 0.99, b[2]], 0.022, 8);
     hr.tube([a[0], a[1] + 0.06, a[2]], [b[0], b[1] + 0.06, b[2]], 0.012, 6);
@@ -476,7 +626,7 @@ function buildTerrace(B: Builders, g: GroundFn, lower: boolean, patio: number, i
   run(L(u1 - 0.05, v0 + 0.05, top), L(u1 - 0.05, v1 - 0.05, top), [1, 0, 0]);
   // the stair down: timber treads on steel stringers
   const stairs = terraceStair(lower, patio, g, top, stairAtEnd, u1, v1);
-  for (const f of stairs.flights) stairFlight(B, f);
+  for (const f of stairs.flights) stairFlight(B, f, railing, trimC);
   if (stairs.landing) {
     const l = stairs.landing;
     hbox(B.get("deck").tint("#7b6046"), l.u0, l.u1, l.v0, l.v1, top - 0.06, top, ["ny"]);
@@ -522,7 +672,7 @@ export function terraceStair(lower: boolean, patio: number, g: GroundFn, top: nu
 }
 
 /** Draws a flight: treads, two stringers, and a glass railing with a handrail on the open side. */
-function stairFlight(B: Builders, f: Flight) {
+function stairFlight(B: Builders, f: Flight, railing: Railing = "glass", trim?: THREE.Color) {
   const wood = B.get("deck").tint("#7b6046");
   const met = B.get("metal").tint("#3d4246");
   // across the flight (to the left of the walking direction)
@@ -543,6 +693,7 @@ function stairFlight(B: Builders, f: Flight) {
   }
   if (f.rail) {
     const c = (f.rail * f.w) / 2;
+    if (railing !== "glass" && trim) { balusters(B, railing, P(0, c, f.z), P(run, c, zEnd), 0.92, trim); return; }
     const rg = B.get("railglass");
     const hr = B.get("metal").tint("#9aa1a7");
     facing(rg, [au, 0, -av], P(0, c, f.z + 0.06), P(run, c, zEnd + 0.06), P(run, c, zEnd + 0.88), P(0, c, f.z + 0.88));
@@ -552,7 +703,7 @@ function stairFlight(B: Builders, f: Flight) {
 }
 
 /** The landing at the front door, its steps down to the path round the house, and what hangs by the door. */
-function buildEntrance(B: Builders, g: GroundFn, p: Plot, index: number, trim: THREE.Color) {
+function buildEntrance(B: Builders, g: GroundFn, p: Plot, index: number, trim: THREE.Color, x: ExteriorOptions = {}) {
   const door = OPENINGS.find((o) => o.kind === "entry")!;
   const c = door.c, v0 = -H.hd - 1.5, v1 = -H.hd;
   const stone = B.get("paving").tint("#a3a19c");
@@ -587,19 +738,33 @@ function buildEntrance(B: Builders, g: GroundFn, p: Plot, index: number, trim: T
   // the house number on a dark plate
   const plate = B.get("paint").tint(trim.getHSL({ h: 0, s: 0, l: 0 }).l > 0.5 ? "#2c3033" : "#e9e7e2");
   hbox(plate, c - 0.82, c - 0.62, -H.hd - 0.02, -H.hd, 1.6, 1.75);
-  // the car charger on the wall, at the corner nearest the road
+  // the car charger on the wall, at the corner nearest the road (a second one further along, between the
+  // bedroom window and the corner; with none, the box the charger would be wired to)
+  const chargers = x.chargers ?? 1;
   const ch = B.get("paint").tint("#e9eaeb");
-  hbox(ch, c + 2.2, c + 2.48, -H.hd - 0.12, -H.hd, 1.0, 1.36);
-  const cab = B.get("metal").tint("#1e2124");
-  cab.tube(L(c + 2.34, -H.hd - 0.12, 1.05), L(c + 2.34, -H.hd - 0.16, 0.6), 0.012, 6);
-  cab.tube(L(c + 2.34, -H.hd - 0.16, 0.6), L(c + 2.5, -H.hd - 0.14, 0.6), 0.012, 6);
+  if (chargers === 0) {
+    hbox(B.get("metal").tint("#8d9195"), c + 2.26, c + 2.42, -H.hd - 0.07, -H.hd, 1.1, 1.26);
+  } else {
+    hbox(ch, c + 2.2, c + 2.48, -H.hd - 0.12, -H.hd, 1.0, 1.36);
+    const cab = B.get("metal").tint("#1e2124");
+    cab.tube(L(c + 2.34, -H.hd - 0.12, 1.05), L(c + 2.34, -H.hd - 0.16, 0.6), 0.012, 6);
+    cab.tube(L(c + 2.34, -H.hd - 0.16, 0.6), L(c + 2.5, -H.hd - 0.14, 0.6), 0.012, 6);
+    if (chargers === 2) {
+      const at = c + 4.2;
+      hbox(B.get("paint").tint("#e9eaeb"), at, at + 0.28, -H.hd - 0.12, -H.hd, 1.0, 1.36);
+      const cab2 = B.get("metal").tint("#1e2124");
+      cab2.tube(L(at + 0.14, -H.hd - 0.12, 1.05), L(at + 0.14, -H.hd - 0.16, 0.6), 0.012, 6);
+      cab2.tube(L(at + 0.14, -H.hd - 0.16, 0.6), L(at - 0.02, -H.hd - 0.14, 0.6), 0.012, 6);
+    }
+  }
   void p; void index;
 }
 
 /** The patio in front of the lower floor: paving on a concrete edge where the ground falls away. */
-function buildPatio(B: Builders, g: GroundFn, patio: number) {
+function buildPatio(B: Builders, g: GroundFn, patio: number, x: ExteriorOptions = {}) {
+  const railing = x.railing ?? "glass";
   const u0 = -H.hw - H.patioSide, u1 = H.hw + H.patioSide;
-  const v0 = H.hd, v1 = H.hd + H.patioDepth;
+  const v0 = H.hd, v1 = H.hd + (x.patioDepth ?? H.patioDepth);
   const stone = B.get("paving").tint("#9d9b96");
   facing(stone, [0, 1, 0], L(u0, v1, patio), L(u1, v1, patio), L(u1, v0, patio), L(u0, v0, patio), [[u0, -v1], [u1, -v1], [u1, -v0], [u0, -v0]]);
   const wall = B.get("stone").tint("#6e6a64");
@@ -612,6 +777,7 @@ function buildPatio(B: Builders, g: GroundFn, patio: number) {
   ];
   const rg = B.get("railglass");
   const hr = B.get("metal").tint("#9aa1a7");
+  const darkTrim = new THREE.Color("#2c3033");
   for (const s of sides) {
     const steps = 10;
     for (let k = 0; k < steps; k++) {
@@ -623,7 +789,7 @@ function buildPatio(B: Builders, g: GroundFn, patio: number) {
       if (patio - low > 0.05) {
         // the wall leans back a little (1:10), as a dry-stone wall is built
         const lean = (patio - low) * 0.1;
-        const off = (x: number, y: number, d: number): [number, number] => [x + (s.n[0] * d), y - (s.n[2] * d)];
+        const off = (x0: number, y: number, d: number): [number, number] => [x0 + (s.n[0] * d), y - (s.n[2] * d)];
         const [ua2, va2] = off(ua, va, lean), [ub2, vb2] = off(ub, vb, lean);
         facing(wall, s.n, L(ua2, va2, low), L(ub2, vb2, low), L(ub, vb, patio - 0.06), L(ua, va, patio - 0.06), [[k * 1.22, low], [(k + 1) * 1.22, low], [(k + 1) * 1.22, patio], [k * 1.22, patio]]);
         // the cap
@@ -633,6 +799,7 @@ function buildPatio(B: Builders, g: GroundFn, patio: number) {
       }
       // a railing where the fall from the patio edge is more than half a metre
       if (patio - Math.max(ga, gb) > 0.5) {
+        if (railing !== "glass") { balusters(B, railing, L(ua, va, patio), L(ub, vb, patio), 1.0, darkTrim); continue; }
         facing(rg, s.n, L(ua, va, patio + 0.06), L(ub, vb, patio + 0.06), L(ub, vb, patio + 0.95), L(ua, va, patio + 0.95));
         hr.tube(L(ua, va, patio + 0.99), L(ub, vb, patio + 0.99), 0.022, 8);
       }
@@ -640,20 +807,146 @@ function buildPatio(B: Builders, g: GroundFn, patio: number) {
   }
 }
 
-/** Every house, merged per material; returns the geometries and the house order. */
-export function buildExteriors(plots: Plot[], fits: HouseFit[], modules: number, groundAt: (x: number, y: number) => number) {
+/**
+ * The carport with its storage room (the buyer's choice, where the plot has room): a slab at the road's
+ * height on a cast edge, or on columns where the ground falls away, glulam posts and beams, a low mono-pitch
+ * roof edged in the trim colour, the storage room at the far end clad like the house, and with the solar
+ * roof, modules on rails on top.
+ */
+function buildCarport(B: Builders, c: Carport, g: GroundFn, trim: THREE.Color, facade: THREE.Color) {
+  const { u0, u1, v0, v1, z } = c;
+  const far = c.open < 0 ? v1 : v0, near = c.open < 0 ? v0 : v1;
+  const dir = c.open < 0 ? 1 : -1;                    // from the open end towards the far end
+  const store = 1.6;                                   // the storage room's depth
+  const vs = far - dir * store;                        // its inner wall
+  // ---- the slab and its edge
+  const pave = B.get("paving").tint("#9f9d98");
+  facing(pave, [0, 1, 0], L(u0, v1, z), L(u1, v1, z), L(u1, v0, z), L(u0, v0, z), [[u0, -v1], [u1, -v1], [u1, -v0], [u0, -v0]]);
+  const conc = B.get("concrete").tint("#8b8984");
+  const lowest = Math.min(g(u0, v0), g(u1, v0), g(u0, v1), g(u1, v1), g((u0 + u1) / 2, (v0 + v1) / 2));
+  if (z - lowest > 1.4) {
+    // on columns: a slab 300 mm thick, columns at the corners and along the sides
+    hbox(conc, u0, u1, v0, v1, z - 0.3, z - 0.005, ["py"]);
+    const cols = Math.max(2, Math.ceil((v1 - v0) / 2.4) + 1);
+    for (const u of [u0 + 0.15, u1 - 0.15]) for (let k = 0; k < cols; k++) {
+      const v = v0 + 0.15 + (k * (v1 - v0 - 0.3)) / (cols - 1);
+      const foot = g(u, v);
+      if (z - 0.3 - foot > 0.05) hbox(conc, u - 0.15, u + 0.15, v - 0.15, v + 0.15, foot - 0.4, z - 0.3);
+    }
+  } else {
+    // a cast edge down into the ground all round
+    const segs = 8;
+    const edge = (ua: number, va: number, ub: number, vb: number) => {
+      for (let k = 0; k < segs; k++) {
+        const t0 = k / segs, t1 = (k + 1) / segs;
+        const pu = ua + (ub - ua) * t0, pv = va + (vb - va) * t0, qu = ua + (ub - ua) * t1, qv = va + (vb - va) * t1;
+        const bottom = Math.min(g(pu, pv), g(qu, qv)) - 0.3;
+        const tu = ua === ub ? 0.1 : 0, tv = va === vb ? 0.1 : 0;
+        hbox(conc, Math.min(pu, qu) - tu, Math.max(pu, qu) + tu, Math.min(pv, qv) - tv, Math.max(pv, qv) + tv, Math.min(bottom, z - 0.25), z - 0.005, ["py"]);
+      }
+    };
+    edge(u0, v0, u1, v0); edge(u0, v1, u1, v1); edge(u0, v0, u0, v1); edge(u1, v0, u1, v1);
+  }
+  // ---- posts (glulam, 115 mm) and the beams under the roof; the roof falls towards the far end
+  const roofNear = z + 2.62, roofFar = z + 2.42;
+  const zr = (v: number) => roofNear + ((roofFar - roofNear) * (v - near)) / (far - near);
+  // (plain timber: the decking's board pattern and colour are for the boards alone)
+  const glulam = B.get("paint").tint("#a07e58");
+  for (const u of [u0 + 0.08, u1 - 0.08]) for (const v of [near + dir * 0.1, (near + vs) / 2, vs - dir * 0.06]) hbox(glulam, u - 0.058, u + 0.058, v - 0.058, v + 0.058, z, zr(v) - 0.24);
+  for (const u of [u0 + 0.08, u1 - 0.08]) {
+    const n = 8;
+    for (let k = 0; k < n; k++) {
+      const va = near + ((far - near) * k) / n, vb = near + ((far - near) * (k + 1)) / n;
+      hbox(glulam, u - 0.058, u + 0.058, Math.min(va, vb), Math.max(va, vb), zr((va + vb) / 2) - 0.24, zr((va + vb) / 2) - 0.06);
+    }
+  }
+  // ---- the roof: a sheet on rafters, its edges boxed in the trim colour
+  const ou = 0.2, ovr = 0.25;
+  const ra = near - dir * ovr, rb = far + dir * ovr;
+  const sheet = B.get("metal").tint("#2f3337");
+  facing(sheet, [0, 1, 0], L(u0 - ou, ra, zr(ra)), L(u1 + ou, ra, zr(ra)), L(u1 + ou, rb, zr(rb)), L(u0 - ou, rb, zr(rb)));
+  const under = B.get("deck").tint("#b9946a");
+  facing(under, [0, -1, 0], L(u0 - ou, ra, zr(ra) - 0.06), L(u1 + ou, ra, zr(ra) - 0.06), L(u1 + ou, rb, zr(rb) - 0.06), L(u0 - ou, rb, zr(rb) - 0.06));
+  const fas = B.get("paint").tint(trim);
+  facing(fas, [0, 0, dir], L(u0 - ou, ra, zr(ra) - 0.2), L(u1 + ou, ra, zr(ra) - 0.2), L(u1 + ou, ra, zr(ra) + 0.03), L(u0 - ou, ra, zr(ra) + 0.03));
+  facing(fas, [0, 0, -dir], L(u0 - ou, rb, zr(rb) - 0.2), L(u1 + ou, rb, zr(rb) - 0.2), L(u1 + ou, rb, zr(rb) + 0.03), L(u0 - ou, rb, zr(rb) + 0.03));
+  for (const [uu, nx] of [[u0 - ou, -1], [u1 + ou, 1]] as [number, number][]) facing(fas, [nx, 0, 0], L(uu, ra, zr(ra) - 0.2), L(uu, rb, zr(rb) - 0.2), L(uu, rb, zr(rb) + 0.03), L(uu, ra, zr(ra) + 0.03));
+  // ---- the storage room at the far end: clad like the house, a door towards the car
+  const clad = B.get("clad").tint(facade);
+  const sa = Math.min(vs, far), sb = Math.max(vs, far);
+  const top = (v: number) => zr(v) - 0.24;
+  const wallU = (u: number, nx: number) => facing(clad, [nx, 0, 0], L(u, sa, z), L(u, sb, z), L(u, sb, top(sb)), L(u, sa, top(sa)), [[sa, z], [sb, z], [sb, top(sb)], [sa, top(sa)]]);
+  wallU(u0 + 0.02, -1);
+  wallU(u1 - 0.02, 1);
+  facing(clad, [0, 0, -dir], L(u0, far, z), L(u1, far, z), L(u1, far, top(far)), L(u0, far, top(far)), [[u0, z], [u1, z], [u1, top(far)], [u0, top(far)]]);
+  const dw = 0.9, dc = (u0 + u1) / 2;
+  const inner = (a: number, b: number, z0: number, z1: number) => facing(clad, [0, 0, dir], L(a, vs, z0), L(b, vs, z0), L(b, vs, z1), L(a, vs, z1), [[a, z0], [b, z0], [b, z1], [a, z1]]);
+  inner(u0, dc - dw / 2, z, top(vs));
+  inner(dc + dw / 2, u1, z, top(vs));
+  inner(dc - dw / 2, dc + dw / 2, z + 2.05, top(vs));
+  const leaf = B.get("paint").tint("#2a2d30");
+  hbox(leaf, dc - dw / 2 + 0.03, dc + dw / 2 - 0.03, vs - 0.02, vs + 0.02, z + 0.01, z + 2.03);
+  hbox(B.get("metal").tint("#9aa0a6"), dc + dw / 2 - 0.16, dc + dw / 2 - 0.06, vs - 0.05 * dir - 0.015, vs - 0.05 * dir + 0.015, z + 1.0, z + 1.03);
+  // ---- solar modules on the roof: rows of three across, from the low end up
+  if (c.pv) {
+    const pvB = B.get("pv"), pvF = B.get("pvframe").tint("#1b1e22");
+    const across = Math.floor((u1 - u0 + 2 * ou - 0.1) / (MODULE.w + 0.02));
+    const rows = Math.floor((Math.abs(rb - ra) - 0.2) / (MODULE.h + 0.02));
+    const width = across * (MODULE.w + 0.02), mid = (u0 + u1) / 2;
+    for (let r = 0; r < rows; r++) {
+      const sA = rb - dir * (0.1 + r * (MODULE.h + 0.02)), sB = sA - dir * MODULE.h;
+      for (const t of [0.25, 0.75]) {
+        const vr = sA + (sB - sA) * t;
+        hbox(pvF, mid - width / 2 - 0.06, mid + width / 2 + 0.06, vr - 0.02, vr + 0.02, zr(vr), zr(vr) + 0.05);
+      }
+      for (let k = 0; k < across; k++) {
+        const ua = mid - width / 2 + k * (MODULE.w + 0.02), ub = ua + MODULE.w;
+        const za = zr(sA) + 0.085, zb = zr(sB) + 0.085;
+        facing(pvB, [0, 1, 0], L(ua + 0.015, sA, za), L(ub - 0.015, sA, za), L(ub - 0.015, sB, zb), L(ua + 0.015, sB, zb), [[0, 0], [1, 0], [1, 1], [0, 1]]);
+        hbox(pvF, ua, ub, Math.min(sA, sB), Math.max(sA, sB), Math.min(za, zb) - 0.035, Math.min(za, zb) - 0.002, ["ny"]);
+      }
+    }
+  }
+}
+
+/** Modules a carport's roof takes (rows of three, as buildCarport lays them). */
+export function carportModules(c: Pick<Carport, "u0" | "u1" | "v0" | "v1">) {
+  const across = Math.floor((c.u1 - c.u0 + 0.4 - 0.1) / (MODULE.w + 0.02));
+  const rows = Math.floor((Math.abs(c.v1 - c.v0) + 0.5 - 0.2) / (MODULE.h + 0.02));
+  return across * rows;
+}
+
+/** The graded ground under a house, relative to its main floor, at a point of its own frame. */
+export function groundFor(p: Plot, mirror: boolean, groundAt: (x: number, y: number) => number): GroundFn {
+  const f = (p.house.facing_deg * Math.PI) / 180;
+  const ca = Math.cos(f), sa = Math.sin(f);
+  const sgn = mirror ? -1 : 1;
+  return (u, v) => groundAt(p.local.x + sgn * u * ca + v * sa, p.local.y - sgn * u * sa + v * ca) - p.local.z_floor;
+}
+
+/** Every house, merged per material, each roof with all its module places; returns the geometries. */
+export function buildExteriors(plots: Plot[], fits: HouseFit[], groundAt: (x: number, y: number) => number) {
   const B = new Builders();
   plots.forEach((p, i) => {
     const fit = fits[i];
     B.attr("aHouse", [i]);
     B.attr("aMove", [0]);
     B.at(houseMatrix(p, fit.mirror));
-    const f = (p.house.facing_deg * Math.PI) / 180;
-    const ca = Math.cos(f), sa = Math.sin(f);
-    const sgn = fit.mirror ? -1 : 1;
-    const g: GroundFn = (u, v) => groundAt(p.local.x + sgn * u * ca + v * sa, p.local.y - sgn * u * sa + v * ca) - p.local.z_floor;
-    buildHouseExterior(B, p, fit, i, g, modules);
+    const g = groundFor(p, fit.mirror, groundAt);
+    buildHouseExterior(B, p, fit, i, g, MAX_MODULES, { slots: true });
     buildDownpipes(B, g, fit.lower, fit.lower && fit.patio_z !== null ? fit.patio_z - fit.floor_z : 0);
   });
+  return B.geometries();
+}
+
+/** One house on its own with a buyer's choices (drawn in place of its merged copy), its modules built to its count. */
+export function buildCustomExterior(p: Plot, fit: HouseFit, index: number, groundAt: (x: number, y: number) => number, modules: number, x: ExteriorOptions) {
+  const B = new Builders();
+  B.attr("aHouse", [index]);
+  B.attr("aMove", [0]);
+  B.at(houseMatrix(p, fit.mirror));
+  const g = groundFor(p, fit.mirror, groundAt);
+  buildHouseExterior(B, p, fit, index, g, modules, { ...x, slots: false });
+  buildDownpipes(B, g, fit.lower, fit.lower && fit.patio_z !== null ? fit.patio_z - fit.floor_z : 0);
   return B.geometries();
 }

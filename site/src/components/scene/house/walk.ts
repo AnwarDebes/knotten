@@ -9,11 +9,14 @@
  * 20 cm cells, through doors and down stairs.
  */
 import type { Plot } from "@/lib/types";
-import { HOUSE, OPENINGS, type HouseFit, type Level, type RoomId } from "@/lib/house/plan";
+import { HOUSE, OPENINGS, ROOMS, type HouseFit, type Level, type Opening, type Room, type RoomId } from "@/lib/house/plan";
 import { fromScene, toLocal } from "./frame";
 import type { Rect } from "@/lib/house/plan";
 import { roomAt, type InteriorBuild, type WalkBox, type WalkFloor, type WalkStair, type WalkWall } from "./interior";
-import { terraceStair, type GroundFn } from "./exterior";
+import { terraceStair, type Carport, type GroundFn } from "./exterior";
+
+/** What a buyer's choices add outside: a deeper terrace (and patio), a carport. */
+export type OutdoorOptions = { terraceDepth?: number; patioDepth?: number; carport?: Carport | null };
 
 export const BODY = { r: 0.24, eye: 1.62, step: 0.42, maxSlope: 0.95 };
 
@@ -26,14 +29,16 @@ export type WalkWorld = {
   /** the other houses near this one: each a solid box (footprint and terrace) in its own frame */
   others: { q: Plot; mirror: boolean }[];
   lower: boolean;
+  /** the rooms of the house's plan (its variant) */
+  rooms: Room[];
 };
 
 /** The outdoor parts of a house a visitor can walk on: terrace, landing, steps, the terrace stair, the patio. */
-export function outdoorWalk(fit: HouseFit, g: GroundFn) {
+export function outdoorWalk(fit: HouseFit, g: GroundFn, x: OutdoorOptions = {}) {
   const floors: WalkFloor[] = [], stairs: WalkStair[] = [], walls: WalkWall[] = [];
   const H = HOUSE;
   const u0 = -H.hw + H.terraceInset, u1 = H.hw - H.terraceInset;
-  const v0 = H.hd, v1 = H.hd + H.terraceDepth, top = -0.03;
+  const v0 = H.hd, v1 = H.hd + (x.terraceDepth ?? H.terraceDepth), top = -0.03;
   floors.push({ level: "main", rect: { u0, u1, v0, v1 }, z: top, room: "outside" });
   const stairAt = u1 - 1.0;
   // the terrace railing (front up to the stair opening, and both sides)
@@ -68,7 +73,7 @@ export function outdoorWalk(fit: HouseFit, g: GroundFn) {
     }
   }
   if (fit.lower) {
-    floors.push({ level: "lower", rect: { u0: -H.hw - H.patioSide, u1: H.hw + H.patioSide, v0: H.hd, v1: H.hd + H.patioDepth }, z: patio, room: "outside" });
+    floors.push({ level: "lower", rect: { u0: -H.hw - H.patioSide, u1: H.hw + H.patioSide, v0: H.hd, v1: H.hd + (x.patioDepth ?? H.patioDepth) }, z: patio, room: "outside" });
     // the terrace's posts and its stair stand on the patio
     for (let k = 0; k <= 4; k++) {
       const u = u0 + 0.12 + (k * (u1 - u0 - 0.24)) / 4;
@@ -82,6 +87,18 @@ export function outdoorWalk(fit: HouseFit, g: GroundFn) {
   const groundAt = Math.min(g(c - 1, lv0), g(c + 1, lv0), g(c, lv0 - 0.9));
   const n = Math.max(0, Math.round((-0.02 - groundAt) / 0.18));
   if (n > 0) stairs.push({ u0: c - 0.8, u1: c + 0.8, v0: lv0 - n * 0.3, v1: lv0, z0: groundAt, z1: -0.02, axis: "v" });
+  // a carport: its slab (a ramp up from the road at its open end), its posts and the storage room
+  const cp = x.carport;
+  if (cp) {
+    const lvl: Level = "main";
+    floors.push({ level: lvl, rect: { u0: cp.u0, u1: cp.u1, v0: cp.v0, v1: cp.v1 }, z: cp.z, room: "outside" });
+    const vOpen = cp.open < 0 ? cp.v0 : cp.v1, out = cp.open < 0 ? -1 : 1;
+    const gOpen = g((cp.u0 + cp.u1) / 2, vOpen + out * 0.5);
+    if (cp.z - gOpen > 0.05) stairs.push({ u0: cp.u0, u1: cp.u1, v0: Math.min(vOpen, vOpen + out * 1.2), v1: Math.max(vOpen, vOpen + out * 1.2), z0: out < 0 ? gOpen : cp.z, z1: out < 0 ? cp.z : gOpen, axis: "v" });
+    const far = cp.open < 0 ? cp.v1 : cp.v0, vs = far - (cp.open < 0 ? 1 : -1) * 1.6;
+    boxes.push({ level: lvl, rect: { u0: cp.u0, u1: cp.u1, v0: Math.min(vs, far), v1: Math.max(vs, far) }, z0: cp.z, z1: cp.z + 2.3, kind: "storage" });
+    for (const u of [cp.u0 + 0.08, cp.u1 - 0.08]) walls.push({ level: "both", a: [u, cp.v0], b: [u, cp.v1], t: 0.12, z0: cp.z, z1: cp.z + 2.3 });
+  }
   return { floors, stairs, walls, boxes };
 }
 
@@ -190,34 +207,34 @@ export function placeOf(w: WalkWorld, u: number, v: number, feet: number): { lev
   const inFoot = Math.abs(u) < HOUSE.hw - HOUSE.wall + 0.05 && Math.abs(v) < HOUSE.hd - HOUSE.wall + 0.05;
   if (!inFoot) return { level: "outside", room: null };
   const level: Level = w.lower && feet < -1.0 ? "lower" : "main";
-  const r = roomAt(u, v, level, w.lower);
+  const r = roomAt(u, v, level, w.lower, w.rooms);
   if (!r && w.lower && u > 1.1 && u < 2.3 && v > -3.4 && v < 0.4) return { level, room: "stair" };
   return { level, room: r ?? (level === "main" ? "living" : "family") };
 }
 
 /** Build the walking world for a visited house. */
-export function walkWorld(plots: Plot[], fits: HouseFit[], index: number, build: InteriorBuild, groundAt: (x: number, y: number) => number): WalkWorld {
+export function walkWorld(plots: Plot[], fits: HouseFit[], index: number, build: InteriorBuild, groundAt: (x: number, y: number) => number, x: OutdoorOptions = {}): WalkWorld {
   const p = plots[index], fit = fits[index];
   const ground: GroundFn = (u, v) => { const l = toLocal(p, fit.mirror, u, v); return groundAt(l.x, l.y) - p.local.z_floor; };
-  const out = outdoorWalk(fit, ground);
+  const out = outdoorWalk(fit, ground, x);
   const others: WalkWorld["others"] = [];
   plots.forEach((q, j) => {
     if (j !== index && Math.hypot(q.local.x - p.local.x, q.local.y - p.local.y) < 45) others.push({ q, mirror: fits[j].mirror });
   });
   return {
     plot: p, fit, index,
-    floors: [...build.floors, ...out.floors, ...outerDoorFloors(build.lower)],
+    floors: [...build.floors, ...out.floors, ...outerDoorFloors(build.lower, build.plan.openings)],
     stairs: [...build.stairs, ...out.stairs],
     walls: [...build.walls, ...out.walls],
     boxes: [...build.boxes, ...out.boxes],
-    ground, others, lower: build.lower,
+    ground, others, lower: build.lower, rooms: build.plan.rooms ?? ROOMS,
   };
 }
 
 /** Floors through the outer walls at the doors (so a foot never falls into the wall's thickness). */
-function outerDoorFloors(lower: boolean): WalkFloor[] {
+function outerDoorFloors(lower: boolean, openings: Opening[] = OPENINGS): WalkFloor[] {
   const out: WalkFloor[] = [];
-  for (const o of OPENINGS) {
+  for (const o of openings) {
     if (o.kind !== "entry" && o.kind !== "slide" && o.kind !== "garden") continue;
     if (o.lowerOnly && !lower) continue;
     const z = o.level === "main" ? 0 : HOUSE.lower;

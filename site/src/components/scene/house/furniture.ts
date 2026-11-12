@@ -42,15 +42,24 @@ function ceilingOver(it: Item) {
 }
 
 type Out = { lamp?: Lamp[]; box?: WalkBox; hotZ?: number };
-type Ctx = { B: Builders; w: number; d: number; h: number; it: Item; seed: number; sch: (typeof SCHEMES)[number]; mirror: boolean };
+/** A buyer's kitchen and bathroom (null: the house's own scheme, as in the model). */
+export type ItemLook = { kitchen?: string | null; worktop?: string | null; bathColour?: string | null };
+type Ctx = { B: Builders; w: number; d: number; h: number; it: Item; seed: number; sch: (typeof SCHEMES)[number]; mirror: boolean; look?: ItemLook };
+
+/** The worktop: oak is drawn as oak, the others as a smooth composite or stone surface. */
+function worktop(c: Ctx) {
+  const t = c.look?.worktop;
+  if (t && t === "#b08a60") return c.B.get("oakwood").tint(t);
+  return c.B.get("gloss").tint(t ?? "#3a3c3d");
+}
 
 const hash = (n: number) => { const x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); };
 
-export function drawItem(B: Builders, it: Item, m: THREE.Matrix4, seed: number, lower: boolean, mirror = false): Out {
+export function drawItem(B: Builders, it: Item, m: THREE.Matrix4, seed: number, lower: boolean, mirror = false, look?: ItemLook): Out {
   const M = itemMatrix(m, it, mirror);
   B.at(M);
   const [w, d, h] = it.size;
-  const ctx: Ctx = { B, w, d, h, it, seed, sch: schemeOf(seed), mirror };
+  const ctx: Ctx = { B, w, d, h, it, seed, sch: schemeOf(seed), mirror, look };
   const out: Out = {};
   const f = DRAW[it.kind];
   if (f) Object.assign(out, f(ctx) ?? {});
@@ -226,7 +235,7 @@ const DRAW: Partial<Record<Item["kind"], (c: Ctx) => Out | void>> = {
     // the bowl hangs on the wall; the cistern is in the wall behind a tiled boxing, the flush plate on it
     white.soft(-w / 2 + 0.02, h - 0.33, -d / 2, w / 2 - 0.02, h, d / 2 - 0.05, 0.08, false);
     white.soft(-w / 2 + 0.01, h, -d / 2 + 0.02, w / 2 - 0.01, h + 0.025, d / 2 - 0.06, 0.012, false);
-    B.get("tileWall").tint("#d7d7d3").box(-0.32, 0, d / 2 - 0.05, 0.32, 1.1, d / 2 + 0.17);
+    B.get("tileWall").tint(c.look?.bathColour ?? "#d7d7d3").box(-0.32, 0, d / 2 - 0.05, 0.32, 1.1, d / 2 + 0.17);
     B.get("chrome").tint("#d5d8da").box(-0.11, 0.98, d / 2 - 0.056, 0.11, 1.12, d / 2 - 0.05);
   },
   vanity(c) {
@@ -258,7 +267,8 @@ const DRAW: Partial<Record<Item["kind"], (c: Ctx) => Out | void>> = {
   // ---------------------------------------------------------------- the kitchen
   kitchenBase(c) {
     const { B, w, d, h, sch } = c;
-    const front = B.get("paintwood").tint(sch.front);
+    const fc = c.look?.kitchen ?? sch.front;
+    const front = B.get("paintwood").tint(fc);
     B.get("matte").tint("#2b2d2f").box(-w / 2, 0, -d / 2 + 0.06, w / 2, 0.1, d / 2);
     // fronts in 60 cm units: drawers and doors with a routed grip
     const n = Math.max(1, Math.round(w / 0.6));
@@ -269,11 +279,23 @@ const DRAW: Partial<Record<Item["kind"], (c: Ctx) => Out | void>> = {
       if (drawers <= 1) front.box(x0, 0.1, -d / 2, x1, h - 0.04, -d / 2 + 0.02);
       else for (let j = 0; j < drawers; j++) { const y0 = 0.1 + j * ((h - 0.14) / drawers), y1 = y0 + (h - 0.14) / drawers - 0.004; front.box(x0, y0, -d / 2, x1, y1, -d / 2 + 0.02); }
     }
-    B.get("paintwood").tint(sch.front).box(-w / 2, 0.1, -d / 2 + 0.02, w / 2, h - 0.04, d / 2);
+    B.get("paintwood").tint(fc).box(-w / 2, 0.1, -d / 2 + 0.02, w / 2, h - 0.04, d / 2);
     // the worktop: 30 mm dark composite stone
-    const top = B.get("gloss").tint("#3a3c3d");
+    const top = c.look?.worktop ? worktop(c) : B.get("gloss").tint("#3a3c3d");
     top.box(-w / 2, h - 0.04, -d / 2 - 0.02, w / 2, h - 0.01, d / 2);
-    if (c.it.variant === 1) {
+    if (c.it.variant === 2) {
+      // a kitchenette: the sink at one end, a two-zone hob at the other
+      const steel = B.get("chrome").tint("#c8cbce");
+      const sx = -w / 2 + 0.4;
+      steel.box(sx - 0.25, h - 0.012, -d / 2 + 0.08, sx + 0.25, h - 0.008, d / 2 - 0.12);
+      B.get("metal").tint("#8b8f92").box(sx - 0.22, h - 0.009, -d / 2 + 0.1, sx + 0.22, h - 0.007, d / 2 - 0.14);
+      steel.cyl(sx, d / 2 - 0.08, 0.02, h - 0.01, h + 0.26, 12);
+      steel.tube([sx, h + 0.25, d / 2 - 0.08], [sx, h + 0.25, d / 2 - 0.28], 0.012, 8);
+      const hx = w / 2 - 0.4;
+      B.get("black").tint("#0f1113").box(hx - 0.2, h - 0.012, -d / 2 + 0.06, hx + 0.2, h - 0.006, d / 2 - 0.08);
+      const ring = B.get("matte").tint("#5a5e62");
+      for (const z of [-0.08, 0.14]) ring.disk(hx, h - 0.0055, z, 0.09, 1, 24, 0.084);
+    } else if (c.it.variant === 1) {
       // the sink under the window, with a tap
       const steel = B.get("chrome").tint("#c8cbce");
       steel.box(-0.3, h - 0.012, -d / 2 + 0.08, 0.3, h - 0.008, d / 2 - 0.12);
@@ -294,8 +316,9 @@ const DRAW: Partial<Record<Item["kind"], (c: Ctx) => Out | void>> = {
   },
   kitchenTall(c) {
     const { B, w, d, h, sch } = c;
-    const front = B.get("paintwood").tint(sch.front);
-    B.get("paintwood").tint(sch.front).box(-w / 2, 0.1, -d / 2 + 0.02, w / 2, h, d / 2);
+    const fc = c.look?.kitchen ?? sch.front;
+    const front = B.get("paintwood").tint(fc);
+    B.get("paintwood").tint(fc).box(-w / 2, 0.1, -d / 2 + 0.02, w / 2, h, d / 2);
     B.get("matte").tint("#2b2d2f").box(-w / 2, 0, -d / 2 + 0.06, w / 2, 0.1, d / 2);
     if (c.it.variant === 0) {
       // an integrated fridge-freezer: two fronts
@@ -316,10 +339,10 @@ const DRAW: Partial<Record<Item["kind"], (c: Ctx) => Out | void>> = {
     // the cabinets on the kitchen side, an overhang on the seating side, the induction hob with a downdraft extractor
     const body = 0.62;
     const z0 = d / 2 - body;   // cabinets at the back (the kitchen side); the front (seats) overhangs
-    const front = B.get("paintwood").tint(sch.front === "#f2f0ec" ? "#3f4a48" : sch.front);
+    const front = B.get("paintwood").tint(c.look?.kitchen ?? (sch.front === "#f2f0ec" ? "#3f4a48" : sch.front));
     front.box(-w / 2 + 0.02, 0.1, z0, w / 2 - 0.02, h - 0.04, d / 2);
     B.get("matte").tint("#2b2d2f").box(-w / 2 + 0.05, 0, z0 + 0.06, w / 2 - 0.05, 0.1, d / 2 - 0.06);
-    const top = B.get("gloss").tint("#3a3c3d");
+    const top = c.look?.worktop ? worktop(c) : B.get("gloss").tint("#3a3c3d");
     top.box(-w / 2, h - 0.04, -d / 2, w / 2, h - 0.01, d / 2);
     // the hob: black glass with four zones, and the extractor slot behind it
     B.get("black").tint("#0f1113").box(-0.39, h - 0.012, z0 + 0.05, 0.39, h - 0.006, z0 + 0.57);
@@ -633,6 +656,30 @@ const DRAW: Partial<Record<Item["kind"], (c: Ctx) => Out | void>> = {
     B.get("matte").tint(cols[0]).box(-w / 2, 0, -d / 2, 0, 0.35, d / 2);
     B.get("matte").tint(cols[1]).box(0.02, 0, -d / 2, w / 2, 0.3, d / 2);
     B.get("matte").tint(cols[2]).box(-w / 2 + 0.05, 0.35, -d / 2 + 0.05, -0.05, 0.6, d / 2 - 0.05);
+  },
+  stove(c) {
+    const { B, w, d, h } = c;
+    // a hearth of slate under it, the wall behind clad in fire-proof board
+    B.get("stoneFloor").tint("#4a4a48").box(-0.45, 0, -d / 2 - 0.35, 0.45, 0.012, d / 2 + 0.05);
+    B.get("matte").tint("#d8d5cf").box(-0.42, 0, d / 2 + 0.05, 0.42, 1.25, d / 2 + 0.07);
+    // the flue's height: up through the vaulted ceiling (the chimney stands on the roof above)
+    const ceil = vaultAt(c.it.at[1]) - (c.it.z ?? 0);
+    const flue = B.get("black").tint("#1b1c1e");
+    if (c.it.variant === 1) {
+      // prepared for a stove: the flue's collar in the ceiling, capped
+      flue.cyl(0, 0, 0.085, ceil - 0.25, ceil, 16);
+      return;
+    }
+    // a clean-burning wood stove in black steel with a tall glass door, on short legs
+    const body = B.get("black").tint("#202123");
+    body.soft(-w / 2, 0.12, -d / 2, w / 2, h, d / 2, 0.02);
+    for (const [x, z] of [[-w / 2 + 0.05, -d / 2 + 0.05], [w / 2 - 0.05, -d / 2 + 0.05], [-w / 2 + 0.05, d / 2 - 0.05], [w / 2 - 0.05, d / 2 - 0.05]]) body.box(x - 0.02, 0, z - 0.02, x + 0.02, 0.12, z + 0.02);
+    B.get("glass").box(-w / 2 + 0.06, 0.32, -d / 2 - 0.004, w / 2 - 0.06, h - 0.22, -d / 2 + 0.004);
+    // the fire behind the glass, glowing warm
+    B.get("fire").box(-w / 2 + 0.09, 0.34, -d / 2 + 0.03, w / 2 - 0.09, 0.62, -d / 2 + 0.05);
+    B.get("chrome").tint("#9da2a6").box(w / 2 - 0.05, 0.55, -d / 2 - 0.03, w / 2 - 0.035, 0.75, -d / 2);
+    flue.cyl(0, 0, 0.075, h, ceil, 16, false);
+    return { hotZ: h + 0.2 };
   },
   tv(c) {
     const { B, w, d, h } = c;
