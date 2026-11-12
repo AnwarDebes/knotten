@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { isLocale } from "@/lib/i18n";
-import { toModerne } from "@/lib/design";
+import { kHref, type KLocale } from "@/lib/klassisk/locale";
 
 /**
  * The public address in link previews, canonical links, language alternates, the sitemap and robots.txt:
@@ -64,24 +64,25 @@ export function withAlternates(path: string, locale: "no" | "en", { title, descr
 }
 
 /**
- * Title, description, canonical address, link preview and the English twin for a Klassisk page:
- * `export const metadata = klassiskMeta("/energi", { title: "Energi og teknologi", description: "..." })`.
- * Klassisk is Norwegian today; its English version is the same page in the Moderne design, in English.
- * Leave the title out on the front page to get the layout's own.
+ * Title, description, canonical address, link preview and the other language for a Klassisk page:
+ * `export const metadata = klassiskMeta("/energi", { title: "Energi og teknologi", description: "..." })`, and for
+ * its English twin under /english: `klassiskMeta("/energi", { title: "Energy and technology", ... }, { locale: "en" })`.
+ * `path` is the page path without the language prefix. Leave the title out on the front page to get the layout's own.
  */
-export function klassiskMeta(path: string, { title, description }: Text, { noindex = false }: { noindex?: boolean } = {}): Metadata {
-  const here = path || "/";
+export function klassiskMeta(path: string, { title, description }: Text, { noindex = false, locale = "no" }: { noindex?: boolean; locale?: KLocale } = {}): Metadata {
+  const page = path || "/";
+  const here = kHref(page, locale);
   return {
     // the front page sits in the layout's own segment, where the layout's title template does not reach
-    ...(title ? { title: here === "/" ? { absolute: brand(title) } : title } : {}),
+    ...(title ? { title: page === "/" ? { absolute: brand(title) } : title } : {}),
     description,
-    alternates: { canonical: here, languages: { nb: here, en: toModerne(here).replace(/^\/no(?=\/|$)/, "/en") } },
+    alternates: { canonical: here, languages: { nb: kHref(page, "no"), en: kHref(page, "en"), "x-default": kHref(page, "no") } },
     openGraph: {
       title: title ? brand(title) : "Knotten",
       description,
       url: here,
       siteName: "Knotten",
-      locale: "nb_NO",
+      locale: locale === "en" ? "en_GB" : "nb_NO",
       type: "website",
       images: [KLASSISK_SHARE],
     },

@@ -4,6 +4,7 @@ import type { Locale } from "@/lib/i18n";
 import { t } from "@/lib/i18n";
 import { plotName, rowLabel, sunLabel } from "@/lib/format";
 import { fmt } from "@/lib/facts/core";
+import type { Design } from "@/lib/design";
 
 function SunRow({ label, day, small = false, summer = false, lang }: { label: string; day: Plot["sun"]["dec21"]; small?: boolean; summer?: boolean; lang: "no" | "en" }) {
   const pct = Math.max(0, Math.min(1, day.possible_hours ? day.hours / day.possible_hours : 0));
@@ -22,7 +23,7 @@ function SunRow({ label, day, small = false, summer = false, lang }: { label: st
 }
 
 /** The sun passport: one plot, its measured sun and view, on a card that reads like a document. */
-export default function Passport({ plot, locale, compact = false, here = false }: { plot: Plot; locale: Locale; compact?: boolean; here?: boolean }) {
+export default function Passport({ plot, locale, compact = false, here = false }: { plot: Plot; locale: Locale; compact?: boolean; here?: boolean; variant?: Design }) {
   const d = t(locale);
   const P = d.passport;
   const no = locale === "no";

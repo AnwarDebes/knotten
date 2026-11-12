@@ -7,12 +7,15 @@ import SourceProvider from "./Source";
 import DesignSwitch from "@/components/DesignSwitch";
 import Track from "@/components/Track";
 
-/** The whole Klassisk page around the content, used by the Klassisk layout. */
-export default function Shell({ children }: { children: React.ReactNode }) {
+/**
+ * The whole Klassisk page around the content, used by the Klassisk layouts: Norwegian at the root and English
+ * under /english (src/app/(klassisk-en)). `locale` sets the page language.
+ */
+export default function Shell({ children, locale = "no" }: { children: React.ReactNode; locale?: "no" | "en" }) {
   return (
-    <html lang="nb" data-scroll-behavior="smooth" className={`${serif.variable} ${sans.variable}`}>
+    <html lang={locale === "en" ? "en" : "nb"} data-scroll-behavior="smooth" className={`${serif.variable} ${sans.variable}`}>
       <body suppressHydrationWarning>
-        <a className="skip" href="#innhold">Hopp til innholdet</a>
+        <a className="skip" href="#innhold">{locale === "en" ? "Skip to the content" : "Hopp til innholdet"}</a>
         <Contours />
         <SourceProvider>
           <DesignSwitch current="klassisk" />

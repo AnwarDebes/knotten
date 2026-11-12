@@ -1,13 +1,14 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import type { Locale } from "@/lib/i18n";
+import type { Design } from "@/lib/design";
 
 /**
  * The fly-in, rendered from the measured model: over the fjord, up the Audna, onto the field.
  * It plays once when it comes into view, holds the last frame, and can be replayed. Phones get the
  * poster and a play button, so nothing heavy loads unasked.
  */
-export default function Film({ locale, className = "" }: { locale: Locale; className?: string }) {
+export default function Film({ locale, className = "" }: { locale: Locale; className?: string; variant?: Design }) {
   const no = locale === "no";
   const video = useRef<HTMLVideoElement>(null);
   const root = useRef<HTMLDivElement>(null);

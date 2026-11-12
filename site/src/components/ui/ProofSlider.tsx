@@ -1,8 +1,9 @@
 "use client";
 import { useRef, useState } from "react";
+import type { Design } from "@/lib/design";
 
 /** Photograph against model from the same point. Drag to compare. */
-export default function ProofSlider({ photo, model, labels, className = "" }: { photo: string; model: string; labels: [string, string]; className?: string }) {
+export default function ProofSlider({ photo, model, labels, className = "" }: { photo: string; model: string; labels: [string, string]; className?: string; variant?: Design }) {
   const [x, setX] = useState(0.5);
   const [drag, setDrag] = useState(false);
   const [photoOk, setPhotoOk] = useState(true);

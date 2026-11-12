@@ -23,6 +23,7 @@ import { houseFigures, type HouseFigures } from "./walk/liveFigures";
 import { useTapFocus } from "./scene/tapFocus";
 import { has3d } from "./scene/has3d";
 import type { HouseFit } from "@/lib/house/plan";
+import type { Design } from "@/lib/design";
 
 const KnottenScene = dynamic(() => import("./scene/KnottenScene"), { ssr: false });
 
@@ -47,7 +48,7 @@ const reducedOnServer = () => false;
  * or whenever the visitor wants, the model can be explored freely. The page always scrolls: the
  * wheel and the drag go to the model only after a click inside it, and Escape hands them back.
  */
-export default function Stage({ plots, locale, initialPlot = null, initialMode = "wipe", compact = false, journey = true, hero = false }: { plots: Plot[]; locale: Locale; initialPlot?: string | null; initialMode?: Mode; compact?: boolean; journey?: boolean; hero?: boolean }) {
+export default function Stage({ plots, locale, initialPlot = null, initialMode = "wipe", compact = false, journey = true, hero = false }: { plots: Plot[]; locale: Locale; initialPlot?: string | null; initialMode?: Mode; compact?: boolean; journey?: boolean; hero?: boolean; /** the design it sits in: Klassisk gets its own skin (default Moderne) */ variant?: Design }) {
   const d = t(locale);
   const S = d.stage;
   const J = d.journey;

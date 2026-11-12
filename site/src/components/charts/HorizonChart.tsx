@@ -1,9 +1,10 @@
 import type { Plot } from "@/lib/types";
 import type { Locale } from "@/lib/i18n";
 import { solarPosition, knottenTime } from "@/lib/solar";
+import type { Design } from "@/lib/design";
 
 /** Terrain horizon by bearing with the sun's path on three dates. Server-rendered SVG. */
-export default function HorizonChart({ plot, locale }: { plot: Plot; locale: Locale }) {
+export default function HorizonChart({ plot, locale }: { plot: Plot; locale: Locale; variant?: Design }) {
   const W = 720, H = 220, padL = 34, padB = 22, padT = 10;
   const maxEl = 60;
   const x = (b: number) => padL + (b / 360) * (W - padL - 8);

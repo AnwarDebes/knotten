@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n";
+import type { Design } from "@/lib/design";
 
 type Msg = { from: "you" | "ai"; text: string; links?: { href: string; label: string }[]; source?: string };
 
@@ -19,7 +20,7 @@ export function Orb({ size = 22 }: { size?: number }) {
  * sun and view, the energy concept, the power price and the weather right now, the road, the area
  * and the release. It links to where each answer is shown, and says so when it does not know.
  */
-export default function Chat({ locale }: { locale: Locale }) {
+export default function Chat({ locale }: { locale: Locale; variant?: Design }) {
   const no = locale === "no";
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
