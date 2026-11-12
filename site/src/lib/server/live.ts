@@ -1,14 +1,16 @@
-import { CONTACT, FACT } from "@/lib/facts";
+import { FACT } from "@/lib/facts";
+import { SITE } from "@/lib/meta";
 
 /**
  * Live data from open services, fetched on the server and cached for a while:
  * - day-ahead power prices for price area NO2 (southern Norway, where Lindesnes is), from
  *   hvakosterstrommen.no, which republishes ENTSO-E's prices in NOK. Without VAT and grid tariff.
  * - the weather forecast for the property from MET Norway (Locationforecast 2.0), which asks
- *   every caller to say who it is in the User-Agent.
+ *   every caller to say who it is in the User-Agent. The site's own address is the contact: no
+ *   person's email address is sent to the service.
  * When a service does not answer, the pages say so and carry on with the model.
  */
-const UA = `Knotten-prosjektportal/1.0 (+https://knotten.no; ${CONTACT.email})`;
+const UA = `Knotten-prosjektportal/1.0 (+${SITE})`;
 
 export type Price = { start: string; end: string; nok: number };
 
