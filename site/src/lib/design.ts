@@ -26,11 +26,20 @@ const KLASSISK_TO_MODERNE: Record<string, string> = {
   "/min-side": "/min-side",
   "/personvern": "/personvern",
   "/status": "/status",
+  "/teamet": "/team",
   // only in Klassisk: the closest Moderne page
   "/kart": "/omradet",
   "/galleri": "/utsikt",
   "/kilder": "/dokumenter",
 };
+
+/**
+ * Pages whose last part carries over to the other design, a person's page on the team: the Klassisk address, its
+ * Moderne twin (after the locale), and the same the other way. Checked before the tables.
+ */
+const SAME_SLUG: { klassisk: RegExp; moderne: string; fromModerne: RegExp; klassiskTo: string }[] = [
+  { klassisk: /^\/teamet\/([a-z0-9-]+)$/, moderne: "/team/$1", fromModerne: /^\/team\/([a-z0-9-]+)$/, klassiskTo: "/teamet/$1" },
+];
 
 /** Moderne page (path after the locale) to Klassisk. Checked in order, so sub-pages come first. */
 const MODERNE_TO_KLASSISK: [string, string][] = [
@@ -48,6 +57,7 @@ const MODERNE_TO_KLASSISK: [string, string][] = [
   ["/min-side", "/min-side"],
   ["/personvern", "/personvern"],
   ["/status", "/status"],
+  ["/team", "/teamet"],
   // only in Moderne: the closest Klassisk page
   ["/utsikt", "/galleri"],
   ["/omradet", "/kart"],
@@ -55,12 +65,16 @@ const MODERNE_TO_KLASSISK: [string, string][] = [
 
 /** Klassisk is Norwegian only, so it always opens the Norwegian Moderne pages. */
 export function toModerne(klassiskPath: string): string {
-  return `/no${KLASSISK_TO_MODERNE[klassiskPath] ?? ""}`;
+  const page = KLASSISK_TO_MODERNE[klassiskPath];
+  if (page !== undefined) return `/no${page}`;
+  for (const s of SAME_SLUG) if (s.klassisk.test(klassiskPath)) return `/no${klassiskPath.replace(s.klassisk, s.moderne)}`;
+  return "/no";
 }
 
 /** Plot pages, news and anything unknown open the Klassisk front page or the nearest section. */
 export function toKlassisk(modernePath: string): string {
   const rest = modernePath.replace(/^\/(no|en)(?=\/|$)/, "");
+  for (const s of SAME_SLUG) if (s.fromModerne.test(rest)) return rest.replace(s.fromModerne, s.klassiskTo);
   for (const [from, to] of MODERNE_TO_KLASSISK) if (rest === from || rest.startsWith(`${from}/`)) return to;
   return "/";
 }

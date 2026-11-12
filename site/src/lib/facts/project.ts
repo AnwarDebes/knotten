@@ -47,7 +47,10 @@ export function weeks(w: [number, number] | null, lang: Lang = "no"): string {
   return lang === "no" ? `uke ${w[0]} til ${w[1]}` : `weeks ${w[0]} to ${w[1]}`;
 }
 
-/** Who may open a document. Documents that name students are behind the login (the site never shows student names). */
+/**
+ * Who may open a document. The internal documents, which name the students, stay behind the login; the team pages
+ * (lib/facts/team.ts) name the people and their roles, as the project asked on 12 November 2026.
+ */
 export type Access = "public" | "login";
 
 /** Date (year-month, or year-month-day) and access for every document either design lists. */
