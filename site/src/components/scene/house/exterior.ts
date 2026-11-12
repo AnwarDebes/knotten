@@ -22,12 +22,12 @@ import type { Plot } from "@/lib/types";
 import { HOUSE, OPENINGS, keep, roofTop, levelZ, holeRect, type HouseFit, type Opening, type Side } from "@/lib/house/plan";
 import { Builders, type Builder, type V3 } from "./kit";
 import { houseMatrix } from "./frame";
+// stained and painted standing cladding (charcoal, weathered grey, white, natural larch, dark green, light grey)
+// and the trim paired with each: one list for the 3D kit and the configurator's "as in the model" choice
+import { FACADES, TRIM } from "@/lib/configurator/palette";
 
+export { FACADES };
 export const MODULE = { w: 1.134, h: 1.762, wp: 430 };   // a 430 Wp module, portrait
-
-// stained and painted standing cladding: charcoal, weathered grey, white, natural larch, dark green, light grey
-export const FACADES = ["#3a3f43", "#8d867b", "#e4e1da", "#9b7a55", "#3f4a40", "#c9c6bf"];
-const TRIM = ["#2c3033", "#e8e6e1", "#f2f0ec", "#2f3236", "#2b322c", "#f2f0ec"];
 
 const H = HOUSE;
 /** depth of the window frames' outer face behind the cladding, and their own depth */
