@@ -1,5 +1,7 @@
 import type { Locale } from "@/lib/i18n";
 import type { Assumption } from "@/lib/facts";
+import type { AnySourceId } from "@/lib/content/sources";
+import Src from "./Source";
 
 export function Provenance({ source, date, provisional, locale }: { source: string; date: string; provisional?: boolean; locale: Locale }) {
   return (
@@ -10,15 +12,18 @@ export function Provenance({ source, date, provisional, locale }: { source: stri
   );
 }
 
-/** A measured figure: the number large, its meaning under it, its source in one small line. */
-export function Figure({ a, locale, size = "lg" }: { a: Assumption; locale: Locale; size?: "lg" | "md" }) {
+/**
+ * A measured figure: the number large, its meaning under it, its source in one small line. With `src`, the meaning
+ * carries a source chip as well, the same chip the Klassisk figures have.
+ */
+export function Figure({ a, locale, size = "lg", src }: { a: Assumption; locale: Locale; size?: "lg" | "md"; src?: AnySourceId }) {
   const v = a.value.toLocaleString(locale === "no" ? "nb-NO" : "en-GB");
   return (
     <div>
       <div className={`num ${size === "lg" ? "text-[56px] md:text-[72px]" : "text-[38px]"} leading-none`}>
         {v}<span className="text-[0.38em] ml-2 font-body font-normal opacity-70">{a.unit[locale]}</span>
       </div>
-      <div className="mt-2 text-[15.5px]">{a.label[locale]}</div>
+      <div className="mt-2 text-[15.5px]">{a.label[locale]}{src && <Src id={src} locale={locale} />}</div>
       <Provenance source={a.source[locale]} date={a.date} provisional={a.provisional} locale={locale} />
     </div>
   );

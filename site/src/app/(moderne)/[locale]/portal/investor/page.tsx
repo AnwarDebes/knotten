@@ -49,11 +49,12 @@ export default async function InvestorRoom({ params }: { params: Promise<{ local
       source: no ? "Prosjekteiers retning 4. september 2026 og energiregnskapet." : "The project owner's direction of 4 September 2026 and the energy budget.",
     },
     {
+      // the innovation itself, counted: every plot analysed on its own in the digital twin, not a by-product of it
       icon: "cube",
       title: no ? "Innovasjonsverdi" : "Innovation value",
-      figure: fmt(FACT.trees_detected, lang), unit: no ? "trær målt i laserdata" : "trees measured in laser data",
-      text: no ? `En digital tvilling bygget fra Kartverkets laserdata: sol og sikt er regnet for hver av de ${FACT.plots} tomtene, energideling mellom boligene modelleres, og data deles med Universitetet i Agder for forskning.` : `A digital twin built from Kartverket's laser data: sun and view are computed for each of the ${FACT.plots} plots, energy sharing between homes is modelled, and data is shared with the University of Agder for research.`,
-      source: no ? "Nettsidens modell, september 2026." : "The website's model, September 2026.",
+      figure: fmt(FACT.plots, lang), unit: no ? "tomter med egen sol- og siktanalyse i den digitale tvillingen" : "plots with their own sun and view analysis in the digital twin",
+      text: no ? `En digital tvilling bygget på Kartverkets laserdata er både salgsverktøy og planverktøy: sol og sikt er regnet for hver av de ${FACT.plots} tomtene, energideling mellom boligene modelleres, robusthet ved strømbrudd er et mål for energikonseptet, og data deles med Universitetet i Agder for forskning. Ambisjonen er et nasjonalt referanseprosjekt.` : `A digital twin built on Kartverket's laser data is both a sales tool and a planning tool: sun and view are computed for each of the ${FACT.plots} plots, energy sharing between the homes is modelled, resilience in power cuts is a goal of the energy concept, and data is shared with the University of Agder for research. The ambition is a national reference project.`,
+      source: no ? "Nettsidens modell for det foreløpige utlegget, 30. september 2026. Foreløpig." : "The website's model for the provisional layout, 30 September 2026. Provisional.",
     },
     {
       icon: "sun",

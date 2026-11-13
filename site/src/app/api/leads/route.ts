@@ -8,9 +8,10 @@ import { configuredOrigin, MAIL_ON, sendMail, siteOrigin } from "@/lib/server/ma
 import { isStorageUnavailable, STORAGE } from "@/lib/server/kv";
 import { CONSENT_TEXT, type ConsentPurpose } from "@/lib/consent";
 import { BROWSER_LEAD_SOURCES, MIN_FILL_MS, type LeadErrorCode } from "@/lib/forms";
+import { leadNote, purposeFor, readLeadExtras } from "@/lib/leadForm";
 import { plotNo } from "@/lib/format";
+import { FACT } from "@/lib/facts";
 
-const PURPOSES = ["buy", "invest", "partner", "curious"] as const;
 const PURPOSE_NO: Record<Lead["purpose"], string> = { buy: "kjøpe bolig", invest: "investere", partner: "samarbeide", curious: "følge med" };
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
@@ -33,6 +34,9 @@ function sameOrigin(req: Request) {
  * hidden field robots fill in, a believable time to fill in the form, limits per network and per address
  * (counted atomically), Turnstile when it is set up, then the lead is recorded (lib/server/leads.ts) with exactly
  * the consents that were ticked. Contact about the registration itself needs no box; news and the rest are optional.
+ * The one interest form (lib/leadForm.ts) also sends who the person is (`role`, among them a request for access to
+ * the project portal with its `access_area`), an `organisation` and a `message`; they become the note on the lead.
+ * Forms from before send `purpose` and `message` only, and are read as before.
  */
 export async function POST(req: Request) {
   if (!(req.headers.get("content-type") ?? "").toLowerCase().startsWith("application/json")) return fail("bad_request", 415);
@@ -65,11 +69,15 @@ export async function POST(req: Request) {
   if (!limit.ok) return fail("too_many", 429);
   if (!(await humanCheck(body.turnstile, ip))) return fail("captcha", 400);
 
-  const purpose: Lead["purpose"] = PURPOSES.find((p) => p === body.purpose) ?? "curious";
-  const plots = Array.isArray(body.plots) ? body.plots.filter((p): p is string => typeof p === "string" && /^plot-\d{2}$/.test(p)).slice(0, 10) : [];
+  const extras = readLeadExtras(body);
+  const access = extras.role === "access";
+  const purpose: Lead["purpose"] = purposeFor(extras.role, extras.area, body.purpose);
+  // any number of the plots there are (the form offers them all), each a real plot number, each once
+  const plots = Array.isArray(body.plots) ? [...new Set(body.plots.filter((p): p is string => typeof p === "string" && /^plot-\d{2}$/.test(p) && Number(p.slice(5)) >= 1 && Number(p.slice(5)) <= FACT.plots))].slice(0, FACT.plots) : [];
   const name = String(body.name ?? "").trim().slice(0, 120);
   const phone = String(body.phone ?? "").trim().slice(0, 40);
-  const message = String(body.message ?? "").trim().slice(0, 2000);
+  // the one form: who the person is, the organisation and the message, as one note; older forms: their message as it was
+  const message = extras.role ? leadNote(extras) : String(body.message ?? "").trim().slice(0, 2000);
   const locale = body.locale === "en" ? "en" : "no";
   // only boxes that were ticked; forms from before the consent log sent three flags
   const given = (body.consents && typeof body.consents === "object" ? body.consents : { updates: body.consent_updates, investor: body.consent_investor, research: body.consent_research }) as Record<string, unknown>;
@@ -88,16 +96,20 @@ export async function POST(req: Request) {
   await recordEvent(repeat ? "lead_repeat" : "lead");
   if (!repeat) await recordEvent(`lead_${purpose}`);
 
-  // tell the project owner, after the answer has gone back to the visitor
-  if (MAIL_ON && !repeat) {
+  // tell the project owner, after the answer has gone back to the visitor; a request for portal access is told
+  // even from an address the records know, since it asks the owner to do something
+  if (MAIL_ON && (!repeat || access)) {
     const origin = await siteOrigin();
+    const who = (name || email).replace(/[\r\n\t]+/g, " ");
     after(async () => {
       const { settings } = await readStore();
       const where = origin ? `\n\nSvar og sett status i portalen:\n${origin}/no/portal/admin/interessenter?status=new` : "\n\nSvar og sett status i portalen under Interessenter.";
+      const what = access ? "ber om tilgang til prosjektportalen" : `vil ${PURPOSE_NO[purpose]}`;
       await sendMail(
         settings.contact_email,
-        `Ny interessent: ${name || email}`,
-        `${name || "(uten navn)"} <${email}> vil ${PURPOSE_NO[purpose]}.${plots.length ? `\nTomter: ${plots.map(plotNo).join(", ")}` : ""}${message ? `\n\n${message}` : ""}${where}`,
+        access ? `Forespørsel om tilgang: ${who}` : `Ny interessent: ${who}`,
+        `${name || "(uten navn)"} <${email}> ${what}.${plots.length ? `\nTomter: ${plots.map(plotNo).join(", ")}` : ""}${message ? `\n\n${message}` : ""}${repeat ? "\n\nAdressen er registrert fra før; forespørselen er lagt som et notat på interessenten." : ""}${where}`,
+        { replyTo: email },
       );
     });
   }

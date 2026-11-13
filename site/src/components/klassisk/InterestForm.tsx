@@ -1,119 +1,156 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { track } from "@/components/Track";
 import Turnstile from "@/components/Turnstile";
-import { CONTACT } from "@/lib/facts";
-import { CONSENT_TEXT, CONTACT_NOTICE, type ConsentPurpose } from "@/lib/consent";
+import { CONTACT_NOTICE } from "@/lib/consent";
 import { leadErrorText } from "@/lib/forms";
+import { plotNo } from "@/lib/format";
+import { ACCESS_AREAS, LEAD_CONSENTS, LEAD_MAX, LEAD_ROLES, LEAD_TEXT, ROLE, accessAreaLabel, consentText, leadPayload, leadSummary, splitAround, type LeadPayload, type LeadRole } from "@/lib/leadForm";
 
 type L = "no" | "en";
-/** Each "interessert som" choice and the purpose the project's lead records use for it. */
-const ROLES: { no: string; en: string; purpose: "buy" | "invest" | "partner" | "curious" }[] = [
-  { no: "Boligkjøper", en: "Home buyer", purpose: "buy" },
-  { no: "Investor eller partner", en: "Investor or partner", purpose: "invest" },
-  { no: "Kommune eller offentlig aktør", en: "Municipality or public body", purpose: "partner" },
-  { no: "Forsker eller student", en: "Researcher or student", purpose: "partner" },
-  { no: "Presse", en: "Press", purpose: "curious" },
-];
-/** The optional boxes, unticked until the person ticks them. Contact about the registration itself needs none. */
-const OPTIONAL: ConsentPurpose[] = ["updates", "investor", "research"];
-const PRIVACY_WORD = { no: "personvernerklæringen", en: "privacy statement" };
-
-const S = {
-  no: {
-    name: "Navn", namePh: "Fornavn Etternavn", email: "E-post", emailPh: "navn@eksempel.no", role: "Jeg er interessert som", phone: "Telefon (valgfritt)",
-    plot: "Tomt", message: "Melding", messagePh: "Hva vil du vite mer om?", consents: "Samtykke (valgfritt)", send: "Send interessemelding", sending: "Sender",
-    sent: "Sendt. Takk, interessen din er registrert.", rights: "Du kan trekke samtykker og be om innsyn eller sletting når som helst.",
-  },
-  en: {
-    name: "Name", namePh: "First and last name", email: "Email", emailPh: "name@example.com", role: "I am interested as", phone: "Phone (optional)",
-    plot: "Plot", message: "Message", messagePh: "What would you like to know more about?", consents: "Consent (optional)", send: "Send registration", sending: "Sending",
-    sent: "Sent. Thank you, your interest is registered.", rights: "You can withdraw consents and ask to see or delete your data at any time.",
-  },
-};
 
 /**
- * Sends to the same records as the Moderne form (/api/leads), so the owner sees every lead in the
- * admin whichever design it came from. Both designs number the plots the same way (layout v6), so a
- * plot chosen in the plot picker is counted with that plot in the records, and named in the note.
- * Only the boxes the person ticks are sent as consents; the role chosen is never taken as one.
+ * "Meld interesse" in the Klassisk look (plain CSS in (klassisk)/globals.css), in both languages. The fields, the
+ * choices and what is sent come from lib/leadForm.ts, the same as the Moderne form; both send to /api/leads, so the
+ * owner sees every lead in the admin whichever design and language it came from. Only the boxes the person ticks
+ * are sent as consents; who the person is never counts as one.
  */
-export default function InterestForm({ plot, role, locale = "no", privacyHref = "/personvern" }: { plot?: string; role?: string; locale?: L; privacyHref?: string }) {
-  const t = S[locale];
+export default function InterestForm({ locale = "no", role: initialRole = "buyer", plots, preselect = [], privacyHref, accountHref, level = 3 }: {
+  locale?: L;
+  role?: LeadRole;
+  /** Every plot id ("plot-07"), in order. */
+  plots: string[];
+  preselect?: string[];
+  privacyHref: string;
+  /** Where a buyer creates an account to follow plots. */
+  accountHref?: string;
+  /** The level of the confirmation's heading (the form sits under an h2 on the contact page). */
+  level?: 2 | 3;
+}) {
+  const t = LEAD_TEXT[locale];
+  const [role, setRole] = useState<LeadRole>(initialRole);
   const [state, setState] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [err, setErr] = useState("");
+  const [sent, setSent] = useState<LeadPayload | null>(null);
+  const info = ROLE[role];
+  const ids = useId();
   const started = useRef(false);
   const start = () => { if (!started.current) { started.current = true; track("form_start"); } };
   // when the form appeared: the server refuses forms sent faster than a person can fill them in
   const shown = useRef(0);
   useEffect(() => { shown.current = Date.now(); }, []);
   const token = useRef("");
-  const initial = ROLES.find((r) => r.no === role || r.en === role || (role === "investor" && r.purpose === "invest"))?.no ?? ROLES[0].no;
+  // the confirmation replaces the form: the keyboard and the screen reader are taken to it
+  const done = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (state === "sent") done.current?.focus(); }, [state]);
+
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const f = new FormData(e.currentTarget);
-    const chosen = ROLES.find((r) => r.no === String(f.get("role") ?? "")) ?? ROLES[0];
-    // the note is for the project, in Norwegian whatever the form's language
-    const note = [`Interessert som: ${chosen.no}.`, plot ? `Gjelder tomt ${plot} i tomtevelgeren (klassisk design).` : "", String(f.get("message") ?? "").trim()]
-      .filter(Boolean)
-      .join("\n");
-    const consents = Object.fromEntries(OPTIONAL.filter((p) => f.get(`consent_${p}`)).map((p) => [p, true]));
+    const body = leadPayload(new FormData(e.currentTarget), { source: "web (klassisk)", locale, shownAt: shown.current, turnstile: token.current });
     setState("sending");
     try {
-      const res = await fetch("/api/leads", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          name: f.get("name"), email: f.get("email"), phone: f.get("phone"), purpose: chosen.purpose, plots: plot && /^\d{1,2}$/.test(plot) ? [`plot-${plot.padStart(2, "0")}`] : [], message: note, website: f.get("website"),
-          consents, source: "web (klassisk)", locale, elapsed: Date.now() - shown.current, turnstile: token.current,
-        }),
-      });
-      if (res.ok) return setState("sent");
-      setErr((await res.json().catch(() => ({}))).error ?? "");
+      const res = await fetch("/api/leads", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+      if (res.ok) {
+        setSent(body);
+        setState("sent");
+        return;
+      }
+      setErr((await res.json().catch(() => ({}))).error ?? "error");
     } catch {
-      setErr("");
+      setErr("error");
     }
     setState("error");
   }
-  const notice = CONTACT_NOTICE[locale];
-  const word = PRIVACY_WORD[locale];
-  const at = notice.lastIndexOf(word);
+
+  if (state === "sent" && sent) {
+    const H = level === 2 ? "h2" : "h3";
+    const access = sent.role === "access";
+    return (
+      <div ref={done} tabIndex={-1} role="status" className="mdone lead-done">
+        <H>{access ? t.thanksAccessTitle : t.thanksTitle}</H>
+        <p className="lede">{access ? t.thanksAccess : t.thanks}</p>
+        <dl className="devfacts">
+          {leadSummary(sent, locale).map((r) => (
+            <div key={r.label}>
+              <dt>{r.label}</dt>
+              <dd>{r.values.length > 1 ? <ul className="lead-list">{r.values.map((v) => <li key={v}>{v}</li>)}</ul> : r.values[0]}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="small">{t.rights}</p>
+        {accountHref && ROLE[sent.role].plots && (
+          <div className="mnote">
+            <p>{t.follow}</p>
+            <Link className="btn sm" href={accountHref}>{t.createAccount}</Link>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const [before, word, after] = splitAround(CONTACT_NOTICE[locale], t.privacyWord);
+  const field = (k: string) => `${ids}-${k}`;
   return (
     // (method post: before the page's script runs, a sent form never puts the email and phone in the address)
-    <form className="form" method="post" onSubmit={submit} onFocus={start}>
-      <label>{t.name}<input type="text" id="f-name" name="name" autoComplete="name" placeholder={t.namePh} /></label>
-      <label>{t.email}<input type="email" id="f-mail" name="email" autoComplete="email" placeholder={t.emailPh} required /></label>
-      <label>
-        {t.role}
-        <select id="f-role" name="role" defaultValue={initial}>
-          {ROLES.map((r) => <option key={r.no} value={r.no}>{r[locale]}</option>)}
-        </select>
-      </label>
-      <label>{t.phone}<input type="tel" id="f-tel" name="phone" autoComplete="tel" /></label>
-      {plot && <label className="full">{t.plot}<input type="text" id="f-plot" name="plot" defaultValue={`${t.plot} ${plot}`} readOnly /></label>}
-      <label className="full">{t.message}<textarea id="f-msg" name="message" rows={4} placeholder={t.messagePh} /></label>
+    <form className="form lead-form" method="post" onSubmit={submit} onFocus={start}>
+      <fieldset className="full consents">
+        <legend>{t.role}</legend>
+        <div className="lead-roles">
+          {LEAD_ROLES.map((r) => (
+            <label key={r} className="choice">
+              <input type="radio" name="role" value={r} checked={role === r} onChange={() => setRole(r)} />
+              {ROLE[r].label[locale]}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <label htmlFor={field("name")}>{t.name}<input type="text" id={field("name")} name="name" autoComplete="name" placeholder={t.namePh} maxLength={LEAD_MAX.name} /></label>
+      <label htmlFor={field("email")}>{t.email}<input type="email" id={field("email")} name="email" autoComplete="email" inputMode="email" placeholder={t.emailPh} required maxLength={200} /></label>
+      <label htmlFor={field("phone")}>{t.phone}<input type="tel" id={field("phone")} name="phone" autoComplete="tel" maxLength={LEAD_MAX.phone} /></label>
+      {info.org && <label htmlFor={field("org")}>{t.organisation}<input type="text" id={field("org")} name="organisation" autoComplete="organization" maxLength={LEAD_MAX.organisation} /></label>}
+      {role === "access" && (
+        <label htmlFor={field("area")} className="full">
+          {t.area}
+          <select id={field("area")} name="access_area" defaultValue="investor">
+            {ACCESS_AREAS.map((a) => <option key={a} value={a}>{accessAreaLabel(a, locale)}</option>)}
+          </select>
+        </label>
+      )}
+      {info.plots && plots.length > 0 && (
+        <fieldset className="full consents">
+          <legend>{t.plots}</legend>
+          <div className="pick">
+            {plots.map((p) => (
+              <label key={p}>
+                <input type="checkbox" name="plots" value={p} defaultChecked={preselect.includes(p)} />
+                <span><span className="sr">{t.plot} </span>{plotNo(p)}</span>
+              </label>
+            ))}
+          </div>
+          <span className="small">{t.plotsHelp}</span>
+        </fieldset>
+      )}
+      <label htmlFor={field("msg")} className="full">{t.message}<textarea id={field("msg")} name="message" rows={4} maxLength={LEAD_MAX.message} placeholder={role === "access" ? t.messageAccessPh : t.messagePh} /></label>
       <label className="sr" aria-hidden>Nettside<input type="text" name="website" tabIndex={-1} autoComplete="off" /></label>
       <fieldset className="full consents">
         <legend>{t.consents}</legend>
-        {OPTIONAL.map((p) => (
+        {LEAD_CONSENTS.map((p) => (
           <label key={p} className="consent">
-            <input type="checkbox" id={`f-consent-${p}`} name={`consent_${p}`} />
-            <span className="small">{CONSENT_TEXT[p].text[locale]}</span>
+            <input type="checkbox" name={`consent_${p}`} />
+            <span className="small">{consentText(p, locale)}</span>
           </label>
         ))}
       </fieldset>
       <div className="full"><Turnstile locale={locale} onToken={(v) => { token.current = v; }} /></div>
       <p className="full small notice">
-        {at >= 0 ? <>{notice.slice(0, at)}<Link href={privacyHref}>{word}</Link>{notice.slice(at + word.length)}</> : <>{notice} <Link href={privacyHref}>{word}</Link></>} {t.rights}
+        {before}<Link href={privacyHref}>{word}</Link>{after} {t.rights}
       </p>
       <div className="full cta-row" style={{ marginTop: 4 }}>
-        <button className="btn" type="submit" disabled={state === "sending" || state === "sent"}>{state === "sending" ? t.sending : t.send}</button>
-        {/* (a live region that is always there, so the result is read out when it appears) */}
-        <span role="status" className="small" style={{ alignSelf: "center" }}>{state === "sent" ? t.sent : ""}</span>
+        <button className="btn" type="submit" disabled={state === "sending"} aria-busy={state === "sending"}>{state === "sending" ? `${t.sending} …` : role === "access" ? t.sendAccess : t.send}</button>
         {state === "error" && (
           <span role="alert" className="small no" style={{ alignSelf: "center" }}>
-            {err ? leadErrorText(err, locale) : locale === "no" ? `Det gikk ikke å sende. Prøv igjen, eller skriv til ${CONTACT.email}.` : `It could not be sent. Try again, or write to ${CONTACT.email}.`}
+            {leadErrorText(err, locale)}{err === "error" ? ` ${t.orWrite}` : ""}
           </span>
         )}
       </div>

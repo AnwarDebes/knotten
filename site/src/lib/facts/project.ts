@@ -1,4 +1,5 @@
 import type { Lang, T } from "./core";
+import { ASSUMPTIONS_VERSION } from "./figures";
 
 /**
  * The project's shared facts outside the energy concept: contact details, the internship, the work plan
@@ -68,9 +69,12 @@ export const DOCS = {
   plots_data: { date: "2026-09-30", access: "public", file: "/data/plots.json" },
   road_data: { date: "2026-09-30", access: "public", file: "/data/road.json" },
   parcel_data: { date: "2026-09-08", access: "public", file: "/data/parcels.json" },
+  // the website's own table of figures ("Kilder og forutsetninger"); the date of the current set (ASSUMPTIONS_VERSION)
+  sources: { date: ASSUMPTIONS_VERSION, access: "public" },
 } as const satisfies Record<string, { date: string; access: Access; file?: string }>;
 
 const MONTHS_NO = ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"];
+const MONTHS_EN = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 /** "2026-09-04" -> "4. sep 2026"; "2026-08" -> "aug 2026" (the short Norwegian form Klassisk uses). */
 export function dateNo(iso: string): string {
@@ -78,6 +82,28 @@ export function dateNo(iso: string): string {
   const month = MONTHS_NO[Number(m) - 1];
   return d ? `${Number(d)}. ${month} ${y}` : `${month} ${y}`;
 }
+
+/** The short date in either language: "4. sep 2026" (no) or "4 Sep 2026" (en); "aug 2026" or "Aug 2026". */
+export function dateShort(iso: string, lang: Lang = "no"): string {
+  if (lang === "no") return dateNo(iso);
+  const [y, m, d] = iso.split("-");
+  const month = MONTHS_EN[Number(m) - 1];
+  return d ? `${Number(d)} ${month} ${y}` : `${month} ${y}`;
+}
+
+/**
+ * The energy budget's yearly cost for the whole field: 30 homes, the office building and the storage building, at the
+ * sheet's own prices (BUDGET.prices). "Netto energikostnad" and "Besparelse mot referanse" from the key figures of the
+ * year ("NØKKELTALL FOR ÅRET"), and the reference they are measured against: every heat demand covered by direct
+ * electric heating, with no solar, wind or battery. Working version, September 2026; every figure is provisional.
+ * The sheet splits the saving evenly over the homes itself (BUDGET.results.saving_per_home_nok, "forenklet fordeling");
+ * any other split per home is the site's own and is called simplified where it is shown.
+ */
+export const ENERGY_COST = {
+  net_nok: 448733,
+  reference_nok: 1625601,
+  saving_nok: 1176868,
+};
 
 const MONTHS_LONG: Record<Lang, string[]> = {
   no: ["januar", "februar", "mars", "april", "mai", "juni", "juli", "august", "september", "oktober", "november", "desember"],
