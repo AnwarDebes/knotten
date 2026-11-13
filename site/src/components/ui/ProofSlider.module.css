@@ -1,0 +1,13 @@
+/* Photograph against model in the Klassisk design: a quiet frame, a white divider with a paper knob, the two names
+   on light pills as Klassisk marks places on its pictures. Used only with variant="klassisk". */
+.frame { position: relative; width: 100%; aspect-ratio: 4 / 3; overflow: hidden; border-radius: 16px; border: 1px solid var(--line); background: var(--paper-3); user-select: none; touch-action: pan-y; cursor: ew-resize; box-shadow: 0 20px 50px -30px rgba(20, 38, 61, 0.4); }
+.frame:focus-visible { outline: 2px solid var(--fjord-deep); outline-offset: 3px; }
+.img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.handle { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 0 1px rgba(20, 38, 61, 0.16); pointer-events: none; }
+.handle::after { content: ""; position: absolute; top: 50%; left: 50%; width: 44px; height: 44px; border-radius: 50%; transform: translate(-50%, -50%); background: rgba(246, 248, 250, 0.95); border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(20, 38, 61, 0.25); }
+.handle::before { content: "◂ ▸"; position: absolute; top: 50%; left: 50%; z-index: 1; transform: translate(-50%, -50%); font-size: 12px; letter-spacing: 0.15em; color: var(--ink); white-space: nowrap; }
+.frame:focus-visible .handle::after { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--fjord-deep); }
+.lab { position: absolute; top: 12px; padding: 5px 11px; border-radius: 999px; background: rgba(246, 248, 250, 0.92); color: var(--ink); font-size: 0.8rem; font-weight: 500; line-height: 1.3; box-shadow: 0 2px 12px rgba(20, 38, 61, 0.15); pointer-events: none; }
+.lab:empty { display: none; }
+.left { left: 12px; }
+.right { right: 12px; }

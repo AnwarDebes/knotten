@@ -9,7 +9,6 @@ import { fromScene, toScene } from "./frame";
 import { BODY, collide, findPath, placeOf, standOn, startNav, stepNav, surfacesAt, type NavBuild } from "./walk";
 import { notifyWalk, walkState, type WalkStart } from "./walkState";
 import { twinUniforms } from "../twin/materials";
-import { forestDetail } from "../twin/TwinForest";
 
 const _v = new THREE.Vector3();
 const _q = new THREE.Quaternion();
@@ -31,9 +30,10 @@ function yawFor(p: Plot, mirror: boolean, du: number, dv: number) {
 }
 
 /**
- * The visitor on foot. Keys (WASD or arrows, Shift to run), a stick on touch screens, dragging to look
- * and a click or tap on a floor to walk there; the camera's eye is 1.62 m above the feet and follows
- * the stairs smoothly. Walking up to another house makes it the visited one.
+ * The visitor on foot. Keys (W and S or the up and down arrows to walk, A and D to step aside, the left and
+ * right arrows or Q and E to turn, Shift to run), a stick on touch screens, dragging to look and a click or tap
+ * on a floor to walk there; the camera's eye is 1.62 m above the feet and follows the stairs smoothly. Walking
+ * up to another house makes it the visited one. The forest keeps its full detail on foot, indoors as outdoors.
  */
 export function WalkRig({ plots, start, onSwitch, interactive }: { plots: Plot[]; start: WalkStart; onSwitch: (index: number) => void; interactive: boolean }) {
   const { camera, size } = useThree();
@@ -62,7 +62,7 @@ export function WalkRig({ plots, start, onSwitch, interactive }: { plots: Plot[]
     const down = (e: KeyboardEvent) => {
       if (own(e)) return;
       const k = e.key.toLowerCase();
-      if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright", "shift"].includes(k)) {
+      if (["w", "a", "s", "d", "q", "e", "arrowup", "arrowdown", "arrowleft", "arrowright", "shift"].includes(k)) {
         keys.add(k);
         if (k.startsWith("arrow")) e.preventDefault();
         walkState.path = [];
@@ -80,7 +80,7 @@ export function WalkRig({ plots, start, onSwitch, interactive }: { plots: Plot[]
   useEffect(() => {
     started.current = false;
     lastVisit.current = -1;
-    return () => { twinUniforms.uExposureBoost.value = 1; forestDetail.scale = 1; forestDetail.near = 1; walkState.path = []; };
+    return () => { twinUniforms.uExposureBoost.value = 1; walkState.path = []; };
   }, [start]);
 
   useFrame((_, rawDt) => {
@@ -168,11 +168,14 @@ export function WalkRig({ plots, start, onSwitch, interactive }: { plots: Plot[]
       w.path = findPath(nav(), [w.u, w.v, w.z], [g.u, g.v, g.z]) ?? [];
     }
 
-    // ---- move
+    // ---- move: forward and back, a step aside, and turning with the keys (for those who walk without a mouse)
     const keys = w.keys;
     let fwd = (keys.has("w") || keys.has("arrowup") ? 1 : 0) - (keys.has("s") || keys.has("arrowdown") ? 1 : 0) + w.stick.y;
-    let str = (keys.has("d") || keys.has("arrowright") ? 1 : 0) - (keys.has("a") || keys.has("arrowleft") ? 1 : 0) + w.stick.x;
+    let str = (keys.has("d") ? 1 : 0) - (keys.has("a") ? 1 : 0) + w.stick.x;
     const run = keys.has("shift") || w.run;
+    const turn = (keys.has("arrowleft") || keys.has("q") ? 1 : 0) - (keys.has("arrowright") || keys.has("e") ? 1 : 0);
+    // a quarter turn in about a second, a little quicker running
+    if (turn && !w.flying) w.yaw += turn * dt * (run ? 2.2 : 1.5);
     const ml = Math.hypot(fwd, str);
     if (ml > 1) { fwd /= ml; str /= ml; }
     // scene directions of the view (flat)
@@ -261,9 +264,6 @@ export function WalkRig({ plots, start, onSwitch, interactive }: { plots: Plot[]
     const target = place.level === "outside" ? 1 : 1.45;
     exposure.current += (target - exposure.current) * Math.min(1, dt * 1.5);
     twinUniforms.uExposureBoost.value = exposure.current;
-    // indoors the forest is seen only through the windows: fewer detailed trees, and painted ones from 140 m
-    forestDetail.scale = place.level === "outside" ? 0.65 : 0.36;
-    forestDetail.near = place.level === "outside" ? 1 : 0.55;
 
     // ---- the house nearest the visitor becomes the visited one (they can walk into any of them)
     if (!w.flying && place.level === "outside") {

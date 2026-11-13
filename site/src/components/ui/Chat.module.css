@@ -1,0 +1,50 @@
+/* Knotten AI in the Klassisk design: Klassisk's ink pill in the corner, a white card with a hairline when it opens,
+   Newsreader for its name, Figtree for the talk, links as Klassisk's quiet chips. Used only with variant="klassisk". */
+.dock { position: fixed; right: 16px; bottom: 16px; z-index: 40; display: flex; flex-direction: column-reverse; align-items: flex-end; gap: 12px; }
+@media (min-width: 768px) { .dock { right: 24px; bottom: 24px; } }
+
+/* the mark: a small sun that turns slowly, amber into fjord blue (Knotten AI's own mark in both designs) */
+.orb { position: relative; display: inline-grid; place-items: center; flex: none; border-radius: 50%; background: conic-gradient(from 0deg, #f0b254, #7fbccf, #6f9a80, #f0b254); box-shadow: 0 0 14px rgba(227, 163, 59, 0.3); }
+@media (prefers-reduced-motion: no-preference) { .orb { animation: turn 9s linear infinite; } }
+@keyframes turn { to { transform: rotate(360deg); } }
+.core { width: 58%; height: 58%; border-radius: 50%; background: var(--ink); }
+
+/* (a light edge, so the pill still reads over Klassisk's navy footer) */
+.pill { display: inline-flex; align-items: center; gap: 10px; padding: 7px 16px 7px 8px; border: 1px solid rgba(255, 255, 255, 0.28); border-radius: 999px; background: var(--ink); color: #fff; font: inherit; font-size: 0.92rem; font-weight: 500; cursor: pointer; box-shadow: 0 14px 34px -10px rgba(20, 38, 61, 0.45); transition: background 0.25s var(--ease), transform 0.25s var(--ease); }
+.pill:hover { background: var(--fjord-deep); transform: translateY(-1px); }
+.pill.small { padding: 7px; }
+.pill:focus-visible { outline: 2px solid var(--fjord-deep); outline-offset: 3px; }
+
+.panel { width: min(92vw, 400px); max-height: calc(100dvh - 6.5rem); display: flex; flex-direction: column; overflow: hidden; background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 18px; box-shadow: 0 30px 70px -24px rgba(20, 38, 61, 0.42); }
+@media (prefers-reduced-motion: no-preference) { .panel { animation: rise 0.35s var(--ease) both; } }
+@keyframes rise { from { opacity: 0.01; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.head { display: flex; align-items: center; gap: 12px; padding: 13px 14px 12px 16px; border-bottom: 1px solid var(--line); }
+.name { font-family: var(--font-serif), Georgia, serif; font-weight: 400; font-size: 1.3rem; line-height: 1; }
+.sub { margin-top: 4px; font-size: 0.78rem; color: var(--ink-3); }
+.close { margin-left: auto; width: 36px; height: 36px; display: grid; place-items: center; flex: none; border: 0; border-radius: 50%; background: transparent; color: var(--ink-2); cursor: pointer; }
+.close:hover { background: var(--paper-2); color: var(--ink); }
+
+.log { flex: 1; min-height: 0; max-height: 340px; overflow: auto; padding: 16px; display: grid; align-content: start; gap: 10px; font-size: 0.93rem; line-height: 1.45; }
+.ai, .you { max-width: 88%; padding: 10px 14px; }
+.ai { justify-self: start; background: var(--paper-2); color: var(--ink); border-radius: 16px 16px 16px 6px; }
+.you { justify-self: end; background: var(--ink); color: #fff; border-radius: 16px 16px 6px 16px; }
+.links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.link { display: inline-block; padding: 4px 11px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--fjord-deep); font-size: 0.8rem; font-weight: 500; text-decoration: none; transition: border-color 0.2s, background 0.2s; }
+.link:hover { border-color: var(--fjord); background: var(--fjord-pale); }
+.note { margin-top: 6px; font-size: 0.74rem; color: var(--ink-3); }
+.suggs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.sugg { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; background: #fff; color: var(--ink-2); font: inherit; font-size: 0.82rem; font-weight: 500; text-align: left; cursor: pointer; transition: border-color 0.2s, color 0.2s; }
+.sugg:hover { border-color: var(--ink); color: var(--ink); }
+.dots { justify-self: start; padding: 12px 14px; background: var(--paper-2); border-radius: 16px 16px 16px 6px; }
+.dots span { display: inline-block; width: 5px; height: 5px; margin-right: 3px; border-radius: 50%; background: var(--ink); opacity: 0.5; }
+@media (prefers-reduced-motion: no-preference) {
+  .dots span { animation: dot 1.2s infinite; }
+  .dots span:nth-child(2) { animation-delay: 0.2s; }
+  .dots span:nth-child(3) { animation-delay: 0.4s; }
+}
+@keyframes dot { 0%, 80%, 100% { transform: translateY(0); opacity: 0.35; } 40% { transform: translateY(-4px); opacity: 1; } }
+
+.form { display: flex; gap: 8px; padding: 12px; border-top: 1px solid var(--line); }
+.input { flex: 1; min-width: 0; padding: 10px 14px; border: 1px solid #7f8c99; border-radius: 10px; background: #fff; color: var(--ink); font: inherit; font-size: 1rem; }
+.input::placeholder { color: var(--ink-3); }
+.input:focus { outline: 2px solid var(--fjord); outline-offset: 0; border-color: var(--fjord); }

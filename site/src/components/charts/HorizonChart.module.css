@@ -1,0 +1,11 @@
+/* The horizon chart in the Klassisk design: Klassisk's paper, ink and the three dates in sun, fjord and pine.
+   Used only with variant="klassisk". */
+.svg { display: block; width: 100%; height: auto; font-family: var(--font-sans), "Segoe UI", Helvetica, Arial, sans-serif; }
+.bg { fill: var(--paper); }
+.grid { stroke: rgba(20, 38, 61, 0.12); }
+.axis { fill: var(--ink-3); font-size: 11px; }
+.terrain { fill: var(--ink); opacity: 0.9; }
+.dec { fill: var(--sun); }
+.mar { fill: var(--fjord); }
+.jun { fill: var(--pine); }
+.legend { fill: var(--ink); font-size: 11px; }

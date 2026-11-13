@@ -2,13 +2,14 @@
 import { useEffect, useRef, useState } from "react";
 import type { Locale } from "@/lib/i18n";
 import type { Design } from "@/lib/design";
+import ks from "./Film.module.css";
 
 /**
  * The fly-in, rendered from the measured model: over the fjord, up the Audna, onto the field.
  * It plays once when it comes into view, holds the last frame, and can be replayed. Phones get the
  * poster and a play button, so nothing heavy loads unasked.
  */
-export default function Film({ locale, className = "" }: { locale: Locale; className?: string; variant?: Design }) {
+export default function Film({ locale, className = "", variant = "moderne" }: { locale: Locale; className?: string; /** the design it sits in: Klassisk gets its own skin (default Moderne) */ variant?: Design }) {
   const no = locale === "no";
   const video = useRef<HTMLVideoElement>(null);
   const root = useRef<HTMLDivElement>(null);
@@ -34,9 +35,35 @@ export default function Film({ locale, className = "" }: { locale: Locale; class
   };
   useEffect(() => { if (auto && state === "poster") play(); }, [auto, state]);
 
+  const label = no ? "Flyturen: over Sniksfjorden, opp langs Audna og inn over feltet på Knotten" : "The fly-in: over Sniksfjorden, up the Audna and in over the field on Knotten";
+  if (variant === "klassisk") {
+    return (
+      <div ref={root} className={className ? `${ks.frame} ${className}` : ks.frame}>
+        {/* eslint-disable-next-line @next/next/no-img-element -- the film's first frame until it plays; next/image adds nothing here */}
+        <img src="/renders/web/site_after_960.webp" srcSet="/renders/web/site_after_960.webp 960w, /renders/web/site_after.webp 1920w" sizes="(min-width: 1024px) 480px, 100vw" alt="" className={`${ks.fill} ${ks.poster} ${state === "poster" ? "" : ks.hidden}`} />
+        <video ref={video} className={ks.fill} src="/renders/knotten_flyin_720p.mp4" preload={auto ? "auto" : "none"} muted playsInline aria-label={label} onEnded={() => setState("done")} />
+        {state !== "playing" && (
+          <div className={ks.play}>
+            <button type="button" className="btn" onClick={play}>
+              {state === "done" ? (no ? "Se flyturen igjen" : "Watch the fly-in again") : (no ? "Se flyturen" : "Watch the fly-in")}
+            </button>
+          </div>
+        )}
+        {/* a film that plays on its own can always be stopped */}
+        {state === "playing" && (
+          <button type="button" className={ks.stop} onClick={() => { video.current?.pause(); setState("done"); }}>
+            {no ? "Stopp filmen" : "Stop the film"}
+          </button>
+        )}
+        <div className={ks.cap}>{no ? "Rendret fra den målte modellen. 12 sekunder." : "Rendered from the measured model. 12 seconds."}</div>
+      </div>
+    );
+  }
+
   return (
     <div ref={root} className={`frame relative aspect-[16/9] ${className}`}>
       {/* (the card is about 340 px wide: the 960 px still is plenty, the 1920 px one only for a wide phone screen) */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- the film's first frame until it plays; next/image adds nothing here */}
       <img src="/renders/web/site_after_960.webp" srcSet="/renders/web/site_after_960.webp 960w, /renders/web/site_after.webp 1920w" sizes="(min-width: 1024px) 360px, 100vw" alt="" className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${state === "poster" ? "opacity-100" : "opacity-0"}`} />
       <video
         ref={video}
@@ -45,7 +72,7 @@ export default function Film({ locale, className = "" }: { locale: Locale; class
         preload={auto ? "auto" : "none"}
         muted
         playsInline
-        aria-label={no ? "Flyturen: over Sniksfjorden, opp langs Audna og inn over feltet på Knotten" : "The fly-in: over Sniksfjorden, up the Audna and in over the field on Knotten"}
+        aria-label={label}
         onEnded={() => setState("done")}
       />
       {state !== "playing" && (

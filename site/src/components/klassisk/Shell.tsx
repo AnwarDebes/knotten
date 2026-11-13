@@ -6,6 +6,7 @@ import TerrainProgress from "./TerrainProgress";
 import SourceProvider from "./Source";
 import DesignSwitch from "@/components/DesignSwitch";
 import Track from "@/components/Track";
+import Chat from "@/components/ui/Chat";
 
 /**
  * The whole Klassisk page around the content, used by the Klassisk layouts: Norwegian at the root and English
@@ -24,6 +25,7 @@ export default function Shell({ children, locale = "no" }: { children: React.Rea
           <Footer locale={locale} />
           <TerrainProgress />
           <Track design="klassisk" />
+          <Chat locale={locale} variant="klassisk" />
         </SourceProvider>
       </body>
     </html>

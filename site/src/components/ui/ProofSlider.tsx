@@ -1,9 +1,10 @@
 "use client";
 import { useRef, useState } from "react";
 import type { Design } from "@/lib/design";
+import ks from "./ProofSlider.module.css";
 
 /** Photograph against model from the same point. Drag to compare. */
-export default function ProofSlider({ photo, model, labels, className = "" }: { photo: string; model: string; labels: [string, string]; className?: string; variant?: Design }) {
+export default function ProofSlider({ photo, model, labels, className = "", variant = "moderne" }: { photo: string; model: string; labels: [string, string]; className?: string; /** the design it sits in: Klassisk gets its own skin (default Moderne) */ variant?: Design }) {
   const [x, setX] = useState(0.5);
   const [drag, setDrag] = useState(false);
   const [photoOk, setPhotoOk] = useState(true);
@@ -31,6 +32,26 @@ export default function ProofSlider({ photo, model, labels, className = "" }: { 
     if (k === "Home") to(() => 0.02);
     if (k === "End") to(() => 0.98);
   };
+  if (variant === "klassisk") {
+    return (
+      <div
+        ref={box}
+        className={className ? `${ks.frame} ${className}` : ks.frame}
+        onPointerDown={move} onPointerMove={move} onPointerUp={move} onPointerCancel={move}
+        tabIndex={0} onKeyDown={onKey} role="slider" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(x * 100)} aria-valuetext={`${Math.round(x * 100)} % ${labels[0].toLowerCase()}`} aria-label={`${labels[0]} / ${labels[1]}`}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element -- two stills of the same size laid over each other; next/image adds nothing here */}
+        <img src={model} alt={labels[1]} loading="lazy" decoding="async" className={ks.img} draggable={false} />
+        {photoOk && (
+          // eslint-disable-next-line @next/next/no-img-element -- (as above)
+          <img src={photo} alt={labels[0]} loading="lazy" decoding="async" className={ks.img} draggable={false} style={{ clipPath: `inset(0 ${100 - x * 100}% 0 0)` }} onError={() => setPhotoOk(false)} />
+        )}
+        <div className={ks.handle} style={{ left: `${x * 100}%` }} />
+        <div className={`${ks.lab} ${ks.left}`}>{photoOk ? labels[0] : ""}</div>
+        <div className={`${ks.lab} ${ks.right}`}>{labels[1]}</div>
+      </div>
+    );
+  }
   return (
     <div
       ref={box}
@@ -38,8 +59,10 @@ export default function ProofSlider({ photo, model, labels, className = "" }: { 
       onPointerDown={move} onPointerMove={move} onPointerUp={move} onPointerCancel={move}
       tabIndex={0} onKeyDown={onKey} role="slider" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(x * 100)} aria-valuetext={`${Math.round(x * 100)} % ${labels[0].toLowerCase()}`} aria-label={`${labels[0]} / ${labels[1]}`}
     >
+      {/* eslint-disable-next-line @next/next/no-img-element -- two stills of the same size laid over each other; next/image adds nothing here */}
       <img src={model} alt={labels[1]} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover" draggable={false} />
       {photoOk && (
+        // eslint-disable-next-line @next/next/no-img-element -- (as above)
         <img src={photo} alt={labels[0]} loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover" draggable={false} style={{ clipPath: `inset(0 ${100 - x * 100}% 0 0)` }} onError={() => setPhotoOk(false)} />
       )}
       <div className="wipe-handle" style={{ left: `${x * 100}%` }} />

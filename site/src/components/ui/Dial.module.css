@@ -1,0 +1,34 @@
+/* The sun dial in the Klassisk design: a quiet paper card over the model, the time in Newsreader, the sun on the thumb.
+   Moderne keeps its own classes in (moderne)/globals.css; these are used only with variant="klassisk". */
+.dial {
+  width: min(80vw, 214px);
+  padding: 12px 14px 10px;
+  background: rgba(246, 248, 250, 0.95);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  box-shadow: 0 12px 34px rgba(20, 38, 61, 0.16);
+  color: var(--ink);
+  touch-action: none;
+  user-select: none;
+}
+/* the time and the day on one line, whether the sun is up under them across the card */
+.head { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: baseline; gap: 2px 12px; }
+.time { font-family: var(--font-serif), Georgia, serif; font-weight: 300; font-size: 1.85rem; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.when { display: contents; }
+.date { justify-self: end; font-family: var(--font-serif), Georgia, serif; font-style: italic; font-size: 1.05rem; line-height: 1; color: var(--fjord-deep); }
+.sun { grid-column: 1 / -1; margin-top: 4px; font-size: 0.72rem; line-height: 1.3; color: var(--ink-3); display: inline-flex; align-items: center; gap: 6px; }
+.sun::before { content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); }
+.sun.up { color: var(--ink); }
+.sun.up::before { background: var(--sun); box-shadow: 0 0 0 3px var(--sun-pale); }
+.label { display: block; margin-top: 10px; font-size: 0.74rem; font-weight: 500; color: var(--ink-2); }
+.label + .label { margin-top: 6px; }
+.range { -webkit-appearance: none; appearance: none; display: block; width: 100%; height: 24px; margin: 2px 0 0; background: transparent; cursor: pointer; }
+.range::-webkit-slider-runnable-track { height: 2px; background: var(--ink-3); border-radius: 2px; }
+.range::-moz-range-track { height: 2px; background: var(--ink-3); border-radius: 2px; }
+/* the thumb is the sun */
+.range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; margin-top: -9px; border-radius: 50%; background: var(--sun); border: 3px solid #fff; box-shadow: 0 0 0 1px var(--ink-3), 0 2px 6px rgba(20, 38, 61, 0.25); }
+.range::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--sun); border: 3px solid #fff; box-shadow: 0 0 0 1px var(--ink-3), 0 2px 6px rgba(20, 38, 61, 0.25); }
+.range:focus { outline: none; }
+.range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--fjord-deep); }
+.range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--fjord-deep); }

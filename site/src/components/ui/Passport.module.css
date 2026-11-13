@@ -1,0 +1,40 @@
+/* The sun passport in the Klassisk design: a white card with a hairline, Newsreader for the plot and the figures,
+   the sun's share of the day as a thin amber rule. Used only with variant="klassisk". */
+.card { background: #fff; color: var(--ink); border: 1px solid var(--line); border-radius: 16px; padding: clamp(18px, 2.4vw, 26px); box-shadow: 0 18px 44px -30px rgba(20, 38, 61, 0.35); }
+.card.compact { padding: 13px 14px 12px; border-radius: 14px; font-size: 0.82rem; }
+.top { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.name { font-family: var(--font-serif), Georgia, serif; font-weight: 400; font-size: 1.9rem; line-height: 1; letter-spacing: -0.01em; }
+.compact .name { font-size: 1.3rem; }
+.meta { margin-top: 6px; font-size: 0.84rem; line-height: 1.4; color: var(--ink-3); }
+.compact .meta { font-size: 0.76rem; margin-top: 4px; }
+.right { text-align: right; }
+.big { font-family: var(--font-serif), Georgia, serif; font-weight: 300; font-size: 1.9rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.compact .big { font-size: 1.3rem; }
+.small { margin-top: 4px; font-size: 0.8rem; color: var(--ink-3); }
+.compact .small { font-size: 0.74rem; }
+
+.rows { margin-top: 14px; border-top: 1px solid var(--line); }
+.compact .rows { margin-top: 8px; }
+.row { padding: 11px 0 10px; border-bottom: 1px solid var(--line); }
+.compact .row { padding: 7px 0 6px; }
+.rowHead { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: baseline; gap: 12px; }
+.rowLabel { font-size: 0.95rem; color: var(--ink); }
+.compact .rowLabel { font-size: 0.8rem; }
+.when { margin-top: 2px; font-size: 0.8rem; color: var(--ink-3); }
+.compact .when { font-size: 0.72rem; }
+.hours { font-family: var(--font-serif), Georgia, serif; font-weight: 300; font-size: 1.75rem; line-height: 1; font-variant-numeric: tabular-nums; }
+.compact .hours { font-size: 1.2rem; }
+.unit { font-family: var(--font-sans), sans-serif; font-size: 0.75rem; color: var(--ink-3); margin-left: 4px; }
+.bar { margin-top: 8px; height: 3px; border-radius: 2px; background: var(--paper-3); overflow: hidden; }
+.compact .bar { margin-top: 5px; }
+.bar > span { display: block; height: 100%; background: var(--sun); }
+
+.facts { margin: 16px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; white-space: nowrap; font-size: 0.95rem; }
+.compact .facts { margin-top: 10px; gap: 6px; font-size: 0.76rem; }
+.facts dt { font-size: 0.78rem; color: var(--ink-3); }
+.compact .facts dt { font-size: 0.7rem; }
+.facts dd { margin: 2px 0 0; color: var(--ink); }
+.facts dd.yes { color: var(--pine); font-weight: 600; }
+
+.prov { margin-top: 16px; font-size: 0.8rem; line-height: 1.45; color: var(--ink-3); }
+.acts { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 10px; }

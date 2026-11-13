@@ -3,17 +3,21 @@
  * The page's side of the walk through a house: where you are, a plan of the floor you are on (with
  * the rooms' areas, and a dot for you), places to go, a stick to walk with on a touch screen, the
  * house's own figures from the energy simulation, and the spots that explain the house's measures.
- * The 3D scene moves and hides the spots every frame (WalkRig); this only draws them.
+ * The 3D scene moves and hides the spots every frame (WalkRig); this only draws them. It sits in either
+ * design: `variant="klassisk"` dresses it in Klassisk's look (WalkHud.module.css).
  */
 import { Fragment, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { Locale } from "@/lib/i18n";
 import type { Plot } from "@/lib/types";
+import type { Design } from "@/lib/design";
 import { HOUSE, PARTITIONS, ROOMS, STAIR, floorArea, keep, levelZ, roomArea, type HouseFit, type Level } from "@/lib/house/plan";
 import { fmt } from "@/lib/facts";
 import { plotNo } from "@/lib/format";
 import Src from "../ui/Source";
+import { Src as KlassiskSrc } from "../klassisk/Source";
 import { HOTSPOTS, verdictLabel } from "./hotspots";
 import { registerHot, requestGoto, setStick, subscribeWalk, walkState, walkVersion, type LiveFigures } from "../scene/house/walkState";
+import ks from "./WalkHud.module.css";
 
 type Spot = { key: string; no: string; en: string; u: number; v: number; z: number; lowerOnly?: boolean };
 const SPOTS: Spot[] = [
@@ -26,7 +30,8 @@ const SPOTS: Spot[] = [
   { key: "terrace", no: "Terrassen", en: "Terrace", u: 1.4, v: HOUSE.hd + 2.0, z: -0.03 },
 ];
 
-export default function WalkHud({ locale, plots, fits, live, onExit }: { locale: Locale; plots: Plot[]; fits: HouseFit[] | null; live: LiveFigures | null; onExit: () => void }) {
+export default function WalkHud({ locale, plots, fits, live, onExit, variant = "moderne" }: { locale: Locale; plots: Plot[]; fits: HouseFit[] | null; live: LiveFigures | null; onExit: () => void; /** the design it sits in (default Moderne) */ variant?: Design }) {
+  const k = variant === "klassisk";
   const no = locale === "no";
   useSyncExternalStore(subscribeWalk, walkVersion, walkVersion);
   const w = walkState;
@@ -44,27 +49,34 @@ export default function WalkHud({ locale, plots, fits, live, onExit }: { locale:
   const area = floorArea(lower);
   const go = (s: Spot) => requestGoto(s.u, s.v, s.z);
 
+  // where you are, and what this house is
+  const whereCard = (
+    <div className={k ? ks.card : "absolute left-3 top-3 md:left-5 md:top-5 pointer-events-auto glass px-3.5 py-2.5 max-w-[min(78vw,360px)]"}>
+      <div className={k ? ks.whereSub : "text-[12px] text-white/65"}>{plot ? `${no ? "Tomt" : "Plot"} ${plotNo(plot.id)} · ${no ? "eksempelhus i modellen" : "example house in the model"}` : ""}</div>
+      <div className={k ? ks.room : "display text-[20px] md:text-[22px] leading-tight"}>{w.flying ? (no ? "På vei til huset ..." : "On the way to the house ...") : where}{levelName && !w.flying ? <span className={k ? ks.level : "text-[14px] text-white/70"}>{` · ${levelName}`}</span> : null}</div>
+      <button className={k ? `linkish ${ks.about}` : "mt-1 text-[12.5px] underline text-white/75 hover:text-white"} onClick={() => setAbout((a) => !a)}>{no ? "Om huset" : "About the house"}</button>
+      {about && (
+        <div className={k ? ks.aboutText : "mt-2 text-[13px] text-white/85 leading-snug"}>
+          {no
+            ? `Ingen hus er tegnet ennå. Dette er nettsidens eksempel på hvordan et hus på tomta kan bygges med tiltakene prosjektet har valgt: bergvarme, solceller, batteri, balansert ventilasjon, gjenvinning av dusjvann og smart styring. Byggestandarden er ikke bestemt. Huset er ${fmt(Math.round(area.total), "no")} m² BRA${lower ? `, hovedplan ${fmt(Math.round(area.main))} m² og underetasje ${fmt(Math.round(area.lower))} m²` : " på ett plan"}; der terrenget faller nok, får huset en underetasje mot hagen.`
+            : `No house has been designed yet. This is the website's example of how a house on the plot can be built with the measures the project has chosen: ground-source heat, solar, a battery, balanced ventilation, heat recovery from shower water and smart control. The building standard has not been decided. The house is ${fmt(Math.round(area.total), "en")} m² of floor area${lower ? `, ${fmt(Math.round(area.main), "en")} m² on the main floor and ${fmt(Math.round(area.lower), "en")} m² below` : " on one floor"}; where the ground falls far enough, the house gets a lower floor towards the garden.`}
+        </div>
+      )}
+    </div>
+  );
+  // the house's own figures, now
+  const livePanel = live && <LivePanel live={live} locale={locale} k={k} />;
+
   return (
-    <div className="absolute inset-0 pointer-events-none">
-      {/* where you are, and what this house is */}
-      <div className="absolute left-3 top-3 md:left-5 md:top-5 pointer-events-auto glass px-3.5 py-2.5 max-w-[min(78vw,360px)]">
-        <div className="text-[12px] text-white/65">{plot ? `${no ? "Tomt" : "Plot"} ${plotNo(plot.id)} · ${no ? "eksempelhus i modellen" : "example house in the model"}` : ""}</div>
-        <div className="display text-[20px] md:text-[22px] leading-tight">{w.flying ? (no ? "På vei til huset ..." : "On the way to the house ...") : where}{levelName && !w.flying ? <span className="text-[14px] text-white/70">{` · ${levelName}`}</span> : null}</div>
-        <button className="mt-1 text-[12.5px] underline text-white/75 hover:text-white" onClick={() => setAbout((a) => !a)}>{no ? "Om huset" : "About the house"}</button>
-        {about && (
-          <div className="mt-2 text-[13px] text-white/85 leading-snug">
-            {no
-              ? `Ingen hus er tegnet ennå. Dette er nettsidens eksempel på hvordan et hus på tomta kan bygges med tiltakene prosjektet har valgt: bergvarme, solceller, batteri, balansert ventilasjon, gjenvinning av dusjvann og smart styring. Byggestandarden er ikke bestemt. Huset er ${fmt(Math.round(area.total), "no")} m² BRA${lower ? `, hovedplan ${fmt(Math.round(area.main))} m² og underetasje ${fmt(Math.round(area.lower))} m²` : " på ett plan"}; der terrenget faller nok, får huset en underetasje mot hagen.`
-              : `No house has been designed yet. This is the website's example of how a house on the plot can be built with the measures the project has chosen: ground-source heat, solar, a battery, balanced ventilation, heat recovery from shower water and smart control. The building standard has not been decided. The house is ${fmt(Math.round(area.total), "en")} m² of floor area${lower ? `, ${fmt(Math.round(area.main), "en")} m² on the main floor and ${fmt(Math.round(area.lower), "en")} m² below` : " on one floor"}; where the ground falls far enough, the house gets a lower floor towards the garden.`}
-          </div>
-        )}
-      </div>
+    <div className={k ? ks.hud : "absolute inset-0 pointer-events-none"}>
+      {/* (in Klassisk the figures stand under the card, so the two never cover the plan of the floor) */}
+      {k ? <div className={ks.leftCol}>{whereCard}{livePanel}</div> : whereCard}
 
       {/* the plan of the floor you are on */}
       {fit && (
-        <div className="absolute right-3 top-3 md:right-5 md:top-5 pointer-events-auto">
-          <button className="chip !bg-night/70 !text-white mb-1.5 md:hidden" onClick={() => setPlanOpen((o) => !o)}>{no ? "Plan" : "Plan"}</button>
-          {planOpen && <FloorPlan fit={fit} plot={plot!} level={w.place.level === "lower" ? "lower" : "main"} locale={locale} />}
+        <div className={k ? ks.planWrap : "absolute right-3 top-3 md:right-5 md:top-5 pointer-events-auto"}>
+          <button className={k ? `${ks.note} ${ks.planToggle}` : "chip !bg-night/70 !text-white mb-1.5 md:hidden"} onClick={() => setPlanOpen((o) => !o)}>{no ? "Plan" : "Plan"}</button>
+          {planOpen && <FloorPlan fit={fit} plot={plot!} level={w.place.level === "lower" ? "lower" : "main"} locale={locale} k={k} />}
         </div>
       )}
 
@@ -73,45 +85,44 @@ export default function WalkHud({ locale, plots, fits, live, onExit }: { locale:
         <button
           key={id}
           ref={(el) => registerHot(id, el)}
-          className="absolute left-0 top-0 -ml-[15px] -mt-[15px] w-[30px] h-[30px] rounded-full grid place-items-center pointer-events-auto transition-opacity duration-200"
-          style={{ opacity: 0, visibility: "hidden", background: "rgba(23,40,58,0.72)", border: "2px solid #e2a23b", boxShadow: "0 0 0 4px rgba(226,162,59,0.25)" }}
+          className={k ? ks.hot : "absolute left-0 top-0 -ml-[15px] -mt-[15px] w-[30px] h-[30px] rounded-full grid place-items-center pointer-events-auto transition-opacity duration-200"}
+          style={k ? { opacity: 0, visibility: "hidden" } : { opacity: 0, visibility: "hidden", background: "rgba(23,40,58,0.72)", border: "2px solid #e2a23b", boxShadow: "0 0 0 4px rgba(226,162,59,0.25)" }}
           aria-label={HOTSPOTS[id].title[locale]}
           title={HOTSPOTS[id].title[locale]}
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => { e.stopPropagation(); setOpen(id); }}
         >
-          <span className="block w-[8px] h-[8px] rounded-full bg-amber" />
+          <span className={k ? ks.hotDot : "block w-[8px] h-[8px] rounded-full bg-amber"} />
         </button>
       ))}
 
       {/* what a spot explains */}
-      {open && HOTSPOTS[open] && <InfoCard id={open} locale={locale} live={live} onClose={() => setOpen(null)} />}
+      {open && HOTSPOTS[open] && <InfoCard id={open} locale={locale} live={live} k={k} onClose={() => setOpen(null)} />}
 
       {/* places to go, how to walk, the way out */}
-      <div className="absolute left-3 bottom-3 md:left-5 md:bottom-5 pointer-events-auto glass p-2.5 md:p-3 max-w-[min(92vw,540px)]" onPointerDown={(e) => e.stopPropagation()}>
-        <div className="flex flex-wrap gap-1.5">
+      <div className={k ? ks.spots : "absolute left-3 bottom-3 md:left-5 md:bottom-5 pointer-events-auto glass p-2.5 md:p-3 max-w-[min(92vw,540px)]"} onPointerDown={(e) => e.stopPropagation()}>
+        <div className={k ? ks.spotChips : "flex flex-wrap gap-1.5"}>
           {SPOTS.filter((s) => !s.lowerOnly || lower).map((s) => (
-            <button key={s.key} className="chip hover:!bg-white/25" onClick={() => go(s)}>{s[locale]}</button>
+            <button key={s.key} className={k ? `chip ${ks.chip}` : "chip hover:!bg-white/25"} onClick={() => go(s)}>{s[locale]}</button>
           ))}
-          <button className="chip !bg-white !text-ink" onClick={onExit}>{no ? "Avslutt" : "Leave"}</button>
+          <button className={k ? `btn sm ${ks.leave}` : "chip !bg-white !text-ink"} onClick={onExit}>{no ? "Avslutt" : "Leave"}</button>
         </div>
-        <div className="mt-2 text-[12.5px] text-white/75 hidden sm:block">
+        <div className={k ? ks.hint : "mt-2 text-[12.5px] text-white/75 hidden sm:block"}>
           {touch
             ? (no ? "Bruk spaken for å gå, dra for å se deg rundt, trykk på gulvet for å gå dit." : "Use the stick to walk, drag to look around, tap the floor to walk there.")
-            : (no ? "Gå med WASD eller piltastene, Shift for å løpe. Dra for å se deg rundt. Klikk på gulvet for å gå dit. Dørene åpner seg når du kommer." : "Walk with WASD or the arrow keys, Shift to run. Drag to look around. Click the floor to walk there. The doors open as you come.")}
+            : (no ? "Gå med W og S eller pil opp og ned, til siden med A og D. Snu deg med pil venstre og høyre eller Q og E, Shift for å løpe. Dra for å se deg rundt. Klikk på gulvet for å gå dit. Dørene åpner seg når du kommer." : "Walk with W and S or the up and down arrows, sideways with A and D. Turn with the left and right arrows or Q and E, Shift to run. Drag to look around. Click the floor to walk there. The doors open as you come.")}
         </div>
       </div>
 
-      {/* the house's own figures, now */}
-      {live && <LivePanel live={live} locale={locale} />}
+      {!k && livePanel}
 
-      {touch && <Stick />}
+      {touch && <Stick k={k} no={no} />}
     </div>
   );
 }
 
 /** The house's figures from the energy simulation at the hour on the dial. */
-function LivePanel({ live, locale }: { live: LiveFigures; locale: Locale }) {
+function LivePanel({ live, locale, k }: { live: LiveFigures; locale: Locale; k: boolean }) {
   const no = locale === "no";
   const n1 = (v: number) => fmt(Math.round(v * 10) / 10, no ? "no" : "en");
   const rows: [string, string][] = [
@@ -122,36 +133,36 @@ function LivePanel({ live, locale }: { live: LiveFigures; locale: Locale }) {
     [live.share >= 0 ? (no ? "Fra naboene" : "From neighbours") : (no ? "Til naboene" : "To neighbours"), `${n1(Math.abs(live.share))} kW`],
   ];
   return (
-    <div className="absolute right-3 bottom-[148px] md:right-5 md:bottom-[218px] pointer-events-auto glass px-3.5 py-2.5 w-[210px] hidden sm:block" onPointerDown={(e) => e.stopPropagation()}>
-      <div className="text-[12px] text-white/65">{no ? "Dette huset nå, i simuleringen" : "This house now, in the simulation"}</div>
-      <dl className="mt-1 grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 text-[13.5px]">
-        {rows.map(([k, v]) => (<Fragment key={k}><dt className="text-white/80">{k}</dt><dd className="text-right tabular-nums">{v}</dd></Fragment>))}
+    <div className={k ? ks.live : "absolute right-3 bottom-[148px] md:right-5 md:bottom-[218px] pointer-events-auto glass px-3.5 py-2.5 w-[210px] hidden sm:block"} onPointerDown={(e) => e.stopPropagation()}>
+      <div className={k ? ks.liveHead : "text-[12px] text-white/65"}>{no ? "Dette huset nå, i simuleringen" : "This house now, in the simulation"}</div>
+      <dl className={k ? ks.liveList : "mt-1 grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 text-[13.5px]"}>
+        {rows.map(([key, v]) => (<Fragment key={key}><dt className={k ? undefined : "text-white/80"}>{key}</dt><dd className={k ? undefined : "text-right tabular-nums"}>{v}</dd></Fragment>))}
       </dl>
-      <div className="mt-1.5 text-[11.5px] text-white/60 leading-snug">{no ? `I året gir taket om lag ${fmt(Math.round(live.yearPv), "no")} kWh, og huset bruker ${fmt(Math.round(live.yearUse), "no")} kWh.` : `In a year the roof makes about ${fmt(Math.round(live.yearPv), "en")} kWh, and the house uses ${fmt(Math.round(live.yearUse), "en")} kWh.`}</div>
+      <div className={k ? ks.liveNote : "mt-1.5 text-[11.5px] text-white/60 leading-snug"}>{no ? `I året gir taket om lag ${fmt(Math.round(live.yearPv), "no")} kWh, og huset bruker ${fmt(Math.round(live.yearUse), "no")} kWh.` : `In a year the roof makes about ${fmt(Math.round(live.yearPv), "en")} kWh, and the house uses ${fmt(Math.round(live.yearUse), "en")} kWh.`}</div>
     </div>
   );
 }
 
-function InfoCard({ id, locale, live, onClose }: { id: string; locale: Locale; live: LiveFigures | null; onClose: () => void }) {
+function InfoCard({ id, locale, live, k, onClose }: { id: string; locale: Locale; live: LiveFigures | null; k: boolean; onClose: () => void }) {
   const no = locale === "no";
   const h = HOTSPOTS[id];
   const v = verdictLabel(h.measure, no);
   useEffect(() => {
-    const k = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
-    window.addEventListener("keydown", k);
-    return () => window.removeEventListener("keydown", k);
+    const key = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
   }, [onClose]);
   return (
-    <div role="dialog" aria-label={h.title[locale]} className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:left-auto md:translate-x-0 md:right-[270px] md:top-5 md:translate-y-0 pointer-events-auto glass p-4 w-[min(92vw,380px)] rise-in" onPointerDown={(e) => e.stopPropagation()}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="display text-[20px] leading-tight">{h.title[locale]}</div>
-        <button aria-label={no ? "Lukk" : "Close"} className="text-white/70 hover:text-white text-[20px] leading-none" onClick={onClose}>×</button>
+    <div role="dialog" aria-label={h.title[locale]} className={k ? ks.info : "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 md:left-auto md:translate-x-0 md:right-[270px] md:top-5 md:translate-y-0 pointer-events-auto glass p-4 w-[min(92vw,380px)] rise-in"} onPointerDown={(e) => e.stopPropagation()}>
+      <div className={k ? ks.infoHead : "flex items-start justify-between gap-3"}>
+        <div className={k ? ks.infoTitle : "display text-[20px] leading-tight"}>{h.title[locale]}</div>
+        <button aria-label={no ? "Lukk" : "Close"} className={k ? ks.infoClose : "text-white/70 hover:text-white text-[20px] leading-none"} onClick={onClose}>×</button>
       </div>
-      <p className="mt-2 text-[14px] text-white/85 leading-snug">{h.body[locale]}</p>
-      {live && h.live && <p className="mt-2 text-[13.5px] text-amber">{h.live(live, no)}</p>}
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        {v && <span className={`chip ${v.verdict === "yes" ? "chip-pine" : "chip-amber"}`}>{`${v.name}: ${v.label}`}</span>}
-        <Src id={h.source} locale={locale} />
+      <p className={k ? ks.infoBody : "mt-2 text-[14px] text-white/85 leading-snug"}>{h.body[locale]}</p>
+      {live && h.live && <p className={k ? ks.infoLive : "mt-2 text-[13.5px] text-amber"}>{h.live(live, no)}</p>}
+      <div className={k ? ks.infoRow : "mt-3 flex flex-wrap items-center gap-2"}>
+        {v && <span className={k ? `tag ${ks.tag} ${ks.verdict} ${v.verdict === "yes" ? "green" : ""}` : `chip ${v.verdict === "yes" ? "chip-pine" : "chip-amber"}`}>{`${v.name}: ${v.label}`}</span>}
+        {k ? <KlassiskSrc id={h.source} label={no ? "Kilde" : "Source"} /> : <Src id={h.source} locale={locale} />}
       </div>
     </div>
   );
@@ -162,7 +173,7 @@ function InfoCard({ id, locale, live, onClose }: { id: string; locale: Locale; l
  * house), with the view side at the top. A dot and a cone show where you stand and look; a click on
  * a room walks you there.
  */
-function FloorPlan({ fit, plot, level, locale }: { fit: HouseFit; plot: Plot; level: Level; locale: Locale }) {
+function FloorPlan({ fit, plot, level, locale, k }: { fit: HouseFit; plot: Plot; level: Level; locale: Locale; k: boolean }) {
   const no = locale === "no";
   const S = 20;   // px per metre
   const pad = 8;
@@ -171,6 +182,10 @@ function FloorPlan({ fit, plot, level, locale }: { fit: HouseFit; plot: Plot; le
   const my = (v: number) => pad + (HOUSE.hd - v) * S;
   const rooms = ROOMS.filter((r) => r.level === level && keep(r, fit.lower) && r.id !== "stair");
   const parts = PARTITIONS.filter((p) => p.level === level && keep(p, fit.lower));
+  // the plan's colours: white on Moderne's dark glass, Klassisk's ink on its paper
+  const C = k
+    ? { house: "rgba(20,38,61,0.03)", wall: "#14263d", room: "rgba(47,95,133,0)", name: "#14263d", area: "#5c6979", part: "rgba(20,38,61,0.75)", stair: "rgba(47,95,133,0.8)", cone: "rgba(47,95,133,0.3)", me: "#2f5f85" }
+    : { house: "rgba(255,255,255,0.06)", wall: "rgba(255,255,255,0.75)", room: "rgba(255,255,255,0.04)", name: "#fff", area: "rgba(255,255,255,0.65)", part: "rgba(255,255,255,0.7)", stair: "rgba(226,162,59,0.8)", cone: "rgba(226,162,59,0.35)", me: "#e2a23b" };
   const me = useRef<SVGGElement>(null);
   // follow the visitor without re-rendering: the dot's transform every frame
   useEffect(() => {
@@ -194,38 +209,38 @@ function FloorPlan({ fit, plot, level, locale }: { fit: HouseFit; plot: Plot; le
   }, [plot, fit]);   // eslint-disable-line react-hooks/exhaustive-deps
   const walkTo = (u: number, v: number) => requestGoto(u, v, levelZ(level));
   return (
-    <div className="glass p-2" onPointerDown={(e) => e.stopPropagation()}>
-      <div className="flex items-center justify-between px-1 text-[11.5px] text-white/70">
+    <div className={k ? ks.plan : "glass p-2"} onPointerDown={(e) => e.stopPropagation()}>
+      <div className={k ? ks.planHead : "flex items-center justify-between px-1 text-[11.5px] text-white/70"}>
         <span>{level === "main" ? (no ? "Hovedplan" : "Main floor") : (no ? "Underetasje" : "Lower floor")}</span>
         <span>{no ? "Utsikten" : "The view"} ↑</span>
       </div>
-      <svg width={W} height={Hh} viewBox={`0 0 ${W} ${Hh}`} className="block mt-1" role="img" aria-label={no ? "Plantegning" : "Floor plan"}>
-        <rect x={mx(-HOUSE.hw) < mx(HOUSE.hw) ? mx(-HOUSE.hw) : mx(HOUSE.hw)} y={my(HOUSE.hd)} width={HOUSE.W * S} height={HOUSE.D * S} fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.75)" strokeWidth={HOUSE.wall * S * 0.6} />
+      <svg width={W} height={Hh} viewBox={`0 0 ${W} ${Hh}`} className={k ? ks.planSvg : "block mt-1"} role="img" aria-label={no ? "Plantegning" : "Floor plan"}>
+        <rect x={mx(-HOUSE.hw) < mx(HOUSE.hw) ? mx(-HOUSE.hw) : mx(HOUSE.hw)} y={my(HOUSE.hd)} width={HOUSE.W * S} height={HOUSE.D * S} fill={C.house} stroke={C.wall} strokeWidth={HOUSE.wall * S * 0.6} />
         {rooms.map((r) => {
           const x0 = Math.min(mx(r.rect.u0), mx(r.rect.u1)), x1 = Math.max(mx(r.rect.u0), mx(r.rect.u1));
           const cx = (x0 + x1) / 2, cy = (my(r.rect.v1) + my(r.rect.v0)) / 2;
           const a = roomArea(r, fit.lower);
           return (
-            <g key={r.id} className="cursor-pointer" onClick={() => walkTo((r.rect.u0 + r.rect.u1) / 2, (r.rect.v0 + r.rect.v1) / 2 + (r.id === "living" ? 0.8 : 0))}>
-              <rect x={x0} y={my(r.rect.v1)} width={x1 - x0} height={my(r.rect.v0) - my(r.rect.v1)} fill="rgba(255,255,255,0.04)" className="hover:fill-[rgba(226,162,59,0.18)]" />
-              <text x={cx} y={cy - 2} textAnchor="middle" fontSize="9.5" fill="#fff" style={{ pointerEvents: "none" }}>{shortName(r.id, no)}</text>
-              <text x={cx} y={cy + 9} textAnchor="middle" fontSize="8.5" fill="rgba(255,255,255,0.65)" style={{ pointerEvents: "none" }}>{fmt(Math.round(a * 10) / 10, no ? "no" : "en")} m²</text>
+            <g key={r.id} className={k ? ks.roomG : "cursor-pointer"} onClick={() => walkTo((r.rect.u0 + r.rect.u1) / 2, (r.rect.v0 + r.rect.v1) / 2 + (r.id === "living" ? 0.8 : 0))}>
+              <rect x={x0} y={my(r.rect.v1)} width={x1 - x0} height={my(r.rect.v0) - my(r.rect.v1)} fill={C.room} className={k ? ks.roomRect : "hover:fill-[rgba(226,162,59,0.18)]"} />
+              <text x={cx} y={cy - 2} textAnchor="middle" fontSize="9.5" fill={C.name} className={k ? ks.planText : undefined} style={{ pointerEvents: "none" }}>{shortName(r.id, no)}</text>
+              <text x={cx} y={cy + 9} textAnchor="middle" fontSize="8.5" fill={C.area} className={k ? ks.planText : undefined} style={{ pointerEvents: "none" }}>{fmt(Math.round(a * 10) / 10, no ? "no" : "en")} m²</text>
             </g>
           );
         })}
         {parts.map((p) => {
           const x0 = Math.min(mx(p.rect.u0), mx(p.rect.u1)), x1 = Math.max(mx(p.rect.u0), mx(p.rect.u1));
-          return <rect key={p.id} x={x0} y={my(p.rect.v1)} width={Math.max(1.5, x1 - x0)} height={Math.max(1.5, my(p.rect.v0) - my(p.rect.v1))} fill="rgba(255,255,255,0.7)" />;
+          return <rect key={p.id} x={x0} y={my(p.rect.v1)} width={Math.max(1.5, x1 - x0)} height={Math.max(1.5, my(p.rect.v0) - my(p.rect.v1))} fill={C.part} />;
         })}
         {fit.lower && (
-          <rect x={Math.min(mx(STAIR.u0), mx(STAIR.u1))} y={my(level === "main" ? STAIR.openTo : 0.27)} width={Math.abs(mx(STAIR.u1) - mx(STAIR.u0))} height={(level === "main" ? STAIR.openTo - STAIR.top : 0.27 - STAIR.top) * S} fill="none" stroke="rgba(226,162,59,0.8)" strokeDasharray="2 2" />
+          <rect x={Math.min(mx(STAIR.u0), mx(STAIR.u1))} y={my(level === "main" ? STAIR.openTo : 0.27)} width={Math.abs(mx(STAIR.u1) - mx(STAIR.u0))} height={(level === "main" ? STAIR.openTo - STAIR.top : 0.27 - STAIR.top) * S} fill="none" stroke={C.stair} strokeDasharray="2 2" />
         )}
         <g ref={me}>
-          <path d="M0 0 L22 -9 A24 24 0 0 1 22 9 Z" fill="rgba(226,162,59,0.35)" />
-          <circle r="4.5" fill="#e2a23b" stroke="#fff" strokeWidth="1.5" />
+          <path d="M0 0 L22 -9 A24 24 0 0 1 22 9 Z" fill={C.cone} />
+          <circle r="4.5" fill={C.me} stroke="#fff" strokeWidth="1.5" />
         </g>
       </svg>
-      <div className="px-1 pt-1 text-[11px] text-white/60">{no ? `${fmt(Math.round(floorArea(fit.lower).total), "no")} m² BRA i alt` : `${fmt(Math.round(floorArea(fit.lower).total), "en")} m² in all`}</div>
+      <div className={k ? ks.planFoot : "px-1 pt-1 text-[11px] text-white/60"}>{no ? `${fmt(Math.round(floorArea(fit.lower).total), "no")} m² BRA i alt` : `${fmt(Math.round(floorArea(fit.lower).total), "en")} m² in all`}</div>
     </div>
   );
 }
@@ -240,7 +255,7 @@ function shortName(id: string, no: boolean) {
 }
 
 /** A stick for walking on a touch screen: push it the way you want to go. */
-function Stick() {
+function Stick({ k, no }: { k: boolean; no: boolean }) {
   const base = useRef<HTMLDivElement>(null);
   const knob = useRef<HTMLDivElement>(null);
   const id = useRef<number | null>(null);
@@ -253,21 +268,21 @@ function Stick() {
     const r = base.current.getBoundingClientRect();
     const dx = (e.clientX - (r.left + r.width / 2)) / (r.width / 2), dy = (e.clientY - (r.top + r.height / 2)) / (r.height / 2);
     const l = Math.hypot(dx, dy);
-    const k = l > 1 ? 1 / l : 1;
-    set(dx * k, -dy * k);
+    const s = l > 1 ? 1 / l : 1;
+    set(dx * s, -dy * s);
   };
   return (
     <div
       ref={base}
-      className="absolute left-4 bottom-[118px] w-[112px] h-[112px] rounded-full pointer-events-auto touch-none"
-      style={{ background: "rgba(23,40,58,0.45)", border: "1.5px solid rgba(255,255,255,0.4)" }}
+      className={k ? ks.stick : "absolute left-4 bottom-[118px] w-[112px] h-[112px] rounded-full pointer-events-auto touch-none"}
+      style={k ? undefined : { background: "rgba(23,40,58,0.45)", border: "1.5px solid rgba(255,255,255,0.4)" }}
       onPointerDown={(e) => { e.stopPropagation(); e.preventDefault(); id.current = e.pointerId; e.currentTarget.setPointerCapture?.(e.pointerId); move(e); }}
       onPointerMove={(e) => { e.stopPropagation(); move(e); }}
       onPointerUp={(e) => { e.stopPropagation(); id.current = null; set(0, 0); }}
       onPointerCancel={() => { id.current = null; set(0, 0); }}
-      aria-label="Gå"
+      aria-label={no ? "Gå" : "Walk"}
     >
-      <div ref={knob} className="absolute left-1/2 top-1/2 -ml-[23px] -mt-[23px] w-[46px] h-[46px] rounded-full pointer-events-none touch-none" style={{ background: "rgba(255,255,255,0.85)" }} />
+      <div ref={knob} className={k ? ks.knob : "absolute left-1/2 top-1/2 -ml-[23px] -mt-[23px] w-[46px] h-[46px] rounded-full pointer-events-none touch-none"} style={k ? undefined : { background: "rgba(255,255,255,0.85)" }} />
     </div>
   );
 }

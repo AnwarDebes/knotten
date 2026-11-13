@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n";
 import type { Design } from "@/lib/design";
+import ks from "./Chat.module.css";
 
 type Msg = { from: "you" | "ai"; text: string; links?: { href: string; label: string }[]; source?: string };
 
@@ -15,12 +16,22 @@ export function Orb({ size = 22 }: { size?: number }) {
   );
 }
 
+/** The same mark drawn by the Klassisk stylesheet (the Moderne one comes with the chat's own style element). */
+function KlassiskOrb({ size }: { size: number }) {
+  return (
+    <span className={ks.orb} style={{ width: size, height: size }} aria-hidden>
+      <span className={ks.core} />
+    </span>
+  );
+}
+
 /**
  * Knotten AI: a floating assistant that answers from the project's own data (/api/ask): the plots,
  * sun and view, the energy concept, the power price and the weather right now, the road, the area
- * and the release. It links to where each answer is shown, and says so when it does not know.
+ * and the release. It links to where each answer is shown, in the design and language it is asked from,
+ * and says so when it does not know.
  */
-export default function Chat({ locale }: { locale: Locale; variant?: Design }) {
+export default function Chat({ locale, variant = "moderne" }: { locale: Locale; /** the design it sits in: Klassisk gets its own skin and Klassisk links (default Moderne) */ variant?: Design }) {
   const no = locale === "no";
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
@@ -64,7 +75,8 @@ export default function Chat({ locale }: { locale: Locale; variant?: Design }) {
     setText("");
     setTyping(true);
     try {
-      const res = await fetch("/api/ask", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q: t, locale }) });
+      // the design and the language decide where the answer's links go (Klassisk's own pages, /english for English)
+      const res = await fetch("/api/ask", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ q: t, locale, design: variant }) });
       const a = (await res.json()) as { text?: string; links?: Msg["links"]; source?: string };
       setMsgs((m) => [...m, { from: "ai", text: a.text ?? (no ? "Noe gikk galt. Prøv igjen." : "Something went wrong. Try again."), links: a.links, source: a.source }]);
     } catch {
@@ -73,6 +85,58 @@ export default function Chat({ locale }: { locale: Locale; variant?: Design }) {
       setTyping(false);
     }
   };
+
+  if (variant === "klassisk") {
+    const folded = small && !open;
+    return (
+      // (the pill comes first in the page's order, so Tab goes from it into the chat; the chat is drawn above it)
+      <div className={ks.dock}>
+        <button ref={pill} type="button" onClick={() => (open ? close() : setOpen(true))} aria-expanded={open} aria-controls={open ? "knotten-ai" : undefined} className={folded ? `${ks.pill} ${ks.small}` : ks.pill}>
+          <KlassiskOrb size={28} />
+          <span className={folded ? "sr" : undefined}>{open ? (no ? "Lukk" : "Close") : "Knotten AI"}</span>
+        </button>
+        {open && (
+          <div id="knotten-ai" className={ks.panel} role="dialog" aria-label="Knotten AI">
+            <div className={ks.head}>
+              <KlassiskOrb size={26} />
+              <div>
+                <div className={ks.name}>Knotten AI</div>
+                <div className={ks.sub}>{no ? "Svarer fra prosjektets egne data" : "Answers from the project's own data"}</div>
+              </div>
+              <button type="button" className={ks.close} onClick={close} aria-label={no ? "Lukk" : "Close"}>
+                <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" /></svg>
+              </button>
+            </div>
+            <div ref={list} role="log" aria-live="polite" className={ks.log}>
+              {all.map((m, i) => (
+                <div key={i} className={m.from === "ai" ? ks.ai : ks.you}>
+                  {m.text}
+                  {m.links && m.links.length > 0 && (
+                    <div className={ks.links}>
+                      {m.links.map((l) => <Link key={l.href} href={l.href} onClick={() => setOpen(false)} className={ks.link}>{l.label}</Link>)}
+                    </div>
+                  )}
+                  {m.source === "ai" && <div className={ks.note}>{no ? "Skrevet av en språkmodell ut fra prosjektets fakta." : "Written by a language model from the project's facts."}</div>}
+                </div>
+              ))}
+              {typing && <div className={ks.dots}><span aria-hidden /><span aria-hidden /><span aria-hidden /><em className="sr">{no ? "Knotten AI skriver" : "Knotten AI is typing"}</em></div>}
+              {msgs.length === 0 && (
+                <div className={ks.suggs}>
+                  {suggestions.map((s) => <button key={s} type="button" className={ks.sugg} onClick={() => ask(s)}>{s}</button>)}
+                </div>
+              )}
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); ask(text); }} className={ks.form}>
+              <input ref={input} className={ks.input} value={text} onChange={(e) => setText(e.target.value)} placeholder={no ? "Spør om Knotten" : "Ask about Knotten"} aria-label={no ? "Melding" : "Message"} />
+              <button className="btn sm" type="submit" aria-label={no ? "Send" : "Send"}>
+                <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden><path d="M2 8h11M9 3.5L13.5 8 9 12.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" fill="none" /></svg>
+              </button>
+            </form>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     // (the pill comes first in the page's order, so Tab goes from it into the chat; the chat is drawn above it)

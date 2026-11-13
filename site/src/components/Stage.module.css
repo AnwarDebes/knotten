@@ -1,0 +1,131 @@
+/*
+  The 3D stage in the Klassisk design (variant="klassisk"): the same model and controls as in Moderne, dressed the way
+  Klassisk dresses its own plot picker: a quiet frame, light paper panels with a hairline over the model, Newsreader
+  for what is said, Figtree for the controls, Klassisk's ink buttons and white chips (the global .btn, .chip, .seg and
+  .linkish of (klassisk)/globals.css), small ink notes over the picture. Amber is the sun only (the dial's thumb).
+  The keyboard ring of the wipe (.wipeKey) is used by both designs.
+*/
+
+/* the wipe's divider as a keyboard control: the ring goes round its knob, not along the line (both designs) */
+.wipeKey:focus { outline: none; }
+.wipeKey:focus-visible::after { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #2f6688; }
+
+.frame { position: relative; width: 100%; overflow: hidden; border-radius: 16px; border: 1px solid var(--line); background: var(--paper-3); color: var(--ink); box-shadow: 0 20px 50px -30px rgba(20, 38, 61, 0.4); transition: box-shadow 0.3s var(--ease); }
+.frame.focused { box-shadow: 0 0 0 2px var(--fjord-deep), 0 20px 50px -30px rgba(20, 38, 61, 0.4); }
+.box { position: absolute; inset: 0; isolation: isolate; }
+.grab { cursor: grab; }
+.touchNone { touch-action: none; }
+.pointer { cursor: pointer; }
+
+.poster { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; opacity: 1; transition: opacity 0.7s var(--ease); }
+.poster.gone { opacity: 0; }
+
+/* small notes over the picture, as on Klassisk's plot picker */
+.note { padding: 6px 12px; border: 0; border-radius: 999px; background: rgba(20, 38, 61, 0.86); color: #fff; font: inherit; font-size: 0.8rem; font-weight: 500; line-height: 1.3; white-space: nowrap; }
+button.note { cursor: pointer; }
+button.note:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+.tl, .tr, .tc { position: absolute; top: 14px; }
+.tl { left: 14px; }
+.tr { right: 14px; }
+.tc { left: 50%; transform: translateX(-50%); pointer-events: none; }
+@media (min-width: 768px) { .tl, .tr, .tc { top: 18px; } .tl { left: 18px; } .tr { right: 18px; } }
+/* on a phone the hint goes under the wipe's two names instead of between them */
+@media (max-width: 480px) { .tc { top: 52px; } }
+.coarse { display: none; }
+@media (pointer: coarse) { .fine { display: none; } .coarse { display: inline; } }
+
+/* the wipe's divider: a white line with a paper knob */
+.wipe { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #fff; box-shadow: 0 0 0 1px rgba(20, 38, 61, 0.14); cursor: ew-resize; }
+.wipe::after { content: ""; position: absolute; top: 50%; left: 50%; width: 46px; height: 46px; border-radius: 50%; transform: translate(-50%, -50%); background: rgba(246, 248, 250, 0.95); border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(20, 38, 61, 0.25); }
+.wipe::before { content: "◂ ▸"; position: absolute; top: 50%; left: 50%; z-index: 1; transform: translate(-50%, -50%); font-size: 12px; letter-spacing: 0.15em; color: var(--ink); white-space: nowrap; }
+.wipe:focus { outline: none; }
+.wipe:focus-visible::after { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--fjord-deep); }
+
+/* the light paper card Klassisk lays over a picture */
+.card, .panel, .caption, .alert, .loading { background: rgba(246, 248, 250, 0.95); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 14px 44px rgba(20, 38, 61, 0.16); color: var(--ink); }
+
+/* the invitation */
+.invite { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; background: linear-gradient(to top, rgba(20, 38, 61, 0.38), rgba(20, 38, 61, 0.06) 55%, rgba(20, 38, 61, 0)); }
+.card { max-width: 460px; padding: 22px 26px 18px; text-align: center; }
+@media (min-width: 768px) { .card { padding: 26px 32px 22px; } }
+.big.big { padding: 14px 26px; font-size: 1rem; }
+.inviteText { max-width: 40ch; margin: 14px auto 0; font-size: 0.92rem; line-height: 1.45; color: var(--ink-2); }
+.inviteLink { margin-top: 10px; }
+
+/* while the model loads */
+.loadWrap { position: absolute; left: 0; right: 0; bottom: 0; padding: 18px; pointer-events: none; }
+.loading { display: inline-flex; align-items: center; gap: 12px; padding: 10px 16px; border-radius: 999px; font-size: 0.88rem; }
+.bar { position: relative; width: 96px; height: 2px; overflow: hidden; border-radius: 2px; background: var(--paper-3); }
+.barIn { position: absolute; top: 0; bottom: 0; left: 0; width: 33%; background: var(--fjord-deep); }
+@media (prefers-reduced-motion: no-preference) { .barIn { animation: loadbar 1.4s ease-in-out infinite; } }
+@keyframes loadbar { from { transform: translateX(-100%); } to { transform: translateX(300%); } }
+
+/* the graphics card gave up, or the model did not come */
+.shade { position: absolute; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(20, 38, 61, 0.42); }
+.alert { max-width: 42ch; padding: 24px; text-align: center; }
+.alertTitle { font-family: var(--font-serif), Georgia, serif; font-weight: 300; font-size: 1.65rem; line-height: 1.15; }
+.alertText { margin-top: 8px; font-size: 0.92rem; line-height: 1.45; color: var(--ink-2); }
+.alertBtn { margin-top: 16px; }
+
+/* the journey: a caption and the stops */
+.jWrap { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px; pointer-events: none; }
+.jGrid { display: grid; gap: 12px; align-items: end; }
+@media (min-width: 768px) { .jWrap { padding: 22px; } .jGrid { grid-template-columns: minmax(0, 1fr) auto; } }
+.caption { max-width: 520px; padding: 16px 18px; pointer-events: auto; }
+@media (min-width: 768px) { .caption { padding: 20px 22px; } }
+@media (prefers-reduced-motion: no-preference) { .caption { animation: rise 0.9s var(--ease) both; } }
+@keyframes rise { from { opacity: 0.01; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.count { font-size: 0.78rem; font-weight: 600; letter-spacing: 0.02em; color: var(--fjord-deep); }
+.jTitle { margin-top: 4px; font-family: var(--font-serif), Georgia, serif; font-weight: 300; font-size: 1.7rem; line-height: 1.1; }
+@media (min-width: 768px) { .jTitle { font-size: 1.95rem; } }
+.jText { margin-top: 6px; font-size: 0.93rem; line-height: 1.5; color: var(--ink-2); }
+.jPlot { margin-top: 8px; font-size: 0.84rem; color: var(--ink); }
+.jBtns { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; }
+.stops { display: flex; justify-content: flex-end; pointer-events: auto; }
+.stopsIn { display: inline-flex; padding: 0 6px; border: 1px solid var(--line); border-radius: 999px; background: rgba(246, 248, 250, 0.92); box-shadow: 0 6px 18px rgba(20, 38, 61, 0.14); }
+.stop { display: grid; place-items: center; min-width: 24px; min-height: 24px; padding: 8px 3px; border: 0; background: transparent; cursor: pointer; }
+.stopBar { display: block; width: 16px; height: 5px; border-radius: 999px; background: var(--ink-3); opacity: 0.45; transition: width 0.3s var(--ease), opacity 0.3s, background 0.3s; }
+.stop:hover .stopBar { opacity: 0.8; }
+.stopBar.on { width: 40px; opacity: 1; background: var(--ink); }
+
+/* exploring: the panel of controls, the dial, the passport */
+.ctlWrap { position: absolute; left: 0; right: 0; bottom: 0; padding: 12px; pointer-events: none; }
+@media (min-width: 768px) { .ctlWrap { padding: 18px; } }
+.ctlRow { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.panel { display: grid; gap: 11px; max-width: 520px; padding: 12px; pointer-events: auto; }
+@media (min-width: 768px) { .panel { padding: 16px; } }
+.seg.seg { flex-wrap: wrap; max-width: 100%; }
+@media (max-width: 480px) { .seg.seg { border-radius: 16px; } .seg.seg button { padding: 6px 10px; font-size: 0.82rem; } }
+.sub { display: none; max-width: 46ch; font-size: 0.9rem; line-height: 1.45; color: var(--ink-2); }
+@media (min-width: 640px) { .sub { display: block; } }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip.chip { padding: 5px 12px; font-size: 0.82rem; line-height: 1.35; transition: background 0.2s, border-color 0.2s, color 0.2s; }
+.chip.chip:not([aria-pressed="true"]):hover { border-color: var(--ink-3); color: var(--ink); }
+.plots { display: flex; flex-wrap: wrap; gap: 4px; max-height: 112px; overflow: auto; }
+.chip.plotChip { min-width: 34px; padding: 4px 8px; text-align: center; }
+/* plots with open sea in view, as on the passports: a pale fjord tint */
+.chip.sea:not([aria-pressed="true"]) { background: var(--fjord-pale); border-color: #b9cfe0; }
+.walkBtn.walkBtn { padding: 6px 14px; font-size: 0.84rem; }
+.fieldRow { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.figs { font-size: 0.82rem; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.plotLine { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 0.88rem; }
+@media (min-width: 768px) { .plotLine { display: none; } }
+.again { justify-self: start; }
+.shareRow { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; justify-self: start; }
+.shared { font-size: 0.8rem; color: var(--pine); }
+.copy { width: min(100%, 420px); padding: 7px 10px; border: 1px solid #7f8c99; border-radius: 10px; background: #fff; color: var(--ink); font: inherit; font-size: 0.8rem; }
+.copyLabel { display: grid; gap: 4px; font-size: 0.8rem; color: var(--ink-2); }
+
+.dialWrap { margin-left: auto; pointer-events: auto; }
+.walkDial { position: absolute; right: 12px; top: 56px; display: flex; flex-direction: column; align-items: flex-end; pointer-events: auto; }
+@media (min-width: 768px) { .walkDial { top: auto; right: 18px; bottom: 18px; } }
+.dialToggle { margin-bottom: 8px; }
+@media (min-width: 768px) { .dialToggle { display: none; } }
+.dialBox { display: none; }
+.dialBox.open { display: block; }
+@media (min-width: 768px) { .dialBox { display: block; } }
+
+.passport { display: none; position: absolute; top: 14px; right: 14px; width: min(60vw, 236px); max-height: calc(100% - 300px); overflow: auto; pointer-events: auto; }
+@media (min-width: 768px) { .passport { display: block; top: 18px; right: 18px; } }
+
+@media (prefers-reduced-motion: reduce) { .frame, .poster, .stopBar, .chip.chip { transition: none; } }

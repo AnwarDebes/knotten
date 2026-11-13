@@ -1,0 +1,74 @@
+/*
+  The walk's page side in the Klassisk design (variant="klassisk"): light paper cards with a hairline over the model,
+  the room in Newsreader, Klassisk's white chips and ink buttons, the plan drawn in ink, the spots as Klassisk's
+  fjord-blue map pins. Used only with variant="klassisk".
+*/
+.hud { position: absolute; inset: 0; pointer-events: none; }
+.card, .plan, .spots, .live, .info { background: rgba(246, 248, 250, 0.95); backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 12px 34px rgba(20, 38, 61, 0.16); color: var(--ink); pointer-events: auto; }
+
+/* the left column: where you are, then the house's own figures */
+.leftCol { position: absolute; left: 12px; top: 12px; display: flex; flex-direction: column; align-items: flex-start; gap: 10px; max-width: min(78vw, 360px); max-height: calc(100% - 150px); overflow: auto; pointer-events: none; }
+@media (min-width: 768px) { .leftCol { left: 18px; top: 18px; } }
+.card { padding: 10px 14px 11px; }
+.whereSub { font-size: 0.74rem; color: var(--ink-3); }
+.room { font-family: var(--font-serif), Georgia, serif; font-weight: 300; font-size: 1.45rem; line-height: 1.15; }
+@media (min-width: 768px) { .room { font-size: 1.6rem; } }
+.level { font-family: var(--font-sans), sans-serif; font-size: 0.85rem; color: var(--ink-3); }
+.about { margin-top: 4px; font-size: 0.82rem; }
+.aboutText { margin-top: 8px; font-size: 0.84rem; line-height: 1.45; color: var(--ink-2); }
+
+.planWrap { position: absolute; right: 12px; top: 12px; display: flex; flex-direction: column; align-items: flex-end; pointer-events: auto; }
+@media (min-width: 768px) { .planWrap { right: 18px; top: 18px; } }
+.note { margin-bottom: 6px; padding: 6px 12px; border: 0; border-radius: 999px; background: rgba(20, 38, 61, 0.86); color: #fff; font: inherit; font-size: 0.8rem; font-weight: 500; cursor: pointer; }
+.note:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@media (min-width: 768px) { .planToggle { display: none; } }
+.plan { padding: 8px; }
+.planHead { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 4px; font-size: 0.72rem; color: var(--ink-3); }
+.planSvg { display: block; margin-top: 4px; }
+.roomRect { transition: fill 0.2s; }
+.roomG { cursor: pointer; }
+.roomG:hover .roomRect { fill: rgba(47, 95, 133, 0.12); }
+.planText { font-family: var(--font-sans), sans-serif; }
+.planFoot { padding: 4px 4px 0; font-size: 0.7rem; color: var(--ink-3); }
+
+/* the spots that explain the house: Klassisk's map pins (moved by the scene every frame) */
+.hot { position: absolute; left: 0; top: 0; width: 30px; height: 30px; margin: -15px 0 0 -15px; display: grid; place-items: center; padding: 0; border: 2px solid #fff; border-radius: 50%; background: var(--fjord-deep); box-shadow: 0 0 0 4px rgba(47, 95, 133, 0.28), 0 4px 12px rgba(20, 38, 61, 0.3); cursor: pointer; pointer-events: auto; transition: opacity 0.2s; }
+.hot:focus-visible { outline: 2px solid #fff; outline-offset: 3px; box-shadow: 0 0 0 6px var(--ink); }
+.hotDot { display: block; width: 8px; height: 8px; border-radius: 50%; background: #fff; }
+
+.spots { position: absolute; left: 12px; bottom: 12px; max-width: min(92vw, 540px); padding: 10px; }
+@media (min-width: 768px) { .spots { left: 18px; bottom: 18px; padding: 12px; } }
+.spotChips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip.chip { padding: 5px 12px; font-size: 0.82rem; line-height: 1.35; }
+.chip.chip:hover { border-color: var(--ink-3); color: var(--ink); }
+.leave.leave { padding: 6px 14px; font-size: 0.84rem; }
+.hint { display: none; margin-top: 8px; font-size: 0.8rem; line-height: 1.45; color: var(--ink-2); }
+@media (min-width: 640px) { .hint { display: block; } }
+
+/* the house's own figures, now */
+.live { display: none; width: 220px; padding: 10px 14px 11px; pointer-events: auto; }
+@media (min-width: 640px) { .live { display: block; } }
+.liveHead { font-size: 0.74rem; color: var(--ink-3); }
+.liveList { margin: 4px 0 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; font-size: 0.85rem; }
+.liveList dt { color: var(--ink-2); }
+.liveList dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.liveNote { margin-top: 6px; font-size: 0.72rem; line-height: 1.4; color: var(--ink-3); }
+
+/* what a spot explains */
+.info { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(92vw, 380px); padding: 16px; }
+@media (min-width: 768px) { .info { left: auto; right: 280px; top: 18px; transform: none; } }
+@media (prefers-reduced-motion: no-preference) { .info { animation: rise 0.6s var(--ease) both; } }
+@keyframes rise { from { opacity: 0.01; } to { opacity: 1; } }
+.infoHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.infoTitle { font-family: var(--font-serif), Georgia, serif; font-weight: 400; font-size: 1.3rem; line-height: 1.2; }
+.infoClose { flex: none; width: 32px; height: 32px; margin: -4px -6px 0 0; display: grid; place-items: center; border: 0; border-radius: 50%; background: transparent; color: var(--ink-2); font-size: 1.3rem; line-height: 1; cursor: pointer; }
+.infoClose:hover { background: var(--paper-2); color: var(--ink); }
+.infoBody { margin-top: 8px; font-size: 0.9rem; line-height: 1.5; color: var(--ink-2); }
+.infoLive { margin-top: 8px; font-size: 0.86rem; color: var(--fjord-deep); font-weight: 500; }
+.infoRow { margin-top: 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.tag.verdict { margin: 0; }
+.infoRow :global(.src) { margin-left: 0; }
+
+/* a stick for walking on a touch screen */
+.stick { position: absolute; left: 16px; bottom: 118px; width: 112px; height: 112px; border-radius: 50%; background: rgba(246, 248, 250, 0.6); border: 1.5px solid rgba(20, 38, 61, 0.35); box-shadow: 0 6px 18px rgba(20, 38, 61, 0.18); pointer-events: auto; touch-action: none; }
+.knob { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: var(--ink); opacity: 0.85; pointer-events: none; touch-action: none; }
