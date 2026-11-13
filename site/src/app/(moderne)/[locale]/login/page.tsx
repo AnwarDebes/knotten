@@ -14,7 +14,7 @@ import { isLocale } from "@/lib/i18n";
 import { STORAGE } from "@/lib/server/kv";
 import { STORAGE_MESSAGE } from "@/lib/errors";
 import { MT } from "@/lib/member-text";
-import { minSidePath, registerPath } from "@/lib/member-paths";
+import { contactPath, minSidePath, registerPath } from "@/lib/member-paths";
 
 export const dynamic = "force-dynamic";
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
@@ -106,7 +106,7 @@ export default async function Login({ params, searchParams }: { params: Promise<
                 </p>
                 <p className="text-[14px] text-muted -mt-4">
                   {no ? "Har du ikke tilgang ennå? " : "No access yet? "}
-                  <Link href={`/${locale}/kontakt`} className="text-fjord">{no ? "Be om tilgang" : "Request access"}</Link>
+                  <Link href={contactPath("moderne", locale)} className="text-fjord">{m.requestAccess}</Link>
                   {no ? `, eller skriv til ${CONTACT.email}.` : `, or write to ${CONTACT.email}.`}
                 </p>
               </div>

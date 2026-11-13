@@ -1,47 +1,56 @@
 import type { Design } from "./design";
+import { kHref } from "./klassisk/locale";
 
 /**
- * Where a buyer's own account lives in each design and language. Klassisk is Norwegian today, so an English page
- * opens the Moderne one; the Klassisk components already carry English, so an English Klassisk only changes these.
+ * Where a buyer's own account lives in each design and language: Klassisk in Norwegian at the root (/min-side) and in
+ * English under /english (/english/min-side), Moderne at /no/min-side and /en/min-side. A visitor stays in the design
+ * and the language they came from, also when a link arrives by email.
  * No Node or browser imports here: pages, server actions, emails and the proxy all use it.
  */
 export type Lang = "no" | "en";
 
-const klassisk = (design: Design | undefined, locale: Lang) => design === "klassisk" && locale === "no";
+/** The address of a page in a design and language: Klassisk's own path, or Moderne's path after the language. */
+const at = (design: Design | undefined, locale: Lang, klassisk: string, moderne: string) =>
+  design === "klassisk" ? kHref(klassisk, locale) : `/${locale}${moderne}`;
 
-/** Min side: /min-side in Klassisk, /no/min-side and /en/min-side in Moderne. */
+/** Min side: /min-side or /english/min-side in Klassisk, /no/min-side and /en/min-side in Moderne. */
 export function minSidePath(design: Design | undefined, locale: Lang) {
-  return klassisk(design, locale) ? "/min-side" : `/${locale}/min-side`;
+  return at(design, locale, "/min-side", "/min-side");
 }
 
-/** The sign-up page: /registrer in Klassisk, /no/registrer and /en/registrer in Moderne. */
+/** The sign-up page: /registrer or /english/registrer in Klassisk, /no/registrer and /en/registrer in Moderne. */
 export function registerPath(design: Design | undefined, locale: Lang) {
-  return klassisk(design, locale) ? "/registrer" : `/${locale}/registrer`;
+  return at(design, locale, "/registrer", "/registrer");
 }
 
-/** The login page: /logg-inn in Klassisk, /no/login and /en/login in Moderne. */
+/** The login page: /logg-inn or /english/logg-inn in Klassisk, /no/login and /en/login in Moderne. */
 export function loginPagePath(design: Design | undefined, locale: Lang) {
-  return klassisk(design, locale) ? "/logg-inn" : `/${locale}/login`;
+  return at(design, locale, "/logg-inn", "/login");
+}
+
+/** The page where invitation, reset and confirmation links land: /logg-inn/passord in Klassisk, /{l}/login/passord in Moderne. */
+export function passwordPagePath(design: Design | undefined, locale: Lang) {
+  return at(design, locale, "/logg-inn/passord", "/login/passord");
 }
 
 /** The privacy statement in the same design and language. */
 export function privacyPath(design: Design | undefined, locale: Lang) {
-  return klassisk(design, locale) ? "/personvern" : `/${locale}/personvern`;
+  return at(design, locale, "/personvern", "/personvern");
 }
 
 /** The house configurator with a saved house's state (`toSearch` from lib/configurator/state). */
 export function configuratorPath(design: Design | undefined, locale: Lang, search = "") {
-  return `${klassisk(design, locale) ? "/konfigurator" : `/${locale}/konfigurator`}${search}`;
+  return `${at(design, locale, "/konfigurator", "/konfigurator")}${search}`;
 }
 
-/** A plot: Moderne has a page per plot; Klassisk shows every plot in the plot picker. */
+/** A plot's own page: /tomtene/07 in Klassisk, /{l}/tomter/plot-07 in Moderne. */
 export function plotPath(design: Design | undefined, locale: Lang, plotId: string) {
-  return klassisk(design, locale) ? "/tomtene" : `/${locale}/tomter/${plotId}`;
+  return at(design, locale, `/tomtene/${plotId.replace(/^plot-/, "").padStart(2, "0")}`, `/tomter/${plotId}`);
 }
 
-/** Where people who were invited ask for access to the portal (the contact pages). */
+/** Where people who were invited ask for access to the portal: the interest form with the access purpose. */
 export function contactPath(design: Design | undefined, locale: Lang) {
-  return klassisk(design, locale) ? "/kontakt" : `/${locale}/kontakt`;
+  return at(design, locale, "/kontakt?rolle=tilgang", "/interesse?purpose=access");
 }
 
 /** Plots preselected on the sign-up page: ?tomt=7 (Klassisk's name) or ?plot=plot-07 (Moderne's), one or several. */

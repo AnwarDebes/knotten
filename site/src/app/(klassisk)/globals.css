@@ -84,9 +84,9 @@ main, footer, header { position: relative; z-index: 1; }
 .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); }
 
 .nav { display: flex; gap: 4px; margin-left: auto; align-items: center; }
-.nav a { color: var(--ink-2); text-decoration: none; padding: 8px 11px; border-radius: 6px; font-size: 0.92rem; font-weight: 500; white-space: nowrap; }
+.nav a { color: var(--ink-2); text-decoration: none; padding: 8px 9px; border-radius: 6px; font-size: 0.92rem; font-weight: 500; white-space: nowrap; }
 .nav a:hover, .nav a[aria-current="page"] { color: var(--ink); background: var(--paper-2); }
-.tools { display: flex; gap: 10px; align-items: center; margin-left: 8px; }
+.tools { display: flex; gap: 8px; align-items: center; margin-left: 8px; }
 .lang { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; font-size: 0.8rem; font-weight: 600; }
 .lang span, .lang a { padding: 5px 9px; color: var(--ink-3); text-decoration: none; }
 .lang a:hover { color: var(--ink); }
@@ -102,8 +102,8 @@ main, footer, header { position: relative; z-index: 1; }
 .nav a.btn.ghost, .nav a.btn.ghost:hover { color: var(--ink); }
 .nav a.btn.ghost:hover { background: var(--paper-2); }
 .burger { display: none; margin-left: auto; background: none; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; cursor: pointer; }
-/* the full menu needs about 1220 px of room; below that it folds into "Meny" instead of running off the page */
-@media (max-width: 1380px) {
+/* the full menu fits from about 1220 px; below that it folds into "Meny" instead of running off the page */
+@media (max-width: 1219px) {
   .nav { display: none; position: absolute; left: 0; right: 0; top: 100%; background: var(--paper); border-bottom: 1px solid var(--line); flex-direction: column; align-items: stretch; padding: 12px var(--gutter) 20px; }
   /* on a short screen (a phone on its side, zoomed text) the open menu scrolls on its own */
   .nav.open { display: flex; max-height: calc(100dvh - 72px); overflow-y: auto; overscroll-behavior: contain; }
@@ -254,7 +254,7 @@ main, footer, header { position: relative; z-index: 1; }
 footer.site { background: var(--ink); color: #c9d5e2; padding-block: 56px 32px; }
 footer.site .wrap { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 32px; }
 footer.site .flogo { display: flex; align-items: center; gap: 14px; color: #fff; text-decoration: none; }
-footer.site h3 { margin: 0 0 12px; font-family: var(--font-sans), sans-serif; font-size: 0.82rem; line-height: inherit; letter-spacing: 0.06em; text-transform: uppercase; color: #8fa5bd; font-weight: 600; }
+footer.site h2, footer.site h3 { margin: 0 0 12px; font-family: var(--font-sans), sans-serif; font-size: 0.82rem; line-height: inherit; letter-spacing: 0.06em; text-transform: uppercase; color: #8fa5bd; font-weight: 600; }
 footer.site a { color: #dce6f0; text-decoration: none; display: block; padding: 4px 0; font-size: 0.95rem; }
 footer.site a:hover { color: #fff; text-decoration: underline; }
 footer.site .note { font-size: 0.85rem; color: #8fa5bd; max-width: 44ch; margin-top: 18px; line-height: 1.5; }
@@ -964,3 +964,36 @@ footer.site .orgnr { color: #c9d5e2; }
   .cfgp-foot { margin-top: 7pt; padding-top: 4pt; border-top: 0.5pt solid #c9d3dc; font-size: 8.5pt; color: #4a5a6e; }
   .cfgp-url { word-break: break-all; }
 }
+
+/* chrome stream: the header's account link and the section a page belongs to, the full row from 1220 px (tighter
+   up to 1400 px, Opprett konto from 1340 px), the folded menu's tools on one wrapping row, the footer's contact
+   lines, and the news list (/nyheter, components/klassisk/routes/News.tsx) */
+.nav a[aria-current="true"] { color: var(--ink); background: var(--paper-2); }
+.nav a.acct { color: var(--fjord-deep); }
+.nav a.acct:hover { color: var(--ink); background: var(--paper-2); }
+@media (min-width: 1220px) {
+  .top .wrap { gap: 20px; }
+  .nav { gap: 2px; }
+  .tools { margin-left: 6px; }
+}
+@media (min-width: 1220px) and (max-width: 1399px) {
+  .nav > a { padding: 8px 7px; }
+  .tools { gap: 6px; }
+  .top .logo-name { font-size: 1.22rem; }
+}
+@media (min-width: 1220px) and (max-width: 1339px) { .nav a.acct { display: none; } }
+@media (max-width: 1219px) {
+  .tools { flex-wrap: wrap; gap: 10px 12px; }
+  .tools > * { flex: none; }
+  .nav .tools a:not(.btn) { border-bottom: 0; }
+  .nav .tools a.btn { border-radius: 999px; }
+  .nav .lang a { padding: 5px 9px; }
+  .nav a.acct { padding: 8px 2px; }
+}
+footer.site .fcontact { margin-top: 18px; }
+.news { display: grid; border-top: 1px solid var(--line); max-width: 880px; }
+.news article { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 6px 28px; padding: 26px 0; border-bottom: 1px solid var(--line); }
+.news time { font-size: 0.9rem; color: var(--ink-3); padding-top: 8px; }
+.news h2 { font-size: clamp(1.45rem, 2.4vw, 1.9rem); font-weight: 400; }
+.news p { color: var(--ink-2); max-width: 66ch; margin-top: 10px; }
+@media (max-width: 640px) { .news article { grid-template-columns: 1fr; } .news time { padding-top: 0; } }

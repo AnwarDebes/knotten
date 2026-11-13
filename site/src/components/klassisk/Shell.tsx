@@ -21,7 +21,7 @@ export default function Shell({ children, locale = "no" }: { children: React.Rea
           <DesignSwitch current="klassisk" />
           <Header />
           <main id="innhold" tabIndex={-1} style={{ outline: "none" }}>{children}</main>
-          <Footer />
+          <Footer locale={locale} />
           <TerrainProgress />
           <Track design="klassisk" />
         </SourceProvider>

@@ -7,6 +7,7 @@ import Icon, { type IconName } from "./Icon";
 import { logout } from "@/app/(moderne)/[locale]/login/actions";
 import { endPreview, startPreview } from "@/app/(moderne)/[locale]/portal/actions";
 import { PREVIEWS } from "@/lib/auth-shared";
+import { kHref } from "@/lib/klassisk/locale";
 import { PreviewContext } from "./PreviewContext";
 
 export type NavItem = { href: string; label: string; icon: IconName; exact?: boolean; sub?: { href: string; label: string; exact?: boolean }[]; badge?: number };
@@ -122,7 +123,8 @@ export default function PortalFrame({ locale, groups, me, children, preview, can
             </details>
           )}
           <Link href={path.replace(/^\/(no|en)(?=\/|$)/, `/${other}`)} className="pt-top-link" hrefLang={other} lang={other}>{other === "en" ? "English" : "Norsk"}</Link>
-          <Link href={no ? "/" : "/en"} className="pt-top-link"><Icon name="external" size={16} /><span className="sr-only sm:not-sr-only">{no ? "Til nettsiden" : "To the website"}</span></Link>
+          {/* the front page in the person's language: / or /english, which the proxy turns into /no or /en for a visitor who chose Moderne */}
+          <a href={kHref("/", locale)} className="pt-top-link"><Icon name="external" size={16} /><span className="sr-only sm:not-sr-only">{no ? "Til nettsiden" : "To the website"}</span></a>
         </header>
         <div className="pt-body"><PreviewContext.Provider value={preview}>{children}</PreviewContext.Provider></div>
       </div>

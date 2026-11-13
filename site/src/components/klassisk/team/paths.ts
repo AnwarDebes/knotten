@@ -1,11 +1,7 @@
 import type { Lang } from "@/lib/facts/core";
+import { kHref } from "@/lib/klassisk/locale";
 
-/**
- * Klassisk addresses for the team components. Klassisk is Norwegian today; when an English Klassisk is wired, its
- * address prefix goes here and every link the team components draw follows.
- */
-const BASE: Record<Lang, string> = { no: "", en: "" };
-
+/** Klassisk addresses for the team components: /teamet in Norwegian, /english/teamet in English (lib/klassisk/locale.ts). */
 export function klassiskHref(path: string, locale: Lang): string {
-  return `${BASE[locale]}${path}`;
+  return kHref(path, locale);
 }

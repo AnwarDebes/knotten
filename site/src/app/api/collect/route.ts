@@ -2,12 +2,16 @@ import { cookies } from "next/headers";
 import { AUTH_COOKIE } from "@/lib/auth";
 import { BOT, recordEvent, recordPageview } from "@/lib/server/stats";
 import { isJson, isSameOrigin } from "@/lib/server/requestGuard";
+import { isPrivatePath } from "@/lib/pages";
 
 /** Events the browser may report. Everything else is counted on the server where it happens. */
 const CLIENT_EVENTS = new Set(["form_start"]);
-/** The public pages only: the portal, the login and sign-up screens and Min side are not part of the website's statistics. */
+/**
+ * The public pages only: the portal, the login, password and sign-up screens and Min side are not part of the
+ * website's statistics, in either design or language (isPrivatePath, from the page registry in lib/pages.ts).
+ */
 const PAGE = /^\/[\p{L}0-9\-_/.]*$/u;
-const SKIP = /^\/(api|_next|portal|logg-inn|min-side|registrer|(no|en)\/(portal|login|min-side|registrer))(\/|$)/;
+const SKIP = (path: string) => /^\/(api|_next|portal)(\/|$)/.test(path) || isPrivatePath(path);
 
 const done = () => new Response(null, { status: 204 });
 
@@ -31,7 +35,7 @@ export async function POST(req: Request) {
     return done();
   }
   const path = typeof body.p === "string" ? body.p.toLowerCase().slice(0, 100) : "";
-  if (!PAGE.test(path) || SKIP.test(path)) return done();
+  if (!PAGE.test(path) || SKIP(path)) return done();
   const ip = (req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || "local").trim();
   await recordPageview(
     { path, ref: typeof body.r === "string" ? body.r.slice(0, 300) : "", design: body.d === "moderne" ? "moderne" : "klassisk" },

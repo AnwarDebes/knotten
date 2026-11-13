@@ -3,16 +3,19 @@ import { useState } from "react";
 import { Mark } from "./Mark";
 
 /**
- * The Knotten logo. Uses the real logo file when it is in place
- * (site/public/assets/incoming/logo.png, the round vignette with the wordmark), and until then
- * sets the same wordmark in type: KNOTTEN in wide capitals, Sjøutsikt i Rødberg beneath.
+ * The Knotten logo. Uses the real logo file when it is in place (site/public/img/logo.webp, the round vignette with
+ * the wordmark: the same pixels as public/assets/incoming/logo.png, transparency included, in a lossless WebP a third
+ * smaller), and until then sets the same wordmark in type: KNOTTEN in wide capitals, Sjøutsikt i Rødberg beneath.
  */
 export default function Logo({ height = 44, wordmark = true, className = "" }: { height?: number; wordmark?: boolean; className?: string }) {
   const [ok, setOk] = useState(true);
   if (ok) {
     return (
+      // eslint-disable-next-line @next/next/no-img-element -- the logo file as it is (same pixels, transparency kept), with a fallback when it is missing
       <img
-        src="/assets/incoming/logo.png"
+        src="/img/logo.webp"
+        width={337}
+        height={307}
         alt="Knotten, Sjøutsikt i Rødberg"
         style={{ height, width: "auto" }}
         className={className}

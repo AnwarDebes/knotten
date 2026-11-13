@@ -5,6 +5,7 @@ import { readJSON } from "@/lib/server/kv";
 import NoAccess from "@/components/portal/NoAccess";
 import { Bars } from "@/components/portal/charts";
 import { Notice, PageHead, Section, Stat } from "@/components/portal/ui";
+import { nameOf, readAddress } from "@/lib/pages";
 
 export const dynamic = "force-dynamic";
 export const generateMetadata = pageTitle("Besøk på nettsiden", "Website visits");
@@ -32,14 +33,15 @@ const TOPIC: Record<string, { no: string; en: string }> = {
   greeting: { no: "Hilsen", en: "Greeting" }, thanks: { no: "Takk", en: "Thanks" }, ai: { no: "Svart av språkmodellen", en: "Answered by the language model" }, unknown: { no: "Uten svar", en: "No answer" }, limit: { no: "Stoppet (for mange)", en: "Stopped (too many)" },
 };
 
-/** Where readable page names come from: the path, with the two designs told apart. */
+/**
+ * A readable name for a counted address, from the page registry (src/lib/pages.ts), with the design and the
+ * language told apart: "Tomt 7 (moderne, engelsk)". An address the registry does not know is shown as it is.
+ */
 function pageName(p: string, no: boolean) {
-  const moderne = /^\/(no|en)(\/|$)/.test(p);
-  const rest = p.replace(/^\/(no|en)(?=\/|$)/, "") || "/";
-  const plot = rest.match(/^\/tomter\/plot-(\d+)/);
-  const names: Record<string, [string, string]> = { "/": ["Forsiden", "Front page"], "/tomter": ["Tomtene", "The plots"], "/tomtene": ["Tomtene", "The plots"], "/prosjektet": ["Prosjektet", "The project"], "/energi": ["Energi", "Energy"], "/energi/eksisterende": ["Eksisterende bygg", "Existing buildings"], "/eksisterende-bygg": ["Eksisterende bygg", "Existing buildings"], "/investor": ["Investorer", "Investors"], "/investorer": ["Investorer", "Investors"], "/interesse": ["Meld interesse", "Register interest"], "/kontakt": ["Kontakt", "Contact"], "/dokumenter": ["Dokumenter", "Documents"], "/dokumentbank": ["Dokumentbank", "Document bank"], "/nyheter": ["Nyheter", "News"], "/utsikt": ["Utsikten", "The view"], "/omradet": ["Området", "The area"], "/kart": ["Kart", "Map"], "/galleri": ["Galleri", "Gallery"], "/personvern": ["Personvern", "Privacy"], "/kilder": ["Kilder", "Sources"] };
-  const base = plot ? `${no ? "Tomt" : "Plot"} ${Number(plot[1])}` : names[rest]?.[no ? 0 : 1] ?? rest;
-  return `${base}${moderne ? (p.startsWith("/en") ? " (moderne, engelsk)" : " (moderne)") : ""}`;
+  const { design, lang } = readAddress(p);
+  const base = nameOf(p, no ? "no" : "en") ?? p;
+  const d = design === "klassisk" ? (no ? "klassisk" : "classic") : no ? "moderne" : "modern";
+  return `${base} (${d}${lang === "en" ? (no ? ", engelsk" : ", English") : ""})`;
 }
 
 /** Visits to the public website, counted without cookies (lib/server/stats.ts). */

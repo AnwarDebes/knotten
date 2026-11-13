@@ -5,7 +5,7 @@ export const LOCALES: Locale[] = ["no", "en"];
 
 const dict = {
   no: {
-    nav: { plots: "Tomtene", view: "Utsikten", energy: "Energi", area: "Området", project: "Prosjektet", investor: "Investor", contact: "Kontakt", login: "Logg inn", interest: "Meld interesse", menu: "Meny", close: "Lukk", portal: "Portal", logout: "Logg ut" },
+    nav: { plots: "Tomtene", view: "Utsikten", energy: "Energi", area: "Området", project: "Prosjektet", investor: "Investorer", contact: "Kontakt", login: "Logg inn", interest: "Meld interesse", menu: "Meny", close: "Lukk", portal: "Portal", logout: "Logg ut" },
     tagline: "Sjøutsikt i Rødberg",
     hero: {
       line1: "Stå på tomten",
