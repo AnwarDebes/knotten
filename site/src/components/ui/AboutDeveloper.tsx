@@ -9,7 +9,7 @@ import Src from "./Source";
  * property, and the work with the University of Agder. The organisation number and the postal address appear
  * once the administrator has entered them (portal, Innstillinger).
  */
-export default function AboutDeveloper({ locale, company, orgDisplay }: { locale: Locale; company: CompanyFacts; orgDisplay: string }) {
+export default function AboutDeveloper({ locale, company, orgDisplay, actions }: { locale: Locale; company: CompanyFacts; orgDisplay: string; /** links under the facts, such as the team page */ actions?: React.ReactNode }) {
   const b = companyBlock(locale, company, orgDisplay);
   const no = locale === "no";
   return (
@@ -29,6 +29,7 @@ export default function AboutDeveloper({ locale, company, orgDisplay }: { locale
               </div>
             ))}
           </dl>
+          {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
         </div>
         <div className="grid content-start gap-8 p-7 md:p-12 bg-bg-2/60 border-t lg:border-t-0 lg:border-l line">
           <div>

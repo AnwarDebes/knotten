@@ -100,3 +100,27 @@ export function osloHourNow() {
 
 /** The clock, read in one place so pages stay free of direct clock calls. */
 export const nowMs = () => Date.now();
+
+/**
+ * "Akkurat nå på Knotten" on both front pages (/api/now): the forecast hour closest to now from MET, and the spot
+ * price in NO2 for the quarter hour (or hour) that is running. A service that does not answer gives null, and the
+ * page says so quietly. Both fetches are kept in Next's data cache (see above), so a busy page costs the services
+ * nothing extra. Sunset is worked out in the browser from lib/solar.ts and needs no service.
+ */
+export type RightNow = {
+  /** When this answer was put together (ISO). */
+  at: string;
+  weather: { time: string; temp: number; wind: number; cloud: number; symbol: string | null; text: { no: string; en: string } } | null;
+  price: { nok: number; start: string; end: string } | null;
+};
+
+export async function rightNow(): Promise<RightNow> {
+  const [w, prices] = await Promise.all([weather(), spotPrices(osloDate())]);
+  const t = nowMs();
+  const h = w && w.hours.length ? current(w) : null;
+  const wx = h && Number.isFinite(h.temp) && Number.isFinite(h.wind)
+    ? { time: h.time, temp: h.temp, wind: h.wind, cloud: h.cloud, symbol: h.symbol ?? null, text: { no: symbolText(h.symbol, true), en: symbolText(h.symbol, false) } }
+    : null;
+  const p = prices?.find((x) => Date.parse(x.start) <= t && t < Date.parse(x.end));
+  return { at: new Date(t).toISOString(), weather: wx, price: p && Number.isFinite(p.nok) ? { nok: p.nok, start: p.start, end: p.end } : null };
+}

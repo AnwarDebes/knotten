@@ -9,7 +9,7 @@ import type { CompanyFacts } from "@/lib/store";
  * property, and the work with the University of Agder. The organisation number and the postal address appear
  * once the administrator has entered them (portal, Innstillinger).
  */
-export default function AboutDeveloper({ locale, company, orgDisplay, alt = true }: { locale: Lang; company: CompanyFacts; orgDisplay: string; alt?: boolean }) {
+export default function AboutDeveloper({ locale, company, orgDisplay, alt = true, actions }: { locale: Lang; company: CompanyFacts; orgDisplay: string; alt?: boolean; /** links under the facts, such as the team page */ actions?: React.ReactNode }) {
   const b = companyBlock(locale, company, orgDisplay);
   const no = locale === "no";
   return (
@@ -27,6 +27,7 @@ export default function AboutDeveloper({ locale, company, orgDisplay, alt = true
               </div>
             ))}
           </dl>
+          {actions && <div className="cta-row" style={{ marginTop: 6 }}>{actions}</div>}
         </Reveal>
         <Reveal className="devcards" stagger delay={120}>
           <div>

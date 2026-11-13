@@ -2,34 +2,33 @@
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { FACT } from "@/lib/facts";
+import { kSplit, type KLocale } from "@/lib/klassisk/locale";
 
 const PATH = "M3 40H78C90 40 96 36 102 28C110 18 118 8 147 5";
-const SECTION_LABELS: Record<string, string> = {
-  hero: "Utsikten",
-  stedet: "Stedet",
-  kart: "Kartene",
-  tomter: "Tomtene",
-  energi: "Energi",
-  bygg: "Eksisterende bygg",
-  investor: "Investorer",
-  kontakt: "Kontakt",
+/** The front page's sections (data-journey) by name, in both languages. */
+const SECTION_LABELS: Record<KLocale, Record<string, string>> = {
+  no: { hero: "Utsikten", reisen: "Reisen", stedet: "Stedet", bilder: "Bilder", kart: "Kartene", tomter: "Tomtene", energi: "Energi", bygg: "Eksisterende bygg", status: "Status", nyheter: "Nyheter", utbygger: "Hvem som står bak", kontakt: "Kontakt" },
+  en: { hero: "The view", reisen: "The journey", stedet: "The place", bilder: "Photos", kart: "The maps", tomter: "Plots", energi: "Energy", bygg: "Existing buildings", status: "Status", nyheter: "News", utbygger: "Who is behind it", kontakt: "Contact" },
 };
 
 /**
- * Scroll progress as a small terrain profile, bottom left: flat river plain, then the knoll.
- * The dot climbs as the visitor scrolls. Kept faint and click-through so it never gets in the way.
+ * Scroll progress as a small terrain profile: flat river plain, then the knoll. The dot climbs as the visitor
+ * scrolls. It sits in the left margin and is shown only where the margin is wide enough to hold it (globals.css,
+ * .prof), so it never covers the page; it stays out of the plot picker and the login, which use the whole width.
  */
 export default function TerrainProgress() {
   const fill = useRef<SVGPathElement>(null);
   const dot = useRef<SVGCircleElement>(null);
   const [label, setLabel] = useState("");
-  const path = usePathname();
+  const { locale, path } = kSplit(usePathname());
   const hidden = path.startsWith("/tomtene") || path.startsWith("/logg-inn");
+  const no = locale === "no";
 
   useEffect(() => {
     const p = fill.current;
     const d = dot.current;
     if (!p || !d) return;
+    const labels = SECTION_LABELS[locale];
     const L = p.getTotalLength();
     p.style.strokeDasharray = `${L}`;
     let ticking = false;
@@ -44,7 +43,7 @@ export default function TerrainProgress() {
       const mid = window.scrollY + window.innerHeight * 0.45;
       let cur = "";
       document.querySelectorAll<HTMLElement>("[data-journey]").forEach((el) => {
-        if (el.offsetTop <= mid) cur = SECTION_LABELS[el.dataset.journey || ""] || cur;
+        if (el.offsetTop <= mid) cur = labels[el.dataset.journey || ""] || cur;
       });
       setLabel(cur);
     };
@@ -61,7 +60,7 @@ export default function TerrainProgress() {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", upd);
     };
-  }, [path]);
+  }, [path, locale]);
 
   return (
     <div className={`prof${hidden ? " hidden" : ""}`} aria-hidden="true">
@@ -69,9 +68,9 @@ export default function TerrainProgress() {
         <path d={PATH} fill="none" stroke="#D4DCE4" strokeWidth="1.5" strokeLinecap="round" />
         <path ref={fill} d={PATH} fill="none" stroke="#2F5F85" strokeWidth="1.5" strokeLinecap="round" />
         <circle ref={dot} cx="3" cy="40" r="3" fill="#14263D" stroke="#fff" strokeWidth="1.2" />
-        <g fontSize="6" fill="#7C8A9B"><text x="3" y="33">0 moh</text><text x="123" y="15">{`${FACT.knotten_m} moh`}</text></g>
+        <g fontSize="6" fill="#7C8A9B"><text x="3" y="33">{no ? "0 moh" : "0 m"}</text><text x="123" y="15">{no ? `${FACT.knotten_m} moh` : `${FACT.knotten_m} m`}</text></g>
       </svg>
-      <span className="proflbl"><span>Elva</span><b>{label || "Knotten"}</b><span>Knotten</span></span>
+      <span className="proflbl"><span>{no ? "Elva" : "River"}</span><b>{label || "Knotten"}</b><span>Knotten</span></span>
     </div>
   );
 }

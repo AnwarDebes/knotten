@@ -128,11 +128,13 @@ main, footer, header { position: relative; z-index: 1; }
 .plate .kicker { font-family: var(--font-serif), Georgia, serif; font-style: italic; font-size: 1.25rem; color: var(--fjord-deep); margin-bottom: 14px; }
 .plate h1 { margin-bottom: 22px; }
 .cta-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+/* the front page's entrance: short, and from 0.01 rather than 0, so the photo and the headline count as painted from
+   the first frame (a browser does not count a wholly transparent picture as painted until it is painted again) */
 @media (prefers-reduced-motion: no-preference) {
-  .rise { opacity: 0; transform: translateY(14px); animation: rise 0.9s var(--ease) forwards; }
-  .rise.d1 { animation-delay: 0.15s; } .rise.d2 { animation-delay: 0.3s; } .rise.d3 { animation-delay: 0.45s; }
+  .rise { animation: rise 0.5s var(--ease) both; }
+  .rise.d1 { animation-delay: 0.06s; } .rise.d2 { animation-delay: 0.12s; } .rise.d3 { animation-delay: 0.18s; }
 }
-@keyframes rise { to { opacity: 1; transform: none; } }
+@keyframes rise { from { opacity: 0.01; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
 /* facts strip */
 .facts { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin-top: clamp(36px, 5vw, 64px); }
@@ -262,14 +264,14 @@ footer.site .bottom { grid-column: 1 / -1; border-top: 1px solid rgba(255, 255, 
 @media (max-width: 820px) { footer.site .wrap { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 480px) { footer.site .wrap { grid-template-columns: 1fr; } }
 
-/* terrain profile progress: small, bottom left, quiet until hovered */
+/* terrain profile progress: small, bottom left in the margin beside the page, and shown only where that margin is
+   wide enough to hold it (the content is at most 1240 px wide), so it never covers text, a form or a button */
 .prof { position: fixed; left: 14px; bottom: 14px; z-index: 15; width: 168px; padding: 6px 8px 4px; background: rgba(255, 255, 255, 0.7); border: 1px solid var(--line); border-radius: 10px; opacity: 0.55; pointer-events: none; transition: opacity 0.3s; }
-.prof:hover { opacity: 1; }
 .prof svg { width: 100%; height: auto; display: block; }
 .proflbl { display: flex; justify-content: space-between; gap: 6px; font-size: 0.62rem; color: var(--ink-3); margin-top: 2px; }
 .proflbl b { color: var(--ink); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .prof.hidden { opacity: 0; }
-@media (max-width: 760px) { .prof { display: none; } }
+@media (max-width: 1659px) { .prof { display: none; } }
 
 /* page headers */
 .phead { padding-block: clamp(36px, 5vw, 64px) 24px; border-bottom: 1px solid var(--line); }
@@ -1103,3 +1105,75 @@ footer.site .fcontact { margin-top: 18px; }
 .kform-lede { color: var(--ink-2); }
 .lead-done .devfacts { margin-top: 4px; }
 .lead-list { margin: 0; padding-left: 1.1em; display: grid; gap: 4px; }
+
+/* home stream: the front page in both languages (components/klassisk/home): the section heads, the framed 3D journey,
+   "Akkurat nå på Knotten", the owner's photos, the plots with the most winter sun, the energy figures and measures, and
+   the news */
+/* below the first screen the front page's sections are laid out only as they come near, so the first paint works out
+   the hero alone (the same picture, drawn sooner); `auto` keeps a section's real height once it has been seen */
+.kcv { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+.kj-head { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 14px clamp(28px, 5vw, 72px); align-items: end; margin-bottom: clamp(24px, 3vw, 36px); }
+.kj-head .stack { gap: 0; }
+.kj-head .lede, .kj-head .measure { margin: 0; }
+@media (max-width: 900px) { .kj-head { grid-template-columns: minmax(0, 1fr); } }
+.kj-box { position: relative; }
+.kj-still { position: relative; height: min(84svh, 860px); border-radius: 18px; overflow: hidden; background: var(--paper-3); border: 1px solid var(--line); }
+.kj-still img { width: 100%; height: 100%; object-fit: cover; }
+.kj-fail { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 12px; padding: 20px; text-align: center; background: rgba(246, 248, 250, 0.88); border-radius: 18px; }
+.kj-hint { margin-top: 12px; }
+.kj-coarse { display: none; }
+@media (pointer: coarse) { .kj-fine { display: none; } .kj-coarse { display: inline; } }
+
+.know { margin-top: clamp(32px, 4vw, 52px); padding: 18px clamp(16px, 2.4vw, 26px) 20px; background: #fff; border: 1px solid var(--line); border-radius: 16px; }
+.know-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px; }
+.know-head h3 { font-size: 1.3rem; }
+.know-grid { margin: 14px 0 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-top: 1px solid var(--line); }
+.know-grid > div { padding: 14px 20px 0 0; min-width: 0; }
+.know-grid > div + div { padding-left: 20px; border-left: 1px solid var(--line); }
+.know-grid dt { font-size: 0.88rem; color: var(--ink-3); }
+.know-grid dd { margin: 0; }
+.know-val { font-family: var(--font-serif), Georgia, serif; font-weight: 300; font-size: 2rem; line-height: 1.15; font-variant-numeric: tabular-nums; margin-top: 2px !important; }
+.know-unit { font-family: var(--font-sans), sans-serif; font-size: 0.9rem; font-weight: 500; color: var(--ink-3); }
+.know-note { color: var(--ink); margin-top: 2px !important; }
+.know-grid .small { margin-top: 6px; }
+.know-off { margin-top: 8px !important; color: var(--ink-3); }
+@media (max-width: 760px) { .know-grid { grid-template-columns: minmax(0, 1fr); } .know-grid > div + div { padding-left: 0; border-left: 0; border-top: 1px solid var(--line); margin-top: 14px; } }
+
+.gallery.kphotos { margin-top: 0; }
+.gallery.kphotos figure img { aspect-ratio: 4 / 3; height: auto; }
+
+.kbest { margin-top: clamp(44px, 6vw, 80px); }
+.kbest .kj-head h3 { font-size: clamp(1.5rem, 2.4vw, 1.9rem); }
+.kbest-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: start; }
+.kbest-card { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.kbest-link { font-weight: 500; font-size: 0.95rem; }
+@media (max-width: 900px) { .kbest-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.kenergy { margin-top: clamp(40px, 5vw, 64px); }
+.kenergy-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.kenergy-head .tag { margin: 0; }
+.kenergy-head + .small { margin-top: 6px; }
+.numrow.four { grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 16px 0 clamp(32px, 4vw, 48px); }
+.numrow b small { font-family: var(--font-sans), sans-serif; font-size: 0.85rem; font-weight: 500; color: var(--ink-3); }
+.numrow span.small { font-size: 0.86rem; color: var(--ink-3); margin-top: 8px; }
+@media (min-width: 821px) and (max-width: 1100px) {
+  .numrow.four { grid-template-columns: 1fr 1fr; }
+  .numrow.four > div:nth-child(2) { border-right: 0; }
+  .numrow.four > div:nth-child(n + 3) { border-top: 1px solid var(--line); }
+}
+.verdicts { margin: 14px 0 0; display: grid; gap: 12px; }
+.verdicts > div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 12px; align-items: baseline; padding-top: 12px; border-top: 1px solid var(--line); }
+.verdicts dt { font-family: var(--font-serif), Georgia, serif; font-size: 1.15rem; }
+.verdicts dd { margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.mchip { display: inline-flex; padding: 4px 11px; border-radius: 999px; font-size: 0.86rem; font-weight: 500; line-height: 1.4; }
+.mchip.yes { background: var(--pine-pale); color: var(--pine); }
+.mchip.maybe { background: var(--fjord-pale); color: var(--fjord-deep); }
+.mchip.no { background: var(--paper-3); color: var(--ink-2); }
+@media (max-width: 560px) { .verdicts > div { grid-template-columns: minmax(0, 1fr); gap: 6px; } }
+
+.knews { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(24px, 4vw, 56px); margin-top: 32px; }
+.knews article { border-top: 2px solid var(--ink); padding-top: 16px; min-width: 0; }
+.knews time { display: block; font-size: 0.85rem; color: var(--ink-3); }
+.knews h3 { margin: 6px 0 10px; }
+.knews p { color: var(--ink-2); font-size: 1rem; max-width: 62ch; }
+@media (max-width: 820px) { .knews { grid-template-columns: minmax(0, 1fr); } }

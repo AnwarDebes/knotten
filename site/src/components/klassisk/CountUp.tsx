@@ -1,8 +1,12 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { fmt, type Lang } from "@/lib/facts/core";
 
-/** Counts a number up from zero the first time it is scrolled into view. Renders the final value without JS. */
-export default function CountUp({ value, prefix = "", suffix = "", duration = 1200 }: { value: number; prefix?: string; suffix?: string; duration?: number }) {
+/**
+ * Counts a number up from zero the first time it is scrolled into view. Renders the final value without JS. Numbers
+ * are written as the page's language writes them: 40 181 in Norwegian, 40,181 in English.
+ */
+export default function CountUp({ value, prefix = "", suffix = "", duration = 1200, locale = "no" }: { value: number; prefix?: string; suffix?: string; duration?: number; locale?: Lang }) {
   const ref = useRef<HTMLElement>(null);
   const [n, setN] = useState(value);
   useEffect(() => {
@@ -24,5 +28,6 @@ export default function CountUp({ value, prefix = "", suffix = "", duration = 12
     io.observe(el);
     return () => io.disconnect();
   }, [value, duration]);
-  return <b ref={ref}>{prefix}{n.toLocaleString("nb-NO").replace(/ /g, " ")}{suffix}</b>;
+  // (the Norwegian group separator is a no-break space; a plain space keeps the serif figures evenly set)
+  return <b ref={ref}>{prefix}{fmt(n, locale).replace(/ | /g, " ")}{suffix}</b>;
 }
