@@ -1,3 +1,4 @@
+import "server-only";
 import { unstable_cache } from "next/cache";
 import { readStore, type CompanyFacts } from "@/lib/store";
 import { RELEASE_NOTE } from "@/lib/content/status";

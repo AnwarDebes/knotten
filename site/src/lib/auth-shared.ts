@@ -30,10 +30,21 @@ export type AccountKind = "stakeholder" | "member";
  */
 export type Session = { id: string; email: string; name: string; role: AccountRole; areas: Area[]; plot?: string; org?: string; kind?: AccountKind; verified?: boolean; preview?: { id: string; realRole: AccountRole } };
 
+/**
+ * In production the cookies that decide access carry the __Host- prefix: the browser then keeps them only when they
+ * come from this host over https, for the whole site (Path=/) and without a Domain, so a page on another subdomain
+ * can never set or overwrite them. A computer running `next dev` over plain http keeps the short names.
+ */
+const HOST_PREFIX = process.env.NODE_ENV === "production" ? "__Host-" : "";
+
 /** The signed, httpOnly session cookie (set and checked in lib/auth.ts). */
-export const AUTH_COOKIE = "knotten_auth";
+export const AUTH_COOKIE = `${HOST_PREFIX}knotten_auth`;
+/** The session cookie's name before the prefix: read once more, moved to AUTH_COOKIE and cleared (lib/auth.ts). */
+export const LEGACY_AUTH_COOKIE = "knotten_auth";
 /** An administrator's "view as" choice. It can only narrow access, never widen it. */
-export const VIEW_COOKIE = "knotten_view";
+export const VIEW_COOKIE = `${HOST_PREFIX}knotten_view`;
+/** The "view as" cookie's name before the prefix; only ever cleared. */
+export const LEGACY_VIEW_COOKIE = "knotten_view";
 
 /** The "view as" choices an administrator can preview the portal with. */
 export const PREVIEWS = [

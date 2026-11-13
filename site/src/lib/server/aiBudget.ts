@@ -1,3 +1,4 @@
+import "server-only";
 import { incrementMany, readCounters } from "./kv";
 import { osloDay } from "./stats";
 

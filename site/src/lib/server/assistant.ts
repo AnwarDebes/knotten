@@ -1,3 +1,4 @@
+import "server-only";
 import { loadCommercial, loadNews, loadPlots, loadSettings } from "@/lib/data";
 import { BUDGET, CONTACT, EED, FACT, PV_KWP_PER_HOME, dateLong } from "@/lib/facts";
 import { faq, type FaqItem } from "@/lib/content/faq";

@@ -5,14 +5,15 @@ import { authSecret, findById, loadAuth, type Account } from "./server/accounts"
 import { hmac, safeEqual } from "./server/crypto";
 import { ProblemError } from "./errors";
 import type { Design } from "./design";
-import { AUTH_COOKIE, can, isAdmin, PREVIEWS, VIEW_COOKIE, WHO_COOKIE, type Area, type Role, type Session } from "./auth-shared";
+import { AUTH_COOKIE, can, isAdmin, LEGACY_AUTH_COOKIE, LEGACY_VIEW_COOKIE, PREVIEWS, VIEW_COOKIE, WHO_COOKIE, type Area, type Role, type Session } from "./auth-shared";
 
 /**
  * Sessions: after a correct password the server sets a signed, httpOnly cookie that scripts in
  * the page cannot read. It carries the account id, the account's session version and an expiry.
  * Every request checks the signature and looks the account up again, so a disabled account or a
  * changed password ends old sessions at once. A second, readable cookie only carries the name
- * for the header's greeting; it grants nothing.
+ * for the header's greeting; it grants nothing. In production the session and "view as" cookies
+ * are __Host- cookies (lib/auth-shared.ts).
  */
 export { ROLES, ROLE_LABEL, AREAS, AREA_LABEL, can, isAdmin } from "./auth-shared";
 export type { Role, Session, Area } from "./auth-shared";
@@ -21,6 +22,15 @@ export { AUTH_COOKIE };
 const LEGACY_COOKIE = "knotten_session";
 const SHORT = 12 * 3600;        // a normal login lasts a working day
 const LONG = 30 * 24 * 3600;    // "remember me": thirty days
+const SECURE = process.env.NODE_ENV === "production";
+
+type Jar = Awaited<ReturnType<typeof cookies>>;
+/** How every access cookie is set: httpOnly, same-site navigation only, https in production, for the whole site. */
+const httpOnlyCookie = (maxAge: number) => ({ httpOnly: true, sameSite: "lax" as const, secure: SECURE, path: "/", maxAge });
+/** Clear a cookie with the attributes it was set with (a __Host- cookie is only cleared by a Secure one with Path=/). */
+function clearCookie(jar: Jar, name: string, httpOnly = true) {
+  jar.delete({ name, path: "/", secure: SECURE, httpOnly, sameSite: "lax" });
+}
 
 /** u: account, v: session version, e: expiry; r: "remember me" was ticked; d: the design the person logged in from. */
 type Payload = { u: string; v: number; e: number; r?: 1; d?: "k" | "m" };
@@ -48,10 +58,33 @@ const toSession = (a: Account): Session =>
     ? { id: a.id, email: a.email, name: a.name, role: "user", areas: [], kind: "member", verified: !!a.email_verified_at }
     : { id: a.id, email: a.email, name: a.name, role: a.role, areas: a.areas, plot: a.plot, org: a.org };
 
+/**
+ * The signed token behind this request, checked. A session started before the cookie got its __Host- name is
+ * accepted once: where this request may set cookies (a form's server action or a route handler) it moves to the
+ * new name and the old cookie is cleared. A page cannot set cookies while it renders, so there it counts as no
+ * session; the person logs in once more and the new cookie replaces the old. (Pages that accepted it would send
+ * the person in a circle: the front door, src/proxy.ts, knows only the new name.)
+ */
+const sessionToken = cache(async (): Promise<Payload | null> => {
+  const jar = await cookies();
+  const token = jar.get(AUTH_COOKIE)?.value;
+  if (token || AUTH_COOKIE === LEGACY_AUTH_COOKIE) return verify(token);
+  const old = jar.get(LEGACY_AUTH_COOKIE)?.value;
+  if (!old) return null;
+  const p = await verify(old);
+  try {
+    if (p) jar.set(AUTH_COOKIE, old, httpOnlyCookie(Math.max(60, p.e - Math.floor(Date.now() / 1000))));
+    clearCookie(jar, LEGACY_AUTH_COOKIE);
+  } catch {
+    // rendering a page: cookies are read-only here
+    return null;
+  }
+  return p;
+});
+
 /** The person behind this request, ignoring any "view as" preview. Looked up once per request. */
 export const getRealSession = cache(async (): Promise<Session | null> => {
-  const jar = await cookies();
-  const p = await verify(jar.get(AUTH_COOKIE)?.value);
+  const p = await sessionToken();
   if (!p) return null;
   const a = findById(await loadAuth(), p.u);
   if (!a || a.status !== "active" || a.sv !== p.v) return null;
@@ -64,7 +97,7 @@ export const getRealSession = cache(async (): Promise<Session | null> => {
  * they last longer than a working day.
  */
 export const sessionInfo = cache(async (): Promise<{ remember: boolean; design?: Design } | null> => {
-  const p = await verify((await cookies()).get(AUTH_COOKIE)?.value);
+  const p = await sessionToken();
   if (!p) return null;
   return { remember: p.r === 1 || p.e - Date.now() / 1000 > SHORT + 60, design: p.d === "k" ? "klassisk" : p.d === "m" ? "moderne" : undefined };
 });
@@ -102,20 +135,40 @@ export async function startSession(a: Account, remember: boolean, design?: Desig
   const d = design ?? (await sessionInfo())?.design;
   const token = await sign({ u: a.id, v: a.sv, e: Math.floor(Date.now() / 1000) + age, ...(remember ? { r: 1 as const } : {}), ...(d ? { d: d === "klassisk" ? ("k" as const) : ("m" as const) } : {}) });
   const jar = await cookies();
-  const secure = process.env.NODE_ENV === "production";
-  jar.set(AUTH_COOKIE, token, { httpOnly: true, sameSite: "lax", secure, path: "/", maxAge: age });
+  jar.set(AUTH_COOKIE, token, httpOnlyCookie(age));
   const who = a.kind === "member" ? { name: a.name, role: "user", kind: "member" } : { name: a.name, role: a.role };
-  jar.set(WHO_COOKIE, JSON.stringify(who), { httpOnly: false, sameSite: "lax", secure, path: "/", maxAge: age });
-  jar.delete(LEGACY_COOKIE);
+  jar.set(WHO_COOKIE, JSON.stringify(who), { httpOnly: false, sameSite: "lax", secure: SECURE, path: "/", maxAge: age });
+  clearLegacy(jar);
+}
+
+/** The cookies' names from before the __Host- prefix (production only), and the oldest session cookie. */
+function clearLegacy(jar: Jar) {
+  if (LEGACY_AUTH_COOKIE !== AUTH_COOKIE && jar.get(LEGACY_AUTH_COOKIE)) clearCookie(jar, LEGACY_AUTH_COOKIE);
+  if (LEGACY_VIEW_COOKIE !== VIEW_COOKIE && jar.get(LEGACY_VIEW_COOKIE)) clearCookie(jar, LEGACY_VIEW_COOKIE);
+  if (jar.get(LEGACY_COOKIE)) clearCookie(jar, LEGACY_COOKIE);
 }
 
 /** Log out on this device: the session, the greeting and any "view as" choice are forgotten. */
 export async function endSession() {
   const jar = await cookies();
-  jar.delete(AUTH_COOKIE);
-  jar.delete(WHO_COOKIE);
-  jar.delete(VIEW_COOKIE);
-  jar.delete(LEGACY_COOKIE);
+  clearCookie(jar, AUTH_COOKIE);
+  clearCookie(jar, WHO_COOKIE, false);
+  clearCookie(jar, VIEW_COOKIE);
+  clearLegacy(jar);
+}
+
+/** An administrator's "view as" choice for two hours (Server Functions only; read by getSession). */
+export async function setPreviewCookie(choice: { id: string; plot?: string }) {
+  const jar = await cookies();
+  jar.set(VIEW_COOKIE, JSON.stringify(choice), httpOnlyCookie(2 * 3600));
+  clearLegacy(jar);
+}
+
+/** End the "view as" preview (Server Functions only). */
+export async function clearPreviewCookie() {
+  const jar = await cookies();
+  clearCookie(jar, VIEW_COOKIE);
+  clearLegacy(jar);
 }
 
 /**

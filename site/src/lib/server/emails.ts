@@ -1,3 +1,4 @@
+import "server-only";
 import { CONTACT } from "@/lib/facts";
 
 /**

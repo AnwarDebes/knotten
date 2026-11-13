@@ -1,3 +1,4 @@
+import "server-only";
 import { newId, readStore, updateStore, type Lead } from "@/lib/store";
 import { consentEvents, type ConsentEvent, type ConsentPurpose } from "@/lib/consent";
 import { consentState, lastContact } from "@/lib/leadConsent";

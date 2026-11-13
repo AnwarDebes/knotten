@@ -1,3 +1,4 @@
+import "server-only";
 import { addUnique, incrementMany, mutate, readCountersMany, readJSON } from "./kv";
 import { randomToken, sha256 } from "./crypto";
 

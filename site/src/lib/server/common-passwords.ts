@@ -1,3 +1,4 @@
+import "server-only";
 /**
  * Passwords and password roots that people try first, in Norwegian and English: the most used passwords, keyboard
  * runs, common words, first names, places, clubs and brands, and the project's own names. A password is refused

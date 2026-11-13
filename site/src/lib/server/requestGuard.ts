@@ -1,3 +1,4 @@
+import "server-only";
 import { SITE } from "@/lib/meta";
 
 /**

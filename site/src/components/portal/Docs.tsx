@@ -1,8 +1,9 @@
 import { AREAS, AREA_LABEL, isAdmin, type Session } from "@/lib/auth-shared";
 import { CATEGORY_LABEL, DOC_CATEGORIES, type Audience, type Doc } from "@/lib/server/records";
 import { FILES_ON, MAX_BYTES, prettySize } from "@/lib/server/files";
-import { deleteDoc, uploadDoc } from "@/app/(moderne)/[locale]/portal/actions";
-import { ActionForm, ConfirmButton } from "./forms";
+import { deleteDoc } from "@/app/(moderne)/[locale]/portal/actions";
+import { ConfirmButton } from "./forms";
+import { RouteForm } from "./RouteForm";
 import { Empty, when } from "./ui";
 import Icon from "./Icon";
 
@@ -52,7 +53,7 @@ export function UploadForm({ session, locale, audience = ["all"], category = "ot
     return <p className="text-[14px] text-muted">{no ? "Opplasting er slått av til fillagring er satt opp (Vercel Blob). Se Innstillinger." : "Uploads are off until file storage is set up (Vercel Blob). See Settings."}</p>;
   }
   return (
-    <ActionForm action={uploadDoc} submit={no ? "Last opp" : "Upload"} pending={no ? "Laster opp …" : "Uploading …"} className="grid gap-3">
+    <RouteForm endpoint="/api/files" locale={locale} submit={no ? "Last opp" : "Upload"} pending={no ? "Laster opp …" : "Uploading …"} className="grid gap-3">
       <input type="hidden" name="lang" value={locale} />
       {register && <input type="hidden" name="register" value={register} />}
       <label className="grid gap-1.5 text-[13.5px]">
@@ -81,6 +82,6 @@ export function UploadForm({ session, locale, audience = ["all"], category = "ot
           <select className="input !py-2" name="plot" defaultValue=""><option value="">{no ? "Ingen bestemt tomt" : "No particular plot"}</option>{plots.map((p) => <option key={p} value={p}>{no ? "Tomt" : "Plot"} {Number(p.slice(5))}</option>)}</select>
         </label>
       )}
-    </ActionForm>
+    </RouteForm>
   );
 }

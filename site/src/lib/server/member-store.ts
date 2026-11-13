@@ -1,3 +1,4 @@
+import "server-only";
 import { after } from "next/server";
 import { mutate, readJSON } from "./kv";
 import { audit, changeAuth, findById, loadAuth, type Account } from "./accounts";

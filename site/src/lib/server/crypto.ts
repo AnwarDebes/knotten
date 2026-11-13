@@ -1,3 +1,4 @@
+import "server-only";
 import { createHash, createHmac, randomBytes, scrypt, timingSafeEqual, type ScryptOptions } from "crypto";
 import { isCommonPassword } from "./common-passwords";
 

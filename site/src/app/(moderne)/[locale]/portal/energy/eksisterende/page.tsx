@@ -2,10 +2,11 @@ import { isAdmin } from "@/lib/auth";
 import { pageTitle, portalPage } from "@/lib/server/portal";
 import { meters } from "@/lib/server/records";
 import { BUDGET, FACT, fmt } from "@/lib/facts";
-import { addUpgrade, clearReadings, importReadings, removeUpgrade, saveBuilding } from "../../actions";
+import { addUpgrade, clearReadings, removeUpgrade, saveBuilding } from "../../actions";
 import NoAccess from "@/components/portal/NoAccess";
 import { MeterView } from "@/components/portal/MeterView";
 import { ActionForm, ConfirmButton } from "@/components/portal/forms";
+import { RouteForm } from "@/components/portal/RouteForm";
 import { PageHead, Section, Waiting, when } from "@/components/portal/ui";
 
 export const dynamic = "force-dynamic";
@@ -46,14 +47,14 @@ export default async function ExistingBuildings({ params }: { params: Promise<{ 
               <div className="grid gap-4">
                 <div className="panel p-5 grid gap-3">
                   <div className="font-medium">{no ? "Last inn målerdata" : "Load meter data"}</div>
-                  <ActionForm action={importReadings} submit={no ? "Les inn" : "Import"} pending={no ? "Leser …" : "Reading …"}>
+                  <RouteForm endpoint="/api/energy/readings" locale={locale} submit={no ? "Les inn" : "Import"} pending={no ? "Leser …" : "Reading …"}>
                     <input type="hidden" name="building" value={b.id} />
                     <input type="hidden" name="lang" value={locale} />
                     <input type="file" name="file" accept=".csv,.txt,text/csv,text/plain" className="input !py-2 text-[14px]" />
                     <textarea name="text" rows={3} className="input !text-[13.5px] font-mono" placeholder={no ? "eller lim inn: 2025-01;2450" : "or paste: 2025-01,2450"} />
                     <input name="source" className="input !py-2" placeholder={no ? "Kilde, f.eks. Elhub, timeverdier 2023 til 2026" : "Source, e.g. Elhub hourly values 2023 to 2026"} />
                     <p className="text-[12.5px] text-muted">{no ? "Time-, døgn- eller månedsverdier; summeres per måned. Måneder som finnes fra før, erstattes." : "Hourly, daily or monthly values; summed per month. Months already present are replaced."}</p>
-                  </ActionForm>
+                  </RouteForm>
                 </div>
                 <div className="panel p-5 grid gap-3">
                   <div className="font-medium">{no ? "Registrer et tiltak" : "Register an upgrade"}</div>

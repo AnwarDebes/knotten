@@ -1,3 +1,4 @@
+import "server-only";
 import { authSecret } from "./accounts";
 import { hmac, safeEqual } from "./crypto";
 import { MIN_FILL_MS } from "@/lib/forms";

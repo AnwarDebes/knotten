@@ -21,6 +21,9 @@ const say = (fd: FormData, no: string, eng: string) => (en(fd) ? eng : no);
 const done = () => revalidatePath("/", "layout");
 const by = (s: Session) => s.name || s.email;
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const PLOT_ID = /^plot-\d{2}$/;
+/** A real calendar date as yyyy-mm-dd (pages format these dates, and an impossible one would break them). */
+const isDate = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v) && !Number.isNaN(Date.parse(`${v}T12:00:00Z`)) && new Date(`${v}T12:00:00Z`).toISOString().slice(0, 10) === v;
 
 // ------------------------------------------------------------------ leads
 export async function setLeadStatus(fd: FormData) {
@@ -88,7 +91,7 @@ export async function removeExamples() {
 export async function savePlot(fd: FormData) {
   const s = await actor();
   const id = str(fd, "id"), status = str(fd, "status") as PlotStatus;
-  if (!PLOT_STATUSES.includes(status)) return;
+  if (!PLOT_STATUSES.includes(status) || !PLOT_ID.test(id)) return;
   const price = Number(String(fd.get("price_nok") ?? "").replace(/[^\d]/g, ""));
   await updateStore(by(s), `tomt ${id}: ${status}${price ? `, ${price} kr` : ""}`, (st) => {
     st.plots[id] = { id, status, price_nok: price || undefined, note: str(fd, "note", 300) || undefined, updated: new Date().toISOString() };
@@ -99,7 +102,7 @@ export async function savePlot(fd: FormData) {
 export async function setAllPlots(fd: FormData) {
   const s = await actor();
   const status = str(fd, "status") as PlotStatus;
-  const ids = str(fd, "ids", 4000).split(",").filter(Boolean);
+  const ids = str(fd, "ids", 4000).split(",").map((x) => x.trim()).filter((x) => PLOT_ID.test(x));
   if (!PLOT_STATUSES.includes(status)) return;
   await updateStore(by(s), `alle tomter: ${status}`, (st) => {
     for (const id of ids) st.plots[id] = { ...(st.plots[id] ?? { id }), id, status, updated: new Date().toISOString() };
@@ -111,7 +114,8 @@ export async function setAllPlots(fd: FormData) {
 export async function saveNews(fd: FormData) {
   const s = await actor();
   const id = str(fd, "id") || newId("n");
-  const item = { id, date: str(fd, "date", 10) || new Date().toISOString().slice(0, 10), title: { no: str(fd, "title_no", 160), en: str(fd, "title_en", 160) }, text: { no: str(fd, "text_no", 2000), en: str(fd, "text_en", 2000) }, published: fd.get("published") === "on" };
+  const date = str(fd, "date", 10);
+  const item = { id, date: isDate(date) ? date : new Date().toISOString().slice(0, 10), title: { no: str(fd, "title_no", 160), en: str(fd, "title_en", 160) }, text: { no: str(fd, "text_no", 2000), en: str(fd, "text_en", 2000) }, published: fd.get("published") === "on" };
   if (!item.title.no && !item.title.en) return;
   if (!item.title.en) item.title.en = item.title.no;
   if (!item.title.no) item.title.no = item.title.en;
@@ -142,8 +146,10 @@ export async function deleteNews(fd: FormData) {
 // ------------------------------------------------------------------ settings and targets
 export async function saveSettings(fd: FormData) {
   const s = await actor();
+  // notifications go to this address: one that cannot be an address keeps the one saved before
+  const email = str(fd, "contact_email", 200);
   await updateStore(by(s), "innstillinger lagret", (st) => {
-    st.settings = { ...st.settings, release_note: { no: str(fd, "release_no", 300), en: str(fd, "release_en", 300) }, contact_email: str(fd, "contact_email", 200), contact_phone: str(fd, "contact_phone", 40), weekly_digest: fd.get("weekly_digest") === "on", digest_lang: str(fd, "digest_lang") === "en" ? "en" : "no" };
+    st.settings = { ...st.settings, release_note: { no: str(fd, "release_no", 300), en: str(fd, "release_en", 300) }, contact_email: EMAIL.test(email) ? email : st.settings.contact_email, contact_phone: str(fd, "contact_phone", 40), weekly_digest: fd.get("weekly_digest") === "on", digest_lang: str(fd, "digest_lang") === "en" ? "en" : "no" };
   });
   done();
 }

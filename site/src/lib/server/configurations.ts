@@ -1,3 +1,4 @@
+import "server-only";
 import { mutate, readJSON } from "./kv";
 import { OPTIONS, STEPS } from "@/lib/configurator/catalog";
 import { loadPlotFacts } from "@/lib/configurator/plots.server";

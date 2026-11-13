@@ -1,3 +1,4 @@
+import "server-only";
 import { cache } from "react";
 import { mutate, readJSON } from "./kv";
 import { isAdmin, type Area, type Session } from "@/lib/auth-shared";
@@ -51,9 +52,15 @@ export type Doc = {
   register?: string;
   file: StoredFile;
   version: number;
-  previous: (StoredFile & { version: number; uploaded: string; by: string })[];
+  previous: (StoredFile & { version: number; uploaded: string; by: string; by_id?: string })[];
   uploaded: string;
+  /** The uploader's name as shown in the list. */
   by: string;
+  /**
+   * The uploader's account id: only that account (or an administrator) may add a new version. Documents from
+   * before it was recorded have none, so only an administrator can add versions to them.
+   */
+  by_id?: string;
   downloads: number;
 };
 type DocsState = { docs: Doc[]; log: { at: string; who: string; doc: string; title: string; version: number }[] };
@@ -208,13 +215,15 @@ export function parseMeterCsv(text: string): { readings: Reading[]; rows: number
   for (const line of lines) {
     const cells = line.split(sep).map((c) => c.trim().replace(/^"|"$/g, ""));
     let month = "";
-    for (const c of cells) {
+    let dateCell = -1;
+    for (const [i, c] of cells.entries()) {
       const no = c.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})/);
       const iso = c.match(/^(\d{4})-(\d{2})(-\d{2})?/);
-      if (no) { month = `${no[3]}-${no[2].padStart(2, "0")}`; break; }
-      if (iso) { month = `${iso[1]}-${iso[2]}`; break; }
+      if (no) { month = `${no[3]}-${no[2].padStart(2, "0")}`; dateCell = i; break; }
+      if (iso) { month = `${iso[1]}-${iso[2]}`; dateCell = i; break; }
     }
-    const nums = cells.map((c) => c.replace(/\s/g, "")).filter((c) => /^-?\d+([.,]\d+)?$/.test(c) && !/^\d{4}$/.test(c));
+    // the value is the last number on the line besides the date; a month's total may well have four digits (2025-01;2450)
+    const nums = cells.filter((_, i) => i !== dateCell).map((c) => c.replace(/\s/g, "")).filter((c) => /^-?\d+([.,]\d+)?$/.test(c));
     const value = nums.length ? Number(nums[nums.length - 1].replace(",", ".")) : NaN;
     if (!month || !Number.isFinite(value)) { skipped++; continue; }
     sums.set(month, (sums.get(month) ?? 0) + value);

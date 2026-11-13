@@ -1,21 +1,21 @@
 "use server";
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { actor, can, getRealSession, getSession, isAdmin, type Area, type Session } from "@/lib/auth";
-import { AREAS, PREVIEWS, VIEW_COOKIE } from "@/lib/auth-shared";
+import { actor, can, clearPreviewCookie, getRealSession, getSession, isAdmin, setPreviewCookie, type Area, type Session } from "@/lib/auth";
+import { AREAS, PREVIEWS } from "@/lib/auth-shared";
 import { newId, readStore, updateStore } from "@/lib/store";
-import { FILES_ON, MAX_BYTES, prettySize, removeFile, saveFile, safeName } from "@/lib/server/files";
-import { DOC_CATEGORIES, THREAD_AREAS, docs, meters, parseMeterCsv, residents, rid, threads, workspace, type Audience, type DocCategory, type ThreadArea } from "@/lib/server/records";
+import { removeFile } from "@/lib/server/files";
+import { DOC_CATEGORIES, THREAD_AREAS, docs, meters, residents, rid, threads, workspace, type Audience, type DocCategory, type ThreadArea } from "@/lib/server/records";
 import { recordEvent } from "@/lib/server/stats";
-import { internalDoc } from "@/lib/docRegister";
 import { MAIL_ON, sendMail, siteOrigin } from "@/lib/server/mail";
 import { ProblemError } from "@/lib/errors";
 
 /**
  * What people do inside the portal: share documents, ask and answer, keep the project's task
- * list, decisions and milestones, save consents, and bring in meter data. Every action checks
- * who is acting and whether they may, on its own; the pages' links are not a lock.
+ * list, decisions and milestones, save consents, and look after the meter data. Every action checks
+ * who is acting and whether they may, on its own; the pages' links are not a lock. Uploads (documents and
+ * meter exports) go to route handlers with their own size limit instead (lib/server/uploads.ts), so these
+ * actions, like every server action, keep Next's small default body limit.
  */
 export type ActionState = { error?: string; ok?: string; link?: string } | undefined;
 
@@ -49,45 +49,6 @@ function audienceFrom(fd: FormData, s: Session): Audience[] {
   return allowed.length ? allowed : isAdmin(s) ? ["all"] : [s.areas[0] ?? "project"];
 }
 
-export async function uploadDoc(_: ActionState, fd: FormData): Promise<ActionState> {
-  const s = await tryActor("any");
-  if (!s || !(isAdmin(s) || can(s, "project"))) return denied(fd, say(fd, "Du har ikke tilgang til å laste opp dokumenter.", "You may not upload documents."));
-  if (!FILES_ON) return { error: say(fd, "Filer kan ikke lagres før en fillagring er satt opp (Vercel Blob). Se Innstillinger.", "Files cannot be stored until file storage is set up (Vercel Blob). See Settings.") };
-  const file = fd.get("file");
-  if (!(file instanceof File) || file.size === 0) return { error: say(fd, "Velg en fil.", "Choose a file.") };
-  if (file.size > MAX_BYTES) return { error: say(fd, `Filen er for stor. Største tillatte størrelse er ${prettySize(MAX_BYTES)}.`, `The file is too large. The limit is ${prettySize(MAX_BYTES, false)}.`) };
-  // one of the documents the public bank lists: filed under its title, as a new version if it is there already
-  const reg = isAdmin(s) ? internalDoc(str(fd, "register", 40)) : undefined;
-  const existing = reg ? (await docs.read()).docs.find((d) => d.register === reg.key) : undefined;
-  const replace = str(fd, "replace", 60) || existing?.id || "";
-  const id = replace || rid("doc");
-  const key = await saveFile(`${id}-v${Date.now().toString(36)}`, file);
-  const ext = file.name.match(/\.[a-z0-9]{1,6}$/i)?.[0]?.toLowerCase() ?? "";
-  const stored = { key, name: reg ? safeName(`${reg.title.no}${ext}`) : safeName(file.name), size: file.size, type: file.type || "application/octet-stream" };
-  const title = str(fd, "title", 160) || reg?.title.no || stored.name.replace(/\.[a-z0-9]+$/i, "");
-  const category = (DOC_CATEGORIES as readonly string[]).includes(str(fd, "category")) ? (str(fd, "category") as DocCategory) : "other";
-  const result = await docs.change((st) => {
-    const old = st.docs.find((d) => d.id === replace);
-    if (old) {
-      if (!isAdmin(s) && old.by !== who(s)) return "forbidden";
-      old.previous = [{ ...old.file, version: old.version, uploaded: old.uploaded, by: old.by }, ...old.previous].slice(0, 20);
-      old.file = stored;
-      old.version += 1;
-      old.uploaded = new Date().toISOString();
-      old.by = who(s);
-      return "version";
-    }
-    st.docs.unshift({ id, title, description: str(fd, "description", 600) || reg?.what.no || undefined, category, audience: audienceFrom(fd, s), plot: str(fd, "plot", 10) || undefined, register: reg?.key, file: stored, version: 1, previous: [], uploaded: new Date().toISOString(), by: who(s), downloads: 0 });
-    return "new";
-  });
-  if (result === "forbidden") {
-    await removeFile(key);
-    return { error: say(fd, "Bare den som lastet opp dokumentet, eller en administrator, kan laste opp en ny versjon.", "Only the uploader or an administrator can add a new version.") };
-  }
-  refresh();
-  return { ok: result === "version" ? say(fd, "Ny versjon lastet opp.", "New version uploaded.") : say(fd, `«${title}» er lastet opp.`, `"${title}" is uploaded.`) };
-}
-
 export async function updateDoc(fd: FormData) {
   const s = await actor("admin");
   const id = str(fd, "id", 60);
@@ -99,7 +60,7 @@ export async function updateDoc(fd: FormData) {
     const c = str(fd, "category");
     if ((DOC_CATEGORIES as readonly string[]).includes(c)) d.category = c as DocCategory;
     d.audience = audienceFrom(fd, s);
-    d.plot = str(fd, "plot", 10) || undefined;
+    d.plot = /^plot-\d{2}$/.test(str(fd, "plot", 10)) ? str(fd, "plot", 10) : undefined;
   });
   refresh();
 }
@@ -294,32 +255,6 @@ export async function saveConsents(_: ActionState, fd: FormData): Promise<Action
 }
 
 // ------------------------------------------------------------------ meters for the buildings on the property
-export async function importReadings(_: ActionState, fd: FormData): Promise<ActionState> {
-  const s = await tryActor("admin");
-  if (!s) return denied(fd, say(fd, "Bare administratorer kan legge inn målerdata.", "Only administrators can add meter data."));
-  const id = str(fd, "building", 40);
-  const file = fd.get("file");
-  const text = file instanceof File && file.size ? await file.text() : String(fd.get("text") ?? "");
-  if (!text.trim()) return { error: say(fd, "Velg en fil eller lim inn tallene.", "Choose a file or paste the figures.") };
-  if (text.length > 8_000_000) return { error: say(fd, "Filen er for stor.", "The file is too large.") };
-  const { readings, rows, skipped } = parseMeterCsv(text);
-  if (!readings.length) return { error: say(fd, "Fant ingen datoer og tall i filen. Forventet format: dato og kWh per linje, for eksempel 01.01.2025;1234,5.", "Found no dates and figures. Expected: a date and kWh per line, e.g. 2025-01-01,1234.5.") };
-  const ok = await meters.change((m) => {
-    const b = m.buildings.find((x) => x.id === id);
-    if (!b) return false;
-    const map = new Map(b.readings.map((r) => [r.month, r.kwh]));
-    for (const r of readings) map.set(r.month, r.kwh);
-    b.readings = [...map.entries()].sort((a, c) => a[0].localeCompare(c[0])).map(([month, kwh]) => ({ month, kwh }));
-    b.source = str(fd, "source", 160) || (file instanceof File ? file.name : say(fd, "lagt inn for hånd", "entered by hand"));
-    b.updated = new Date().toISOString();
-    return true;
-  });
-  if (!ok) return { error: "?" };
-  refresh();
-  const first = readings[0].month, last = readings[readings.length - 1].month;
-  return { ok: say(fd, `${readings.length} måneder lest inn (${first} til ${last}) fra ${rows} linjer${skipped ? `; ${skipped} linjer uten dato eller tall ble hoppet over` : ""}.`, `${readings.length} months read (${first} to ${last}) from ${rows} lines${skipped ? `; ${skipped} lines without a date or figure were skipped` : ""}.`) };
-}
-
 export async function addUpgrade(_: ActionState, fd: FormData): Promise<ActionState> {
   const s = await tryActor("admin");
   if (!s) return denied(fd, say(fd, "Bare administratorer kan registrere tiltak.", "Only administrators can register upgrades."));
@@ -366,12 +301,12 @@ export async function startPreview(fd: FormData) {
   const locale = str(fd, "lang") === "en" ? "en" : "no";
   if (!p) return;
   const plot = /^plot-\d{2}$/.test(str(fd, "plot", 10)) ? str(fd, "plot", 10) : undefined;
-  (await cookies()).set(VIEW_COOKIE, JSON.stringify({ id: p.id, plot }), { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 2 * 3600 });
+  await setPreviewCookie({ id: p.id, plot });
   redirect(`/${locale}/portal${p.path}`);
 }
 
 export async function endPreview(fd: FormData) {
-  (await cookies()).delete(VIEW_COOKIE);
+  await clearPreviewCookie();
   const locale = str(fd, "lang") === "en" ? "en" : "no";
   redirect(`/${locale}/portal`);
 }

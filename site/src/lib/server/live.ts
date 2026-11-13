@@ -1,3 +1,4 @@
+import "server-only";
 import { FACT } from "@/lib/facts";
 import { SITE } from "@/lib/meta";
 

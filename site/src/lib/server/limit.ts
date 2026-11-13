@@ -1,3 +1,4 @@
+import "server-only";
 import { getDel, incr, ttl } from "./kv";
 import { sha256 } from "./crypto";
 

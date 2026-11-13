@@ -1,3 +1,4 @@
+import "server-only";
 import { readStore } from "@/lib/store";
 import { loadAuth } from "./accounts";
 import { docs, localizeWorkspace, threads, workspace } from "./records";

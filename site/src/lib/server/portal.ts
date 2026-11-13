@@ -1,3 +1,4 @@
+import "server-only";
 import { can, requireSession, sessionInfo, type Area, type Session } from "@/lib/auth";
 import { isLocale } from "@/lib/i18n";
 import { minSidePath } from "@/lib/member-paths";

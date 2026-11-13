@@ -1,3 +1,4 @@
+import "server-only";
 import { cache } from "react";
 import { createJSON, getDel, getValue, mutate, readJSON, setNX, STORAGE } from "./kv";
 import { hashPassword, humanCode, randomToken, sha256 } from "./crypto";
