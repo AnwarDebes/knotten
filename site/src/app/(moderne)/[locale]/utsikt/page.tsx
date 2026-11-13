@@ -1,9 +1,11 @@
+import Image from "next/image";
 import type { Locale } from "@/lib/i18n";
 import Nav from "@/components/ui/Nav";
 import PageHead from "@/components/ui/PageHead";
 import ProofSlider from "@/components/ui/ProofSlider";
 import { Figure } from "@/components/ui/Provenance";
 import { assumption } from "@/lib/facts";
+import { PHOTO, VIEW_PHOTOS, photoCredit } from "@/lib/content/photos";
 import { pageMeta } from "@/lib/meta";
 import { isLocale } from "@/lib/i18n";
 import { notFound } from "next/navigation";
@@ -18,9 +20,6 @@ export default async function View({ params }: { params: Promise<{ locale: strin
   if (!isLocale(l)) notFound();
   const locale = l as Locale;
   const no = locale === "no";
-  const photos: [string, string][] = no
-    ? [["photo_fjord_wide.webp", "Utsikten sørover mot Sniksfjorden."], ["photo_fjord_farm.webp", "Gårdene, veien og elva nedenfor feltet."], ["photo_sea_summer.webp", "Sommer over fjorden."]]
-    : [["photo_fjord_wide.webp", "The view south towards Sniksfjorden."], ["photo_fjord_farm.webp", "The farms, the road and the river below the field."], ["photo_sea_summer.webp", "Summer over the fjord."]];
   return (
     <>
       <Nav locale={locale} />
@@ -31,13 +30,17 @@ export default async function View({ params }: { params: Promise<{ locale: strin
           : "From Knotten the eye runs south along the Audna, out Sniksfjorden and on to open sea. That is not a promise, it is a sight line, computed from the terrain in every degree around the horizon."}
       />
       <section className="wrap pb-12">
-        <div className="grid gap-4 md:grid-cols-2">
-          {photos.map(([f, cap], i) => (
-            <figure key={f} className={`frame ${i === 0 ? "md:col-span-2" : ""}`}>
-              <img src={`/assets/incoming/web/${f}`} alt={cap} className={`w-full object-cover ${i === 0 ? "aspect-[21/9]" : "aspect-[4/3]"}`} loading={i === 0 ? "eager" : "lazy"} />
-              <figcaption className="provenance px-4 py-3">{cap} {f === "photo_sea_summer.webp" ? (no ? "Bilde fra prosjekteier; hvor det er tatt, er ikke oppgitt." : "Photo from the project owner; where it was taken is not stated.") : (no ? "Fotografert fra nabotomten, litt lavere enn feltet." : "Photographed from the neighbouring plot, a little lower than the field.")}</figcaption>
-            </figure>
-          ))}
+        {/* the project owner's photos of the view (src/lib/content/photos.ts, the same as the Klassisk photos page) */}
+        <div className="grid gap-4 md:grid-cols-3">
+          {VIEW_PHOTOS.map((k, i) => {
+            const p = PHOTO[k];
+            return (
+              <figure key={k} className={`frame ${i === 0 ? "md:col-span-3" : ""}`}>
+                <Image src={p.src} alt={p.alt[locale]} width={p.w} height={p.h} sizes={i === 0 ? "(max-width: 768px) 100vw, 1360px" : "(max-width: 768px) 100vw, 460px"} quality={85} priority={i === 0} className={`w-full object-cover ${i === 0 ? "aspect-[21/9]" : "aspect-[4/3]"}`} />
+                <figcaption className="provenance px-4 py-3">{p.caption[locale]}. {no ? "Foto" : "Photo"}: {photoCredit(p)}</figcaption>
+              </figure>
+            );
+          })}
         </div>
       </section>
       <section className="wrap pb-16 grid gap-x-10 gap-y-12 sm:grid-cols-3">
@@ -55,7 +58,7 @@ export default async function View({ params }: { params: Promise<{ locale: strin
                 : "The neighbour's grill hut sits on the edge of the hill east of the field. The photograph from there shows the farm, the river bend and the fjord. The model camera stands on the same point. Drag the divider."}
             </p>
           </div>
-          <ProofSlider photo="/assets/incoming/web/view_from_grillbu.webp" model="/renders/web/grillbu_photo_match.webp" labels={[no ? "Fotografi" : "Photograph", no ? "Modell" : "Model"]} />
+          <ProofSlider photo={PHOTO.view.src} model="/renders/web/grillbu_photo_match.webp" labels={[no ? "Fotografi" : "Photograph", no ? "Modell" : "Model"]} />
         </div>
       </section>
       <section className="wrap section grid gap-12 lg:grid-cols-2 items-start">
@@ -66,11 +69,11 @@ export default async function View({ params }: { params: Promise<{ locale: strin
               ? "Hver stripe er én grad. Mørk blå: siktlinjen når vann lenger unna enn 7 km, altså åpent hav. Fra det høyeste punktet på eiendommen, i stuehøyde, er korridoren 164 til 189 grader (beregnet)."
               : "Each stripe is one degree. Dark blue: the sight line reaches water beyond 7 km, which is open sea. From the highest point of the property, at living-room height, the corridor is 164 to 189 degrees (computed)."}
           </p>
-          <img src="/renders/sightline_panorama.png" alt={no ? "siktpanorama" : "sight line panorama"} className="w-full mt-6 rounded-[var(--radius)] bg-bone" />
+          <Image src="/renders/sightline_panorama.png" alt={no ? "Siktpanorama fra det høyeste punktet på eiendommen: én stripe per grad, mørk blå der siktlinjen når åpent hav" : "Sight line panorama from the highest point of the property: one stripe per degree, dark blue where the sight line reaches open sea"} width={905} height={270} unoptimized className="w-full h-auto mt-6 rounded-[var(--radius)] bg-bone" />
           <p className="provenance mt-2.5">{no ? "Kartverket DTM 1 m, terrarium 20 og 80 m, refraksjon k = 1,17. Beregnet 2026-09-05." : "Kartverket DTM 1 m, terrarium 20 and 80 m, refraction k = 1.17. Computed 2026-09-05."}</p>
         </div>
         <figure className="frame">
-          <img src="/renders/web/knotten_view_model.webp" alt="" className="w-full" loading="lazy" />
+          <Image src="/renders/web/knotten_view_model.webp" alt={no ? "Modellens utsikt sørover fra det høyeste punktet på eiendommen, over det ryddede feltet mot fjorden" : "The model's view south from the highest point of the property, over the cleared field towards the fjord"} width={1320} height={880} sizes="(max-width: 1024px) 100vw, 680px" quality={90} className="w-full h-auto" />
           <figcaption className="provenance px-4 py-3">{no ? "Fra det høyeste punktet på eiendommen, 5 m over bakken, retning 174 grader, feltet ryddet." : "From the highest point of the property, 5 m above ground, bearing 174 degrees, field cleared."}</figcaption>
         </figure>
       </section>

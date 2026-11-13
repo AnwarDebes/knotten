@@ -492,3 +492,20 @@ canvas { display: block; outline: none; }
   .cfgp-foot { margin-top: 7pt; padding-top: 4pt; border-top: .5pt solid #c8d1d9; font-size: 8.5pt; color: #3a4d60; }
   .cfgp-url { word-break: break-all; }
 }
+
+/* plots and place: the site plan in the Moderne colours (components/klassisk/SitePlan.tsx with design="moderne") */
+.siteplan[data-design="moderne"] { display: block; width: 100%; max-width: 1120px; height: auto; margin-inline: auto; border-radius: 12px; }
+.siteplan[data-design="moderne"] .layer { transition: opacity .6s ease; }
+.siteplan[data-design="moderne"][data-mode="today"] .layer-plan { opacity: 0; }
+.siteplan[data-design="moderne"][data-mode="plan"] .layer-forest { opacity: .35; }
+.siteplan[data-design="moderne"] .plot { cursor: pointer; }
+.siteplan[data-design="moderne"] .plot rect { transition: fill .2s; }
+.siteplan[data-design="moderne"] .plot:focus { outline: none; }
+.siteplan[data-design="moderne"] .plot:focus-visible rect { stroke: var(--ink); stroke-width: 2.5; }
+.siteplan[data-design="moderne"] .plot:hover rect, .siteplan[data-design="moderne"] .plot.sel rect { fill: var(--ink); }
+.siteplan[data-design="moderne"] .plot text { font-family: var(--font-body); font-size: 9px; font-weight: 600; fill: #fff; pointer-events: none; }
+.siteplan[data-design="moderne"] .plot .sight { opacity: 0; transition: opacity .25s; }
+.siteplan[data-design="moderne"] .plot:hover .sight, .siteplan[data-design="moderne"] .plot.sel .sight, .siteplan[data-design="moderne"] .plot:focus-visible .sight { opacity: 1; }
+.siteplan[data-design="moderne"] .plot.dim { opacity: .22; }
+@media (prefers-reduced-motion: no-preference) { .siteplan[data-design="moderne"].popin .plot { opacity: 0; animation: plan-pop .5s ease forwards; } }
+@keyframes plan-pop { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }

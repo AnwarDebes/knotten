@@ -7,6 +7,9 @@ import { FACT, fmt, word } from "@/lib/facts";
 import Nav from "@/components/ui/Nav";
 import PageHead from "@/components/ui/PageHead";
 import Stage from "@/components/Stage";
+import WithWebGL from "@/components/klassisk/plots/WithWebGL";
+import PlanOverview from "./PlanOverview";
+import { SORTS, STATUS_TEXT, priceText } from "@/lib/content/plots";
 import { pageMeta } from "@/lib/meta";
 import { notFound } from "next/navigation";
 
@@ -29,7 +32,8 @@ export default async function Plots({ params, searchParams }: { params: Promise<
     : sort === "height" ? b.local.z_ground - a.local.z_ground
     : sort === "row" ? a.row - b.row
     : b.sun.dec21.hours - a.sun.dec21.hours);
-  const sorts = [["dec", no ? "Sol 21. desember" : "Sun 21 December"], ["sea", no ? "Sjø i sikt" : "Water in view"], ["height", no ? "Høyde" : "Elevation"], ["row", no ? "Rekke" : "Row"]];
+  // (the same four orders as the Klassisk plot picker; here the winter sun comes first)
+  const sorts = [SORTS[1], SORTS[2], SORTS[3], SORTS[0]].map((o) => [o.key, o.label[locale]]);
   return (
     <>
       <Nav locale={locale} />
@@ -40,7 +44,20 @@ export default async function Plots({ params, searchParams }: { params: Promise<
           : `In the model, ${plots.length} plots sit inside the parcel boundary, in ${word(FACT.rows, "en")} rows as in the project owner's plan: A, B and C one above the other on the south face and D on the Knotten knoll. The aim is a sea view from every plot, but it is not certain every plot will get one; in the model's proposal all see water. The layout is provisional and will be replaced by the regulated plan, but the numbers per plot are already computed from the terrain.`}
         action={<Link className="btn btn-amber" href={`/${locale}/interesse`}>{d.cta.register}</Link>}
       />
-      <Stage plots={plots} locale={locale} initialMode="plot" initialPlot={sorted[0].id} compact />
+      <WithWebGL fallback={<p role="status" className="wrap text-[15px] font-medium">{no ? "3D-modellen kan ikke vises i denne nettleseren. Situasjonsplanen under viser de samme tomtene." : "The 3D model cannot be drawn in this browser. The site plan below shows the same plots."}</p>}>
+        <Stage plots={plots} locale={locale} initialMode="plot" initialPlot={sorted[0].id} compact />
+      </WithWebGL>
+      <section className="wrap section-tight" aria-labelledby="plan">
+        <div className="grid gap-4 md:grid-cols-[1fr_1fr] items-end mb-6">
+          <h2 id="plan" className="display text-[clamp(30px,4vw,48px)]">{no ? "Situasjonsplanen" : "The site plan"}</h2>
+          <p className="text-[15.5px] text-ink-2 max-w-[52ch] md:justify-self-end">
+            {no
+              ? `Alle ${plots.length} tomtene på det målte terrenget, nord opp, med veien, gangstien og byggene som står der i dag. Velg en tomt for å se sol, sikt og horisont.`
+              : `All ${plots.length} plots on the measured terrain, north up, with the road, the footpath and the buildings that stand there today. Choose a plot to see its sun, view and horizon.`}
+          </p>
+        </div>
+        <PlanOverview locale={locale} />
+      </section>
       <section className="wrap section-tight">
         <div className="flex flex-wrap items-center gap-2 text-[14px]">
           <span className="text-granite mr-1">{no ? "Sorter etter" : "Sort by"}</span>
@@ -49,7 +66,8 @@ export default async function Plots({ params, searchParams }: { params: Promise<
           ))}
         </div>
         {/* on a wide screen the table fits, and its headings stay in view under the header while the rows scroll */}
-        <div className="overflow-x-auto lg:overflow-visible mt-6">
+        {/* (relative: the hidden link texts in the table stay inside the scrolling box, so a phone gets no sideways scroll) */}
+        <div className="relative overflow-x-auto lg:overflow-visible mt-6">
           <table className="table table-sticky">
             <thead>
               <tr>
@@ -63,7 +81,7 @@ export default async function Plots({ params, searchParams }: { params: Promise<
                 <th>{no ? "Åpent hav" : "Open sea"}</th>
                 <th className="n">{no ? "Helning" : "Slope"}</th>
                 <th>{no ? "Hustype" : "House type"}</th>
-                <th>Status</th>
+                <th>{no ? "Status og pris" : "Status and price"}</th>
               </tr>
             </thead>
             <tbody>
@@ -83,7 +101,7 @@ export default async function Plots({ params, searchParams }: { params: Promise<
                     {com[p.id].house_type[locale]}
                     <div className="mt-1"><Link href={`/${locale}/konfigurator?tomt=${p.id.slice(5)}`} prefetch={false} className="text-[13.5px]">{no ? "Sett sammen huset" : "Configure the house"}<span className="sr-only"> {no ? "på" : "on"} {plotName(p.id, no).toLowerCase()}</span></Link></div>
                   </td>
-                  <td><span className={`chip ${com[p.id].status === "available" ? "chip-pine" : com[p.id].status === "reserved" ? "chip-amber" : ""}`}>{{ unreleased: no ? "ikke sluppet" : "unreleased", available: no ? "ledig" : "available", reserved: no ? "reservert" : "reserved", sold: no ? "solgt" : "sold" }[com[p.id].status]}</span>{com[p.id].price_nok ? <div className="text-[12.5px] text-muted mt-1">{com[p.id].price_nok!.toLocaleString(no ? "nb-NO" : "en-GB")} kr</div> : null}</td>
+                  <td><span className={`chip ${com[p.id].status === "available" ? "chip-pine" : com[p.id].status === "reserved" ? "chip-amber" : ""}`}>{STATUS_TEXT[com[p.id].status][locale].toLowerCase()}</span><div className="text-[12.5px] text-muted mt-1 whitespace-nowrap">{priceText(com[p.id].price_nok, locale)}</div></td>
                 </tr>
               ))}
             </tbody>
