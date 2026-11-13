@@ -56,6 +56,8 @@ const BY: Record<LeadSource, string> = {
   "min side": "Min side",
   admin: "Administrator",
 };
+/** The authors of the notes a buyer's own account writes on its lead: the sign-up and Min side (lib/server/member-store.ts). */
+export const ACCOUNT_NOTE_BY: readonly string[] = [BY.registrering, BY["min side"]];
 const PURPOSE_NO: Record<Lead["purpose"], string> = { buy: "kjøpe bolig", invest: "investere", partner: "samarbeide", curious: "følge med" };
 const CONSENT_NO: Record<ConsentPurpose, string> = { updates: "nyheter på e-post", plot_alerts: "varsler om tomtene", investor: "kontakt om investering", research: "forskningen med UiA" };
 

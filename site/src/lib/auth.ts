@@ -206,7 +206,9 @@ export function safeNext(next: string | null | undefined, locale: string) {
   try { u = new URL(n, base); } catch { return fallback; }
   if (u.origin !== base) return fallback;
   const path = u.pathname + u.search + u.hash;
-  if (LOGIN_PATH.test(path)) return fallback;
+  // the parser resolves "/.//evil.example", "/..//evil.example" and "/%2e//evil.example" to "//evil.example", which a
+  // browser reads as another site: a path that starts with two slashes after parsing is refused as well
+  if (path.startsWith("//") || LOGIN_PATH.test(path)) return fallback;
   return path;
 }
 

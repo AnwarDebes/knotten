@@ -2,7 +2,8 @@ import { cookies } from "next/headers";
 import { AUTH_COOKIE, LEGACY_AUTH_COOKIE } from "@/lib/auth-shared";
 import { BOT, recordEvent, recordPageview } from "@/lib/server/stats";
 import { isJson, isSameOrigin, readTextCapped } from "@/lib/server/requestGuard";
-import { isPrivatePath } from "@/lib/pages";
+import { isPrivatePath, readAddress } from "@/lib/pages";
+import { allow } from "@/lib/server/limit";
 
 /** The largest body read: a path of 100 characters, a referrer of 300 and the design, with room to spare. */
 const MAX_BODY = 4_000;
@@ -42,8 +43,11 @@ export async function POST(req: Request) {
     return done();
   }
   const path = typeof body.p === "string" ? body.p.toLowerCase().slice(0, 100) : "";
-  if (!PAGE.test(path) || SKIP(path)) return done();
+  // only pages the site has (the page registry knows them), so made-up paths never become counters
+  if (!PAGE.test(path) || SKIP(path) || !readAddress(path).match) return done();
   const ip = (req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || "local").trim();
+  // a person reads a page every few seconds at most: a flood from one network stops being counted instead of growing the records
+  if (!(await allow("collect", ip, 120, 10).catch(() => false))) return done();
   await recordPageview(
     { path, ref: typeof body.r === "string" ? body.r.slice(0, 300) : "", design: body.d === "moderne" ? "moderne" : "klassisk" },
     ip,

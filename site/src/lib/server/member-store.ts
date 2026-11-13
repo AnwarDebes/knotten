@@ -4,7 +4,7 @@ import { mutate, readJSON } from "./kv";
 import { audit, changeAuth, findById, loadAuth, type Account } from "./accounts";
 import { sha256 } from "./crypto";
 import { MAIL_ON, sendMail, siteOrigin } from "./mail";
-import { forgetLeads, moveLeads, recordLead, type LeadSource } from "./leads";
+import { ACCOUNT_NOTE_BY, forgetLeads, moveLeads, recordLead, type LeadSource } from "./leads";
 import { deleteAllFor, listSaved } from "./configurations";
 import { welcomeMail } from "./emails";
 import { CONSENT_TEXT, PRIVACY_VERSION, type ConsentEvent, type ConsentPurpose } from "@/lib/consent";
@@ -28,9 +28,10 @@ import { CONTACT } from "@/lib/facts";
  *   them only once the address is confirmed, and no email goes out to it.
  * - The CRM lead is written only through recordLead (lib/server/leads.ts), with `verified` true only for a
  *   confirmed address. Leads the account created itself are remembered (lead_ids), so the person can see them in
- *   the export and delete them with the account; another lead with the same address is theirs only once the
- *   address is confirmed. When the address changes, the person's own leads move to the new address with it, so the
- *   CRM keeps one record per person.
+ *   the export and delete them with the account (before the address is confirmed, only while nothing else has been
+ *   written to them: see ownLeads); another lead with the same address is theirs only once the address is
+ *   confirmed. When the address changes, the person's own leads move to the new address with it, so the CRM keeps
+ *   one record per person.
  * - Every change to news and plot alerts is a new consent event (append-only), with the text id and the privacy
  *   statement's version, as for the interest forms.
  */
@@ -209,11 +210,19 @@ async function freshAuth() {
   return (await readJSON<Awaited<ReturnType<typeof loadAuth>>>("auth")) ?? (await loadAuth());
 }
 
-/** Leads that belong to this person: the one the account created, and with a confirmed address any with that address. */
+/**
+ * Leads that belong to this person: the one the account created, and with a confirmed address any with that address.
+ * Until the address is confirmed, the lead the account created counts only while nothing but the account has written
+ * to it: a later registration with the same address (the interest form, the configurator) is added to that lead as a
+ * note and may come from the real owner of the address, as may the project's own notes. Such a lead is then not shown
+ * in the export, moved with a new address or deleted with the account.
+ */
 async function ownLeads(a: Account, m: MemberRecord): Promise<Lead[]> {
   const { leads } = await readStore();
   const mine = new Set(m.lead_ids ?? []);
-  return leads.filter((l) => l.source !== "eksempel" && (mine.has(l.id) || (!!a.email_verified_at && l.email.toLowerCase() === a.email)));
+  const verified = !!a.email_verified_at;
+  const onlyOwn = (l: Lead) => (l.notes ?? []).every((n) => ACCOUNT_NOTE_BY.includes(n.by));
+  return leads.filter((l) => l.source !== "eksempel" && ((mine.has(l.id) && (verified || onlyOwn(l))) || (verified && l.email.toLowerCase() === a.email)));
 }
 
 /**

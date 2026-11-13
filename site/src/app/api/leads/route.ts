@@ -66,12 +66,12 @@ export async function POST(req: Request) {
   if (STORAGE === "temp") return fail("storage_unavailable", 503);
 
   const ip = (req.headers.get("x-forwarded-for")?.split(",")[0] || req.headers.get("x-real-ip") || "local").trim().slice(0, 64);
-  const limit = await take([
-    { key: `leads:i:${limitId(ip)}`, max: 5, windowSec: 600 },
-    { key: `leads:e:${limitId(email)}`, max: 3, windowSec: 3600 },
-  ]);
-  if (!limit.ok) return fail("too_many", 429);
+  const perNetwork = await take([{ key: `leads:i:${limitId(ip)}`, max: 5, windowSec: 600 }]);
+  if (!perNetwork.ok) return fail("too_many", 429);
   if (!(await humanCheck(body.turnstile, ip))) return fail("captcha", 400);
+  // the limit per address counts only answers that passed the check above, so nobody can use up another person's allowance
+  const perAddress = await take([{ key: `leads:e:${limitId(email)}`, max: 3, windowSec: 3600 }]);
+  if (!perAddress.ok) return fail("too_many", 429);
 
   const extras = readLeadExtras(body);
   const access = extras.role === "access";
