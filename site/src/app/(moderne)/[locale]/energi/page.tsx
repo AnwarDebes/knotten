@@ -1,17 +1,21 @@
+import Image from "next/image";
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n";
 import Nav from "@/components/ui/Nav";
 import PageHead from "@/components/ui/PageHead";
 import EnergySimulator from "@/components/energy/EnergySimulator";
+import EnergySystem from "@/components/energy/EnergySystem";
+import Src from "@/components/ui/Source";
 import { loadPlots } from "@/lib/data";
-import { BUDGET, DOCS, EED, MEASURES, MEASURES_COMPARED, DIRECTION, STATUS_SOLAR, dateLong, fmt } from "@/lib/facts";
+import { BUDGET, DOCS, EED, MEASURES, MEASURES_COMPARED, MEASURE_GROUPS, DIRECTION, STATUS_SOLAR, VERDICT, dateLong, fmt } from "@/lib/facts";
+import { EED_FIGURES, EED_NEXT } from "@/lib/content/energy";
 import { pageMeta } from "@/lib/meta";
 import { isLocale } from "@/lib/i18n";
 import { notFound } from "next/navigation";
 
 export const generateMetadata = pageMeta("/energi", {
-  no: { title: "Energi", description: "Energikonseptet for Knotten: retningen fra prosjekteier, energiregnskapet for hele feltet, brønnparken og vurderingen av hvert tiltak, med kilde og dato." },
-  en: { title: "Energy", description: "The energy concept for Knotten: the direction from the project owner, the energy budget for the whole field, the borehole field and the assessment of every measure, with source and date." },
+  no: { title: "Energi og teknologi", description: "Energikonseptet for Knotten: retningen fra prosjekteier, energiregnskapet for hele feltet, brønnparken og vurderingen av hvert tiltak, med kilde og dato." },
+  en: { title: "Energy and technology", description: "The energy concept for Knotten: the direction from the project owner, the energy budget for the whole field, the borehole field and the assessment of every measure, with source and date." },
 });
 
 /** One figure in the energy budget: the number, its unit, what it is and where it comes from. */
@@ -32,16 +36,16 @@ export default async function Energy({ params }: { params: Promise<{ locale: str
   const no = locale === "no";
   const { plots } = await loadPlots();
   const nb = (v: number) => fmt(v, no ? "no" : "en");
-  const verdict = { yes: no ? "Ja" : "Yes", maybe: no ? "Kanskje" : "Maybe", no: no ? "Nei" : "No" };
   const verdictClass = { yes: "chip-pine", maybe: "chip-amber", no: "" };
-  const cat = { production: no ? "Produksjon" : "Production", storage: no ? "Lagring og varme" : "Storage and heat", efficiency: no ? "Bygget" : "The building", control: no ? "Styring" : "Control" };
   const perYear = no ? "kWh/år" : "kWh/year";
+  const temperature = EED_FIGURES.find((f) => f.id === "temperatur")!;
+  const dialogs = EED_FIGURES.filter((f) => f.id !== "temperatur");
 
   return (
     <>
       <Nav locale={locale} />
       <PageHead
-        title={no ? "Energien, tegnet på landskapet." : "Energy, drawn on the landscape."}
+        title={no ? "Energi og teknologi" : "Energy and technology"}
         lede={no
           ? "Målet er Norges mest energieffektive, robuste og attraktive boligfelt. Under er konseptet slik det står nå: retningen fra prosjekteier, energiregnskapet for hele feltet, den simulerte brønnparken, og vurderingen av hvert tiltak. Alt er arbeidsgrunnlag med kilde og dato, ikke løfter."
           : "The goal is Norway's most energy-efficient, robust and attractive housing development. Below is the concept as it stands: the direction from the project owner, the energy budget for the whole field, the simulated borehole field, and the assessment of every measure. All of it is a working basis with source and date, not promises."}
@@ -50,6 +54,23 @@ export default async function Energy({ params }: { params: Promise<{ locale: str
       {/* the energy simulator: the field hour by hour through a typical year, on the 3D model */}
       <section className="wrap pb-6">
         <EnergySimulator plots={plots} locale={locale} />
+      </section>
+
+      {/* the system sketch: the same drawing as on the Klassisk page, in this design's look */}
+      <section className="wrap section-tight">
+        <div className="grid gap-6 lg:grid-cols-[1fr_1.3fr] items-end">
+          <h2 className="display text-[clamp(34px,4.6vw,64px)] max-w-[12ch] rise">{no ? "Slik henger det sammen." : "How it fits together."}</h2>
+          <p className="lede max-w-[54ch] rise rise-late">
+            {no
+              ? "Sol og kanskje vind lader et batteri i hver bolig og kanskje et felles lager. Smart styring fordeler strømmen til boligene, kontorbygget og lageret, og strømnettet tar overskuddet og dekker resten. Sandbatteriet er lagt bort."
+              : "The sun and possibly wind charge a battery in every home and perhaps a shared store. Smart control shares the power out to the homes, the office building and the warehouse, and the grid takes the surplus and covers the rest. The sand battery is dropped."}{" "}
+            <Src id="retning" locale={locale} />
+          </p>
+        </div>
+        <figure className="panel mt-8 p-4 md:p-8">
+          <EnergySystem variant="moderne" locale={locale} />
+          <figcaption className="provenance mt-4">{no ? `En skisse av retningen fra prosjekteier, ${dateLong(DOCS.direction.date)}, ikke en prosjektert løsning.` : `A sketch of the project owner's direction, ${dateLong(DOCS.direction.date, "en")}, not a designed solution.`}</figcaption>
+        </figure>
       </section>
 
       {/* the budget */}
@@ -89,8 +110,27 @@ export default async function Energy({ params }: { params: Promise<{ locale: str
             </div>
           </div>
           <figure className="paper p-4 md:p-6">
-            <img src="/img/eed-temperatur.png" width={2341} height={1005} alt={no ? `Væsketemperaturen i brønnparken over ${EED.years} år, simulert i Earth Energy Designer: den stabiliserer seg, og siste år ligger den mellom ${nb(EED.fluid_min_c)} og ${nb(EED.fluid_max_c)} °C` : `The fluid temperature in the borehole field over ${EED.years} years, simulated in Earth Energy Designer: it settles, and in the last year it stays between ${nb(EED.fluid_min_c)} and ${nb(EED.fluid_max_c)} °C`} className="w-full rounded-[10px]" loading="lazy" />
-            <figcaption className="provenance !text-granite mt-3">{no ? `Væsketemperatur i brønnene gjennom ${EED.years} år, månedlig simulering i EED. Energisporet.` : `Fluid temperature in the boreholes over ${EED.years} years, monthly simulation in EED. The energy track.`}</figcaption>
+            <Image src={temperature.src} width={temperature.w} height={temperature.h} alt={temperature.alt[locale]} className="w-full h-auto rounded-[10px]" sizes="(min-width: 1024px) 45vw, 100vw" quality={90} />
+            <figcaption className="mt-3 text-[14.5px]"><span className="font-medium">{temperature.title[locale]}.</span> <span className="text-bone-2">{temperature.text[locale]}</span><span className="provenance !text-granite block mt-1">{temperature.credit[locale]}. <a className="underline underline-offset-2" href={temperature.src} target="_blank" rel="noopener">{no ? "Åpne hele bildet" : "Open the full picture"}</a></span></figcaption>
+          </figure>
+        </div>
+        {/* the rest of the analysis: the base load and the borehole field as entered, and what is studied next */}
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          {dialogs.map((f) => (
+            <figure key={f.id} className="panel p-4 md:p-5 grid content-start gap-3">
+              <div className="rounded-[10px] overflow-hidden bg-bg-2 max-h-[420px]">
+                <Image src={f.src} width={f.w} height={f.h} alt={f.alt[locale]} className="w-full h-auto" sizes="(min-width: 768px) 30vw, 100vw" quality={90} />
+              </div>
+              <figcaption className="text-[14.5px]"><span className="font-medium">{f.title[locale]}.</span> <span className="text-bone-2">{f.text[locale]}</span><span className="provenance block mt-1">{f.credit[locale]}. <a className="underline underline-offset-2" href={f.src} target="_blank" rel="noopener">{no ? "Åpne hele bildet" : "Open the full picture"}</a></span></figcaption>
+            </figure>
+          ))}
+          <figure className="panel p-5 md:p-6 grid content-start gap-4">
+            <ul className="grid gap-3">
+              {EED_NEXT.items.map((t) => (
+                <li key={t.no} className="grid grid-cols-[14px_1fr] gap-2 items-baseline text-[16px]"><span className="inline-block w-2 h-2 rounded-full bg-fjord" aria-hidden="true" />{t[locale]}</li>
+              ))}
+            </ul>
+            <figcaption className="text-[14.5px]"><span className="font-medium">{EED_NEXT.title[locale]}.</span><span className="provenance block mt-1">{EED_NEXT.credit[locale]}</span></figcaption>
           </figure>
         </div>
       </section>
@@ -102,16 +142,16 @@ export default async function Energy({ params }: { params: Promise<{ locale: str
           <p className="lede max-w-[54ch] rise rise-late">{no ? `${MEASURES.length} tiltak. Energisporet sammenlignet ${MEASURES_COMPARED} av dem på kostnad, gjennomførbarhet, robusthet ved strømbrudd og hva de faktisk gir; det felles solanlegget kom senere med retningen fra prosjekteier. Ja, kanskje og nei er den foreløpige vurderingen; der energisporet og prosjekteier er uenige, står begge i teksten.` : `${MEASURES.length} measures. The energy track compared ${MEASURES_COMPARED} of them on cost, feasibility, robustness in an outage and what they actually give; the shared solar plant came later with the project owner's direction. Yes, maybe and no are the provisional assessment; where the energy track and the project owner differ, both are in the text.`}</p>
         </div>
         <div className="mt-10 grid gap-3">
-          {(["production", "storage", "efficiency", "control"] as const).map((c) => (
-            <div key={c} className="grid gap-3">
-              <div className="label mt-4">{cat[c]}</div>
-              {MEASURES.filter((m) => m.category === c).map((m) => (
+          {MEASURE_GROUPS.map((g) => (
+            <div key={g.id} className="grid gap-3">
+              <div className="label mt-4">{g.name[locale]}</div>
+              {MEASURES.filter((m) => m.category === g.id).map((m) => (
                 <div key={m.name.en} className="panel p-5 md:p-6 grid gap-3 md:grid-cols-[220px_1fr_1fr_auto] items-start">
                   <div className="display text-[20px] leading-tight">{m.name[locale]}</div>
                   <p className="text-[14.5px] text-bone-2">{m.what[locale]}</p>
                   <p className="text-[14.5px] text-granite">{m.why[locale]}</p>
                   <div className="flex md:flex-col items-center md:items-end gap-2">
-                    <span className={`chip ${verdictClass[m.verdict]}`}>{verdict[m.verdict]}</span>
+                    <span className={`chip ${verdictClass[m.verdict]}`}>{VERDICT[m.verdict][locale]}</span>
                     {m.robustness !== null && <span className="text-[12px] text-granite whitespace-nowrap">{no ? "strømbrudd" : "outage"} {m.robustness}/10</span>}
                   </div>
                 </div>
@@ -143,7 +183,7 @@ export default async function Energy({ params }: { params: Promise<{ locale: str
         <div className="dark rounded-[var(--radius-lg)] p-8 md:p-12 grid gap-6 md:grid-cols-[1fr_auto] items-center">
           <div>
             <div className="display text-[clamp(28px,3.5vw,40px)]">{no ? "Eksisterende bygg som bevis" : "Existing buildings as proof"}</div>
-            <p className="mt-3 opacity-85 max-w-[56ch]">{no ? "Kontorbygget og boligen på eiendommen bruker strøm i dag og kan måles. Der kan teorien møte virkeligheten." : "The office and the house on the property use power today and can be measured. That is where theory can meet reality."}</p>
+            <p className="mt-3 opacity-85 max-w-[56ch]">{no ? "Kontorbygget og bolighuset på eiendommen bruker strøm i dag og kan måles. Der kan teorien møte virkeligheten." : "The office and the house on the property use power today and can be measured. That is where theory can meet reality."}</p>
           </div>
           <Link className="btn btn-amber" href={`/${locale}/energi/eksisterende`}>{no ? "Se byggene" : "See the buildings"}</Link>
         </div>

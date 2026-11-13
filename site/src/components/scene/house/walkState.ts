@@ -46,6 +46,8 @@ export type LiveFigures = {
   pv: number; use: number; hp: number; soc: number; grid: number; share: number;
   temp: number; price: number; cop: number; hour: number; day: number; month: number;
   yearPv: number; yearUse: number; selfUse: number; batteryKwh: number; kwp: number; offline: boolean;
+  /** what the house's own electricity meter has counted since 1 January up to this hour, kWh (the meter's screen shows it) */
+  meterKwh: number;
 };
 
 /** Walk to a spot of the visited house (its frame: u, v, z above the main floor). */

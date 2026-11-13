@@ -374,13 +374,38 @@ function moduleTexture() {
   return t;
 }
 
-/** The modules: glass over dark cells, lit amber in the energy view by what the roof makes. */
+/**
+ * The modules: glass over dark cells, lit amber in the energy view by what the roof makes.
+ *
+ * Both faces are drawn and the normal is turned towards the sky in the vertex shader: the merged roofs lay each
+ * module's glass face down (so with one face drawn it was culled, and the roofs showed only the empty frames),
+ * while a carport's modules face up. A module always faces the sky, so the light, the reflections and the
+ * shadow lookup all use the upward normal, whichever face is seen. In the energy view the cells glow by the
+ * roof's production and the lines between the cells and the module's edge stay dark, so a module still reads as
+ * a module in full daylight; by day the glow is a little lower, as it has to stand beside the sunlit field.
+ */
 export function pvMaterial(aware: Aware = {}) {
-  const m = new THREE.MeshPhysicalMaterial({ map: moduleTexture(), roughness: 0.16, metalness: 0.1, clearcoat: 0.7, clearcoatRoughness: 0.06, envMapIntensity: 1.2, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
-  return houseAware(m, "house-pv-v2", (s) => {
-    s.fragmentShader = s.fragmentShader.replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
-float shine = uEnergy * uPV[hIndex];
-totalEmissiveRadiance += vec3(1.0, 0.62, 0.18) * shine * 0.9;`);
+  const m = new THREE.MeshPhysicalMaterial({ map: moduleTexture(), roughness: 0.16, metalness: 0.1, clearcoat: 0.7, clearcoatRoughness: 0.06, envMapIntensity: 1.2, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1, side: THREE.DoubleSide });
+  return houseAware(m, "house-pv-v3", (s) => {
+    s.vertexShader = s.vertexShader.replace("#include <beginnormal_vertex>", `#include <beginnormal_vertex>
+if ((modelMatrix * vec4(objectNormal, 0.0)).y < 0.0) objectNormal = -objectNormal;`);
+    s.fragmentShader = s.fragmentShader
+      .replace("#include <normal_fragment_begin>", `#include <normal_fragment_begin>
+// (the normal already faces the sky: no turning for the face that is seen)
+normal = normalize(vNormal);
+nonPerturbedNormal = normal;`)
+      .replace("#include <emissivemap_fragment>", `#include <emissivemap_fragment>
+{
+  float shine = uEnergy * uPV[hIndex];
+  // 6 x 12 cells per module (as the texture draws them); the lines between them anti-aliased by the screen footprint
+  vec2 cuv = vUv * vec2(6.0, 12.0);
+  vec2 cf = abs(fract(cuv) - 0.5);
+  vec2 aa = fwidth(cuv) + 1e-4;
+  vec2 ln = smoothstep(vec2(0.44) - aa, vec2(0.44) + aa, cf);
+  float rim = 1.0 - smoothstep(0.0, 0.02, min(min(vUv.x, 1.0 - vUv.x), min(vUv.y, 1.0 - vUv.y)));
+  float cell = (1.0 - max(ln.x, ln.y)) * (1.0 - rim);
+  totalEmissiveRadiance += vec3(1.0, 0.62, 0.18) * shine * mix(0.9, 0.6, uDaylight) * mix(0.18, 1.0, cell);
+}`);
   }, aware);
 }
 

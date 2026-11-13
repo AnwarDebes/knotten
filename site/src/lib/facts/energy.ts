@@ -116,6 +116,56 @@ export function measure(id: string): Measure {
   return m;
 }
 
+/** The measures in groups, in this order, with the same names in both designs. */
+export const MEASURE_GROUPS: { id: Measure["category"]; name: { no: string; en: string } }[] = [
+  { id: "production", name: { no: "Produksjon", en: "Production" } },
+  { id: "storage", name: { no: "Lagring og varme", en: "Storage and heat" } },
+  { id: "efficiency", name: { no: "Bygget", en: "The building" } },
+  { id: "control", name: { no: "Styring", en: "Control" } },
+];
+
+/** The verdict as one word. */
+export const VERDICT: Record<Measure["verdict"], { no: string; en: string }> = {
+  yes: { no: "Ja", en: "Yes" },
+  maybe: { no: "Kanskje", en: "Maybe" },
+  no: { no: "Nei", en: "No" },
+};
+
+/** `short` in English, for the English pages. */
+const SHORT_EN: Record<string, string> = {
+  solar_roof: "Yes, can cover much of the demand",
+  shared_solar: "Direction from the project owner, the figure must be computed",
+  bedrock: "Yes or maybe, storage or extraction to be settled",
+  btes: "Yes or maybe",
+  battery_home: "Yes, can be expensive over time",
+  emergency_battery: "Yes or maybe",
+  large_battery: "No, legally demanding",
+  sand: "No, dropped",
+  wind: "Energy track: no. Project owner: evaluated as a supplement",
+  heat_recovery: "Yes, saves a lot of heat loss",
+  air_sealing: "Yes, but the benefit depends on the power price",
+  greywater: "Yes, saves some energy",
+  smart_control: "Yes",
+  energy_display: "Yes",
+  microgrid: "Difficult, needs further study",
+  v2h: "No, little benefit against cost",
+  three_phase: "No, not needed",
+};
+
+/** The verdict in a few words, in a language; throws if the English is missing, so the build fails instead of showing Norwegian. */
+export function shortVerdict(m: Measure, lang: "no" | "en" = "no"): string {
+  if (lang === "no") return m.short;
+  const s = SHORT_EN[m.id];
+  if (!s) throw new Error(`missing English verdict for measure ${m.id}`);
+  return s;
+}
+
+/** The outage score as the pages print it: "7 av 10", "0 av 10 alene", or not scored (the shared solar plant came later). */
+export function outageScore(m: Measure, lang: "no" | "en" = "no"): string {
+  if (m.robustness === null) return lang === "no" ? "ikke vurdert" : "not scored";
+  return lang === "no" ? `${m.robustness} av 10${m.alone ? " alene" : ""}` : `${m.robustness} of 10${m.alone ? " on its own" : ""}`;
+}
+
 /** The project owner's direction of 4 September 2026, in eight points. The sand battery was dropped later (27 September). */
 export const DIRECTION = {
   no: [

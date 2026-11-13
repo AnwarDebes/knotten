@@ -1027,3 +1027,37 @@ footer.site .fcontact { margin-top: 18px; }
 .pk-still figcaption b { display: block; font-family: var(--font-serif), Georgia, serif; font-weight: 400; font-size: 1.2rem; color: var(--ink); margin-bottom: 4px; }
 .scene .pk-cap { position: absolute; right: 92px; bottom: 124px; max-width: min(560px, calc(100% - 116px)); margin: 0; padding: 7px 12px; border-radius: 8px; background: rgba(20, 38, 61, 0.78); color: #fff; font-size: 0.8rem; line-height: 1.4; }
 @media (max-width: 900px) { .scene .pk-cap { left: 14px; right: 78px; bottom: 116px; max-width: none; } }
+
+/* energy stream: the energy page (the measures table, the direction list) and the existing buildings (cards, meter data, steps) */
+.mtbl .mgroup th { position: static; background: var(--paper-2); color: var(--ink-2); padding: 8px 10px; }
+.mtbl tbody th[scope="row"] { position: static; text-transform: none; letter-spacing: 0; font-size: inherit; color: var(--ink); font-weight: 600; }
+@media (max-width: 560px) {
+  /* on a phone each measure is a block: its name, then the verdict and the outage score side by side */
+  .mtbl thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .mtbl table, .mtbl tbody { display: block; }
+  .mtbl tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 14px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+  .mtbl tr.mgroup { display: block; padding: 0; border-bottom: 0; }
+  .mtbl .mgroup th { display: block; border-bottom: 1px solid var(--line); }
+  .mtbl tbody th[scope="row"], .mtbl td { padding: 0; border-bottom: 0; }
+  .mtbl tbody th[scope="row"] { grid-column: 1 / -1; }
+  .mtbl td:last-child { text-align: right; white-space: nowrap; }
+  /* the column heading is hidden on a phone: the score says what it is */
+  .mtbl td[data-label]::before { content: attr(data-label) " "; color: var(--ink-3); }
+}
+.dirlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.dirlist li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 12px; align-items: baseline; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px 18px; color: var(--ink-2); }
+.dirlist .dn { font-family: var(--font-serif), Georgia, serif; font-size: 1.5rem; font-weight: 300; line-height: 1; color: var(--fjord-deep); }
+.blist.four { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 32px 48px; }
+@media (max-width: 820px) { .blist.four { grid-template-columns: minmax(0, 1fr); } }
+.blist article h2 { font-size: 1.25rem; font-weight: 400; line-height: 1.2; }
+.bfig { margin-top: 8px; padding-top: 12px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 2px; }
+.bfig .tag { align-self: flex-start; margin-bottom: 6px; }
+.bfig b { font-family: var(--font-serif), Georgia, serif; font-weight: 300; font-size: 1.7rem; line-height: 1.1; color: var(--ink); font-variant-numeric: tabular-nums; }
+.meter .mh { font-size: 1.45rem; font-weight: 400; line-height: 1.2; }
+.meterdata { display: grid; gap: 14px; min-width: 0; }
+.meteryears th.n, .meteryears td.n { text-align: right; }
+@media (max-width: 560px) { .meteryears th, .meteryears td { padding: 8px 6px; } }
+.msteps { margin-top: 28px; max-width: 70ch; background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; }
+.msteps h2 { font-size: 1.45rem; font-weight: 400; line-height: 1.2; }
+.msteps ol { margin: 12px 0 0; padding-left: 22px; display: grid; gap: 6px; color: var(--ink-2); }
+.msteps .small { margin-top: 12px; }

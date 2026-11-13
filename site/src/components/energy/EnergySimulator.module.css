@@ -34,7 +34,8 @@
 .reset { background: transparent; }
 
 .main { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 14px; }
-@media (max-width: 1000px) { .main { grid-template-columns: 1fr; } }
+/* single columns are minmax(0, 1fr): a plain 1fr lets the widest child (a table) push the card past a phone's edge */
+@media (max-width: 1000px) { .main { grid-template-columns: minmax(0, 1fr); } }
 
 .stage { position: relative; border-radius: 16px; overflow: hidden; background: #c3cfd8; height: min(62vh, 620px); min-height: 360px; }
 .stage canvas { display: block; }
@@ -51,7 +52,7 @@
 .panel { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; display: grid; gap: 12px; align-content: start; }
 .lower > .card { align-self: start; }
 .panelHead { font-size: 12.5px; color: var(--muted); text-transform: none; letter-spacing: 0.01em; }
-.now { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.now { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px 14px; }
 .big { font-size: 24px; font-weight: 650; font-variant-numeric: tabular-nums; line-height: 1.1; }
 .small { font-size: 12.5px; color: var(--muted); }
 .weather { display: flex; gap: 12px; flex-wrap: wrap; font-size: 13.5px; color: var(--ink-2); }
@@ -65,7 +66,7 @@
 .flowVal { font-size: 12.5px; font-variant-numeric: tabular-nums; color: var(--ink); }
 
 .timeline { margin-top: 14px; display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: 10px 14px; align-items: center; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 10px 14px; }
-@media (max-width: 700px) { .timeline { grid-template-columns: 1fr; } }
+@media (max-width: 700px) { .timeline { grid-template-columns: minmax(0, 1fr); } }
 .btn { appearance: none; border: 0; background: var(--ink); color: #fff; border-radius: 999px; padding: 8px 15px; font-size: 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
 .btn[aria-pressed="true"] { background: var(--amber); color: var(--ink); }
 .btnGhost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
@@ -76,8 +77,8 @@
 .failed { margin: 16px; max-width: 40ch; background: rgba(255, 255, 255, 0.94); border-radius: 14px; padding: 16px 18px; box-shadow: 0 6px 20px rgba(23, 40, 58, 0.14); display: grid; gap: 10px; justify-items: center; text-align: center; font-size: 14.5px; color: var(--ink); }
 .failed p { margin: 0; }
 
-.charts { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-@media (max-width: 1000px) { .charts { grid-template-columns: 1fr; } }
+.charts { margin-top: 14px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 1000px) { .charts { grid-template-columns: minmax(0, 1fr); } }
 .card { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; }
 .cardTitle { font-weight: 600; font-size: 15.5px; }
 .cardSub { font-size: 13px; color: var(--muted); margin-top: 2px; }
@@ -97,11 +98,20 @@
 .figLabel { margin-top: 4px; font-size: 14px; }
 .figNote { margin-top: 6px; font-size: 12.5px; color: var(--muted); }
 
-.lower { margin-top: 14px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }
-@media (max-width: 1000px) { .lower { grid-template-columns: 1fr; } }
-.compare { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+.lower { margin-top: 14px; display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 14px; }
+@media (max-width: 1000px) { .lower { grid-template-columns: minmax(0, 1fr); } }
+.compareWrap { overflow-x: auto; margin-top: 8px; }
+.compare { width: 100%; border-collapse: collapse; font-size: 14px; }
 .compare th, .compare td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--line); }
 .compare td.n, .compare th.n { text-align: right; font-variant-numeric: tabular-nums; }
+/* on a phone the comparison keeps all three columns inside the card */
+@media (max-width: 480px) {
+  .compare { font-size: 13px; }
+  .compare th, .compare td { padding: 7px 3px; }
+  .compare th:first-child, .compare td:first-child { padding-left: 0; }
+  /* (Klassisk sets every table heading in spaced capitals, too wide for three columns here) */
+  .compare th { text-transform: none; letter-spacing: 0; font-size: 12.5px; }
+}
 .outage { display: grid; gap: 10px; align-content: start; }
 .outageResult { background: var(--soft); border-radius: 12px; padding: 10px 12px; font-size: 14px; }
 .method { margin-top: 14px; }

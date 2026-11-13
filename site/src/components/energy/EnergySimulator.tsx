@@ -284,7 +284,7 @@ export default function EnergySimulator({ plots, locale, variant = "moderne" }: 
             <div className={s.card}>
               <div className={s.cardTitle}>{no ? "Mot energiregnskapet" : "Against the energy budget"}</div>
               <div className={s.cardSub}>{no ? "Regnskapet regner måned for måned; simuleringen time for time med ekte vær. Med regnskapets egne forutsetninger lander de nær hverandre." : "The budget works month by month; the simulation hour by hour with real weather. With the budget's own assumptions they land close together."}</div>
-              <table className={s.compare}>
+              <div className={s.compareWrap}><table className={s.compare}>
                 <thead><tr><th></th><th className={s.n}>{no ? "Regnskapet" : "Budget"}</th><th className={s.n}>{isBudget ? (no ? "Simuleringen" : "Simulation") : (no ? "Ditt valg" : "Your choice")}</th></tr></thead>
                 <tbody>
                   <tr><td>{no ? "Selvforsyning strøm" : "Power self-sufficiency"}</td><td className={s.n}>{fmt(BUDGET.results.self_sufficiency_pct, no ? "no" : "en")} %</td><td className={s.n}>{pct(T.selfSufficiency)}</td></tr>
@@ -293,7 +293,7 @@ export default function EnergySimulator({ plots, locale, variant = "moderne" }: 
                   <tr><td>{no ? "CO₂ spart, kg" : "CO₂ saved, kg"}</td><td className={s.n}>{nb(BUDGET.results.co2_saved_kg)}</td><td className={s.n}>{nb(T.co2Saved)}</td></tr>
                   <tr><td>{no ? "Varmepumpenes strøm, kWh" : "Heat pump power, kWh"}</td><td className={s.n}>{nb(BUDGET.heat_pump_el_kwh)}</td><td className={s.n}>{nb(T.heatPumpEl)}</td></tr>
                 </tbody>
-              </table>
+              </table></div>
               <div className={s.provenance}>{no ? `Solcellene i simuleringen gir i snitt ${nb(r.yieldPerKwp.roofsMean)} kWh per kWp på boligtakene (${nb(r.yieldPerKwp.worst)} til ${nb(r.yieldPerKwp.best)} etter takets retning og terrenget rundt), kalibrert mot EUs PVGIS, som gir ${nb(r.yieldPerKwp.pvgisSouth35)} kWh per kWp for et sørvendt panel på stedet. Regnskapet bruker ${BUDGET.pv.yield_kwh_per_kwp} kWh per kWp og ${BUDGET.pv.system_eff_pct} % systemvirkningsgrad.` : `The panels in the simulation give ${nb(r.yieldPerKwp.roofsMean)} kWh per kWp on the home roofs on average (${nb(r.yieldPerKwp.worst)} to ${nb(r.yieldPerKwp.best)} with the roof's direction and the terrain around), calibrated against the EU's PVGIS, which gives ${nb(r.yieldPerKwp.pvgisSouth35)} kWh per kWp for a south-facing panel on the spot. The budget uses ${BUDGET.pv.yield_kwh_per_kwp} kWh per kWp and ${BUDGET.pv.system_eff_pct} % system efficiency.`}</div>
             </div>
             <div className={`${s.card} ${s.outage}`}>

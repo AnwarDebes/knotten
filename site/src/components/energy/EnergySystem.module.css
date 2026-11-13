@@ -1,0 +1,18 @@
+/* The energy system sketch (EnergySystem.tsx): the same drawing in both designs, wide on large screens and
+   tall on phones, each in its own design's colours and fonts. Self-contained, as the simulator's styles are. */
+.sketch { display: block; }
+.wide, .tall { display: block; width: 100%; height: auto; overflow: visible; }
+.tall { display: none; max-width: 440px; margin-inline: auto; }
+@media (max-width: 899px) {
+  .wide { display: none; }
+  .tall { display: block; }
+}
+
+.flow { stroke-dasharray: 6 8; }
+@media (prefers-reduced-motion: no-preference) {
+  .flow { animation: flow 1.6s linear infinite; }
+}
+@keyframes flow { to { stroke-dashoffset: -14; } }
+
+.name { font-weight: 600; }
+.moderne .name { font-family: var(--font-display), var(--font-body), system-ui, sans-serif; letter-spacing: -0.01em; }

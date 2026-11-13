@@ -9,17 +9,37 @@
  *
  * Sunlight comes in only through the windows: for every point, the ray towards the sun is followed
  * through the house's own geometry (which outer wall it leaves by, whether that is inside an opening
- * at both faces of the wall, under the eaves or the terrace, past the inner walls) and through the
- * glass. The plot's measured horizon decides whether the sun is up at all. So a sunlit patch falls on
- * the floor exactly where the window throws it, and no light leaks through a wall.
+ * at both faces of the wall, under the eaves or the terrace, past the inner walls and the furniture)
+ * and through the glass. The plot's measured horizon decides whether the sun is up at all. So a sunlit
+ * patch falls on the floor exactly where the window throws it, the table and the sofa throw their own
+ * shadows into it, and no light leaks through a wall.
+ *
+ * The edges of the patches are soft as a real sun's are: the sun is a disc half a degree wide, so an edge
+ * blurs with the distance to whatever casts it (a window frame's shadow is sharp next to the window and
+ * softer across the room), and never sharper than the pixel it falls in (the footprint of the pixel on the
+ * window, as fwidth gives it), so the edges do not stair-step or crawl as the visitor moves.
  */
 import * as THREE from "three";
-import { HOUSE, keep, levelZ, holeRect } from "@/lib/house/plan";
+import { HOUSE, keep, levelZ, holeRect, type Item } from "@/lib/house/plan";
 import { MODEL_PLAN, type Plan } from "@/lib/house/variants";
 import { twinUniforms } from "../twin/materials";
 
 export const MAX_WIN = 24;
 export const MAX_PART = 16;
+/** The most furniture boxes the sun is tested against (both floors together). */
+export const MAX_OCC = 128;
+
+/**
+ * The furniture as boxes in the house's own frame, the main floor's first: column i is box i, row 0 holds
+ * (u0, u1, v0, v1) and row 1 (z0, z1) in metres, z from the main floor. A float texture, so the boxes cost
+ * one sampler instead of hundreds of uniform vectors.
+ */
+const occData = new Float32Array(MAX_OCC * 2 * 4);
+const occTexture = new THREE.DataTexture(occData, MAX_OCC, 2, THREE.RGBAFormat, THREE.FloatType);
+occTexture.minFilter = THREE.NearestFilter;
+occTexture.magFilter = THREE.NearestFilter;
+occTexture.generateMipmaps = false;
+occTexture.needsUpdate = true;
 
 export const interiorUniforms = {
   uHouse: { value: new THREE.Vector4(0, 0, 1, 0) },      // origin x, origin z (scene), cos, sin of the facing
@@ -38,9 +58,92 @@ export const interiorUniforms = {
   uPartZ: { value: Array.from({ length: MAX_PART }, () => new THREE.Vector2()) },     // z0, z1
   uLowerOn: { value: 0 },
   uTerraceDepth: { value: HOUSE.terraceDepth },                                       // the deck over the lower floor's openings
+  uOcc: { value: occTexture },                                                        // the furniture's boxes
+  uOccMain: { value: 0 },                                                             // how many are on the main floor (they come first)
+  uOccAll: { value: 0 },                                                              // how many in all
 };
 
-/** Fill the uniforms for one house: its frame, its openings and its inner walls (of the plan's variant). */
+/** A box in an item's own frame: x across its front, y up from its bottom, z from its front (-d/2) to its back (+d/2). */
+type Part = [x0: number, y0: number, z0: number, x1: number, y1: number, z1: number];
+
+/** The pieces of furniture that stand on the floor as solid blocks, whole. */
+const SOLID = new Set<Item["kind"]>(["heatpump", "washer", "utilitysink", "battery", "wc", "vanity", "kitchenBase", "kitchenTall", "wardrobe", "bookcase", "coatcupboard", "boxes", "tv"]);
+
+/**
+ * What of an item stands in the sun's way, as boxes matching how furniture.ts draws it: a table is its top and
+ * its legs (the sun passes under it), a chair its seat and back, a sofa its seat, back and arms. Thin things
+ * (lamps' stems, rails, the shower's glass, the plants' leaves) are left out.
+ */
+function sunParts(it: Item): Part[] {
+  const [w, d, h] = it.size;
+  switch (it.kind) {
+    case "table": {
+      const legs = [[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([sx, sz]): Part => {
+        const x = sx * (w / 2 - 0.08), z = sz * (d / 2 - 0.08);
+        return [x - 0.025, 0, z - 0.025, x + 0.025, h - 0.035, z + 0.025];
+      });
+      return [[-w / 2, h - 0.035, -d / 2, w / 2, h, d / 2], ...legs];
+    }
+    case "chair": return [[-w / 2, 0.42, -d / 2, w / 2, 0.48, d / 2 - 0.02], [-w / 2 + 0.03, h - 0.14, d / 2 - 0.045, w / 2 - 0.03, h, d / 2]];
+    case "officechair": return [[-w / 2 + 0.03, 0.42, -w / 2 + 0.05, w / 2 - 0.03, 0.5, w / 2 - 0.05], [-w / 2 + 0.05, 0.55, w / 2 - 0.12, w / 2 - 0.05, h, w / 2 - 0.05]];
+    case "stool": return [[-0.18, h - 0.03, -0.18, 0.18, h, 0.18]];
+    case "sofa": {
+      const seat = 0.42, arm = 0.18;
+      return [[-w / 2, 0.1, -d / 2 + 0.03, w / 2, seat, d / 2], [-w / 2 + arm, seat, d / 2 - 0.24, w / 2 - arm, h, d / 2], [-w / 2, seat, -d / 2 + 0.03, -w / 2 + arm, seat + 0.18, d / 2], [w / 2 - arm, seat, -d / 2 + 0.03, w / 2, seat + 0.18, d / 2]];
+    }
+    case "armchair": return [[-w / 2, 0.2, -d / 2, w / 2, 0.42, d / 2], [-w / 2 + 0.02, 0.42, d / 2 - 0.2, w / 2 - 0.02, h, d / 2], [-w / 2, 0.42, -d / 2 + 0.05, -w / 2 + 0.12, 0.6, d / 2], [w / 2 - 0.12, 0.42, -d / 2 + 0.05, w / 2, 0.6, d / 2]];
+    case "coffeetable": return [[-w / 2, h - 0.03, -d / 2, w / 2, h, d / 2], [-w / 2 + 0.05, 0.12, -d / 2 + 0.05, w / 2 - 0.05, 0.14, d / 2 - 0.05]];
+    case "island": {
+      const z0 = d / 2 - 0.62;
+      return [[-w / 2 + 0.02, 0, z0, w / 2 - 0.02, h - 0.04, d / 2], [-w / 2, h - 0.04, -d / 2, w / 2, h - 0.01, d / 2]];
+    }
+    case "desk": return [[-w / 2, h - 0.025, -d / 2, w / 2, h, d / 2]];
+    case "bench": return [[-w / 2, h - 0.04, -d / 2, w / 2, h, d / 2], [-w / 2, 0.08, -d / 2, w / 2, 0.1, d / 2]];
+    case "sideboard": return [[-w / 2, 0.14, -d / 2, w / 2, h, d / 2]];
+    case "nightstand": return [[-w / 2, 0.15, -d / 2, w / 2, h, d / 2]];
+    case "bed": return [[-w / 2, 0.08, -d / 2, w / 2, h, d / 2], [-w / 2, 0.25, d / 2 - 0.08, w / 2, 1.05, d / 2 + 0.02]];
+    case "stove": return [[-w / 2, 0.12, -d / 2, w / 2, h, d / 2]];
+    case "floorlamp": return [[-0.2, h - 0.3, -0.2, 0.2, h, 0.2]];
+    case "plant": return [[-w * 0.42, 0, -w * 0.42, w * 0.42, h * 0.23, w * 0.42]];
+    default: return SOLID.has(it.kind) ? [[-w / 2, 0, -d / 2, w / 2, h, d / 2]] : [];
+  }
+}
+
+/** A part placed in the house's own frame (as furniture.ts places it: mirrored back in a mirrored house, turned, set down). */
+function placePart(it: Item, p: Part, mirror: boolean): [number, number, number, number, number, number] {
+  const a = (-it.rot * Math.PI) / 2, c = Math.round(Math.cos(a)), s = Math.round(Math.sin(a));
+  const base = levelZ(it.level) + (it.z ?? 0);
+  let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity;
+  for (const x0 of [p[0], p[3]]) for (const z of [p[2], p[5]]) {
+    const x = mirror ? -x0 : x0;
+    const u = it.at[0] + x * c + z * s, v = it.at[1] - (-x * s + z * c);
+    u0 = Math.min(u0, u); u1 = Math.max(u1, u); v0 = Math.min(v0, v); v1 = Math.max(v1, v);
+  }
+  return [u0, u1, v0, v1, base + p[1], base + p[4]];
+}
+
+/** The furniture of one house as the sun's boxes: the main floor's first, then the lower floor's. */
+function setFurniture(items: Item[], mirror: boolean, lower: boolean) {
+  const main: number[][] = [], low: number[][] = [];
+  for (const it of items) {
+    if (!keep(it, lower) || it.ceil) continue;
+    for (const p of sunParts(it)) (it.level === "lower" ? low : main).push(placePart(it, p, mirror));
+  }
+  // each floor's boxes in order of their low edge along the house, so the shader can stop at the first that starts beyond the ray
+  main.sort((a, b) => a[0] - b[0]);
+  low.sort((a, b) => a[0] - b[0]);
+  const all = [...main, ...low].slice(0, MAX_OCC);
+  occData.fill(0);
+  all.forEach((b, i) => {
+    occData.set([b[0], b[1], b[2], b[3]], i * 4);
+    occData.set([b[4], b[5], 0, 0], (MAX_OCC + i) * 4);
+  });
+  occTexture.needsUpdate = true;
+  interiorUniforms.uOccMain.value = Math.min(main.length, MAX_OCC);
+  interiorUniforms.uOccAll.value = all.length;
+}
+
+/** Fill the uniforms for one house: its frame, its openings, its inner walls and its furniture (of the plan's variant). */
 export function setInteriorHouse(x: number, y: number, floorZ: number, facingDeg: number, mirror: boolean, lower: boolean, plan: Plan = MODEL_PLAN) {
   const f = (facingDeg * Math.PI) / 180;
   interiorUniforms.uHouse.value.set(x, -y, Math.cos(f), Math.sin(f));
@@ -62,6 +165,7 @@ export function setInteriorHouse(x: number, y: number, floorZ: number, facingDeg
     const z0 = levelZ(p.level);
     interiorUniforms.uPartZ.value[i].set(z0, p.level === "lower" ? HOUSE.lowerCeiling : 5.2);
   });
+  setFurniture(plan.items, mirror, lower);
 }
 
 const H = HOUSE;
@@ -78,6 +182,9 @@ uniform vec4 uPart[${MAX_PART}];
 uniform vec2 uPartZ[${MAX_PART}];
 uniform float uLowerOn;
 uniform float uTerraceDepth;
+uniform sampler2D uOcc;
+uniform int uOccMain;
+uniform int uOccAll;
 const float HW = ${H.hw.toFixed(3)};
 const float HD = ${H.hd.toFixed(3)};
 const float IW = ${H.iw.toFixed(3)};
@@ -93,20 +200,54 @@ vec3 hDir(vec3 d) {
 }
 float roofUnder(float v) { return EAVE + (HD - abs(v)) * ((RIDGE - EAVE) / HD) - 0.3; }
 
-// is (s, z) inside an opening on this side?
-float inOpening(float side, float s, float z) {
-  float hit = 0.0;
+// the sun is a disc about half a degree across (tan of its radius): a shadow's edge blurs by this per metre
+// between the edge and the point it falls on
+const float SUN_R = 0.00465;
+
+// 0 well below an edge at d = 0, 1 well above it, over a width of 2h
+float softStep(float d, float h) { h = max(h, 1e-4); return smoothstep(-h, h, d); }
+
+// for the pairs of axes (y, z), (x, z) and (x, y): how a gap in t between two slabs of a box turns into
+// metres across the ray (s with no component near zero)
+vec3 slabRate(vec3 s) {
+  vec3 a = abs(s);
+  return vec3(a.y * a.z / length(a.yz), a.x * a.z / length(a.xz), a.x * a.y / length(a.xy));
+}
+
+// how much of the sun, seen from the point, passes inside an opening on this side; (s, z) is where the ray
+// meets the wall, hs and hz how soft the opening's edges are there along the wall and upwards
+float openingCover(float side, float s, float z, float hs, float hz) {
+  hs = max(hs, 1e-4); hz = max(hz, 1e-4);
+  float cover = 0.0;
   for (int i = 0; i < ${MAX_WIN}; i++) {
     if (i >= uNWin) break;
     if (abs(uWinSide[i] - side) > 0.5) continue;
     vec4 w = uWin[i];
-    hit = max(hit, step(w.x + 0.06, s) * step(s, w.y - 0.06) * step(w.z + 0.06, z) * step(z, w.w - 0.06));
+    // (outside the opening's soft band the cover is exactly nothing: no need to work it out)
+    if (s < w.x + 0.06 - hs || s > w.y - 0.06 + hs || z < w.z + 0.06 - hz || z > w.w - 0.06 + hz) continue;
+    cover = max(cover, softStep(s - (w.x + 0.06), hs) * softStep((w.y - 0.06) - s, hs) * softStep(z - (w.z + 0.06), hz) * softStep((w.w - 0.06) - z, hz));
   }
-  return hit;
+  return cover;
 }
 
-// the share of direct sun reaching point p (house frame) along s (house frame, unit, pointing to the sun)
-float sunThrough(vec3 p, vec3 s) {
+// how much of the sun a box (house frame, lo to hi) hides from point p, looking along the ray (inv = 1 / s,
+// rate = slabRate(s)); only a box between the point and the wall the light comes through (tMax) counts. The
+// edge is as soft as the sun at the box's distance, and never sharper than the pixel (pix: half its footprint)
+float boxShade(vec3 p, vec3 inv, vec3 rate, vec3 lo, vec3 hi, float tMax, float pix) {
+  vec3 t0 = (lo - p) * inv, t1 = (hi - p) * inv;
+  vec3 tn = min(t0, t1), tf = max(t0, t1);
+  float a = max(max(tn.x, tn.y), tn.z), b = min(min(tf.x, tf.y), tf.z);
+  // from inside the box, behind it, or beyond the wall the light comes through: no shade
+  if (a < 0.02 || b < 0.02 || a > tMax) return 0.0;
+  // the ray passes through the box when it is inside each slab before it has left any other; the smallest of
+  // those margins, in metres across the ray, is how far inside (+) or outside (-) the box's outline it passes
+  float m = min(min(min((tf.y - tn.x) * rate.z, (tf.x - tn.y) * rate.z), min((tf.z - tn.x) * rate.y, (tf.x - tn.z) * rate.y)), min((tf.z - tn.y) * rate.x, (tf.y - tn.z) * rate.x));
+  return softStep(m, SUN_R * a + pix);
+}
+
+// the share of direct sun reaching point p (house frame) along s (house frame, unit, pointing to the sun);
+// dpx, dpy: how p changes from one pixel to the next (dFdx, dFdy), for edges as wide as the pixel's footprint
+float sunThrough(vec3 p, vec3 s, vec3 dpx, vec3 dpy) {
   if (s.z <= 0.01 || uSunUp <= 0.0) return 0.0;
   float big = 1e6;
   float tF = s.y > 1e-4 ? (HD - p.y) / s.y : big;
@@ -119,44 +260,72 @@ float sunThrough(vec3 p, vec3 s) {
   else if (t == tB) { side = 1.0; tIn = (-ID - p.y) / s.y; }
   else if (t == tL) { side = 2.0; tIn = (-IW - p.x) / s.x; }
   else { side = 3.0; tIn = (IW - p.x) / s.x; }
-  vec3 e = p + s * t, ei = p + s * max(tIn, 0.0);
+  // where the ray meets the wall (along it, and up) moves with p by jS and jZ: with the pixel's step in p this is
+  // the footprint fwidth gives; the sun's disc spreads over the wall by spreadS and spreadZ per metre of ray
+  vec3 jS, jZ; float sn, ss;
+  if (side < 1.5) { jS = vec3(1.0, -s.x / s.y, 0.0); jZ = vec3(0.0, -s.z / s.y, 1.0); sn = s.y; ss = s.x; }
+  else { jS = vec3(-s.y / s.x, 1.0, 0.0); jZ = vec3(-s.z / s.x, 0.0, 1.0); sn = s.x; ss = s.y; }
+  float fS = abs(dot(jS, dpx)) + abs(dot(jS, dpy)), fZ = abs(dot(jZ, dpx)) + abs(dot(jZ, dpy));
+  float n2 = max(sn * sn, 0.0025);
+  float spreadS = SUN_R * sqrt(1.0 + ss * ss / n2), spreadZ = SUN_R * sqrt(1.0 + s.z * s.z / n2);
+  float tI = max(tIn, 0.0);
+  vec3 e = p + s * t, ei = p + s * tI;
   float se = side < 1.5 ? e.x : e.y, si = side < 1.5 ? ei.x : ei.y;
-  // through the opening at both faces of the wall (the reveal shades a low sun)
-  float through = inOpening(side, se, e.z) * inOpening(side, si, ei.z);
-  if (through < 0.5) return 0.0;
+  // through the opening at both faces of the wall (the reveal shades a low sun); the outer face first, as most
+  // rays meet the wall where there is no opening
+  float through = openingCover(side, se, e.z, min(0.5 * fS + spreadS * t, 0.25), min(0.5 * fZ + spreadZ * t, 0.25));
+  if (through <= 0.0) return 0.0;
+  through *= openingCover(side, si, ei.z, min(0.5 * fS + spreadS * tI, 0.25), min(0.5 * fZ + spreadZ * tI, 0.25));
+  if (through <= 0.0) return 0.0;
   // a point on the lower floor cannot see past the main floor's slab
   if (p.z < -0.35 && e.z > -0.32) return 0.0;
   // the eaves over the long walls, the verges over the gables
   if (side < 1.5) {
     float tO = side < 0.5 ? (HD + OV - p.y) / s.y : (-HD - OV - p.y) / s.y;
     float zo = p.z + s.z * tO;
-    if (zo > EAVE - OV * ((RIDGE - EAVE) / HD) - 0.3 && zo < RIDGE + 0.5) return 0.0;
-    // under the terrace (from the lower floor, the deck 3 m deep above the patio)
+    if (zo < RIDGE + 0.5) through *= 1.0 - softStep(zo - (EAVE - OV * ((RIDGE - EAVE) / HD) - 0.3), min(0.5 * fZ + spreadZ * tO, 0.25));
+    // under the terrace (from the lower floor, the deck above the patio)
     if (side < 0.5 && p.z < -0.35) {
       float tT = (HD + uTerraceDepth - p.y) / s.y;
-      if (p.z + s.z * tT > -0.78) return 0.0;
+      through *= 1.0 - softStep(p.z + s.z * tT + 0.78, min(0.5 * fZ + spreadZ * tT, 0.25));
     }
   } else {
     float tO = side < 2.5 ? (-HW - OV - p.x) / s.x : (HW + OV - p.x) / s.x;
     vec3 o = p + s * tO;
-    if (o.z > roofUnder(o.y) && abs(o.y) < HD + OV) return 0.0;
+    // under the verge's edge, and within the roof's length
+    vec3 jR = jZ + ((RIDGE - EAVE) / HD) * sign(o.y) * jS;
+    float hR = min(0.5 * (abs(dot(jR, dpx)) + abs(dot(jR, dpy))) + spreadZ * tO, 0.25);
+    through *= 1.0 - softStep(o.z - roofUnder(o.y), hR) * softStep(HD + OV - abs(o.y), min(0.5 * fS + spreadS * tO, 0.25));
   }
-  // the inner walls between the point and the window
+  if (through <= 0.0) return 0.0;
+  // the inner walls and the furniture between the point and the window
+  vec3 sc = vec3(abs(s.x) > 1e-5 ? s.x : 1e-5, abs(s.y) > 1e-5 ? s.y : 1e-5, abs(s.z) > 1e-5 ? s.z : 1e-5);
+  vec3 inv = 1.0 / sc, rate = slabRate(sc);
+  float pix = 0.25 * (length(dpx) + length(dpy));
+  float hidden = 0.0;
+  // what the ray crosses on its way to the wall, in plan, with room to spare for the softest edge: a box outside
+  // it, or wholly below the point (the ray climbs), cannot hide the sun and is passed over before the arithmetic
+  vec2 segLo = min(p.xy, e.xy) - 0.3, segHi = max(p.xy, e.xy) + 0.3;
   for (int i = 0; i < ${MAX_PART}; i++) {
     if (i >= uNPart) break;
     vec4 r = uPart[i];
-    // slab test of the ray in plan against the wall's rectangle
-    vec2 inv = 1.0 / vec2(abs(s.x) > 1e-5 ? s.x : 1e-5, abs(s.y) > 1e-5 ? s.y : 1e-5);
-    vec2 t0 = (vec2(r.x, r.z) - p.xy) * inv, t1 = (vec2(r.y, r.w) - p.xy) * inv;
-    vec2 tmin = min(t0, t1), tmax = max(t0, t1);
-    float a = max(tmin.x, tmin.y), b = min(tmax.x, tmax.y);
-    if (b > max(a, 0.02) && a < t) {
-      float za = p.z + s.z * max(a, 0.0);
-      if (za > uPartZ[i].x && za < uPartZ[i].y) return 0.0;
-    }
+    if (r.y < segLo.x || r.x > segHi.x || r.w < segLo.y || r.z > segHi.y) continue;
+    hidden = max(hidden, boxShade(p, inv, rate, vec3(r.x, r.z, uPartZ[i].x), vec3(r.y, r.w, uPartZ[i].y), t, pix));
+  }
+  // the furniture on the point's own floor (a ray from one floor never reaches the other's)
+  int i0 = p.z < -0.35 ? uOccMain : 0, i1 = p.z < -0.35 ? uOccAll : uOccMain;
+  for (int i = i0; i < i1; i++) {
+    if (hidden > 0.999) break;
+    vec4 bx = texelFetch(uOcc, ivec2(i, 0), 0);
+    // (the boxes come in order of their low edge in u: from here on, none reaches the ray)
+    if (bx.x > segHi.x) break;
+    if (bx.y < segLo.x || bx.w < segLo.y || bx.z > segHi.y) continue;
+    vec2 bz = texelFetch(uOcc, ivec2(i, 1), 0).xy;
+    if (bz.y < p.z) continue;
+    hidden = max(hidden, boxShade(p, inv, rate, vec3(bx.x, bx.z, bz.x), vec3(bx.y, bx.w, bz.y), t, pix));
   }
   // triple glazing lets through about 60 % of the sun's light
-  return 0.6 * uSunUp;
+  return 0.6 * uSunUp * through * (1.0 - hidden);
 }
 `;
 
@@ -216,7 +385,8 @@ ${pattern}`)
   // what glossy surfaces mirror indoors is mostly the room, not the sky
   vec3 spec = reflectedLight.indirectSpecular;
   reflectedLight.indirectSpecular = mix(spec, vec3(dot(spec, vec3(0.2126, 0.7152, 0.0722))) * warm, 0.75) * mix(0.1, 1.0, clamp(vSky * 2.5, 0.0, 1.0)) * ao;
-  float sun = sunThrough(vHouseP, normalize(hDir(uSunWorld)));
+  vec3 sunDx = dFdx(vHouseP), sunDy = dFdy(vHouseP);
+  float sun = sunThrough(vHouseP, normalize(hDir(uSunWorld)), sunDx, sunDy);
   reflectedLight.directDiffuse *= sun;
   reflectedLight.directSpecular *= sun;
   reflectedLight.indirectDiffuse += BRDF_Lambert(material.diffuseColor) * (vLamp * uLampsOn + vLampS * uSensorOn) * uLampGain * uLampColor * mix(0.55, 1.0, ao);
@@ -224,7 +394,7 @@ ${pattern}`)
   };
   // the plain surfaces (no pattern of their own) share one program: their differences are uniforms, or settings
   // three keys on anyway (transparency, sides)
-  m.customProgramCacheKey = () => (pattern || fragPre ? `interior-${key}-v1` : "interior-plain-v1");
+  m.customProgramCacheKey = () => (pattern || fragPre ? `interior-${key}-v2` : "interior-plain-v2");
   return m;
 }
 
