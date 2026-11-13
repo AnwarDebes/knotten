@@ -1,8 +1,11 @@
 import { cookies } from "next/headers";
-import { AUTH_COOKIE } from "@/lib/auth";
+import { AUTH_COOKIE, LEGACY_AUTH_COOKIE } from "@/lib/auth-shared";
 import { BOT, recordEvent, recordPageview } from "@/lib/server/stats";
-import { isJson, isSameOrigin } from "@/lib/server/requestGuard";
+import { isJson, isSameOrigin, readTextCapped } from "@/lib/server/requestGuard";
 import { isPrivatePath } from "@/lib/pages";
+
+/** The largest body read: a path of 100 characters, a referrer of 300 and the design, with room to spare. */
+const MAX_BODY = 4_000;
 
 /** Events the browser may report. Everything else is counted on the server where it happens. */
 const CLIENT_EVENTS = new Set(["form_start"]);
@@ -21,11 +24,15 @@ export async function POST(req: Request) {
   if (!isJson(req) || !isSameOrigin(req)) return new Response(null, { status: 403 });
   const ua = req.headers.get("user-agent") ?? "";
   if (!ua || BOT.test(ua) || req.headers.get("sec-gpc") === "1" || req.headers.get("dnt") === "1") return done();
-  // the team's own visits while logged in would only blur the numbers
-  if ((await cookies()).get(AUTH_COOKIE)) return done();
+  // the team's own visits while logged in would only blur the numbers (a session from before the cookie's rename too)
+  const jar = await cookies();
+  if (jar.get(AUTH_COOKIE) || jar.get(LEGACY_AUTH_COOKIE)) return done();
+  // a page view is a path, a referrer and the design: the body is read up to a few kilobytes, never more
+  const text = await readTextCapped(req, MAX_BODY).catch(() => "");
+  if (text === null) return new Response(null, { status: 413 });
   let body: { p?: unknown; r?: unknown; d?: unknown; e?: unknown };
   try {
-    body = JSON.parse((await req.text()).slice(0, 2000));
+    body = JSON.parse(text);
   } catch {
     return new Response(null, { status: 400 });
   }

@@ -17,7 +17,7 @@ import { ModerneIncluded, ModerneStepOptions } from "./ModerneOptions";
 import ModerneSummary from "./ModerneSummary";
 
 export default function ModerneConfigurator({ locale, data, initial }: { locale: Locale; data: ConfiguratorData; initial: Initial }) {
-  const c = useConfigurator({ data, initial, lang: locale });
+  const c = useConfigurator({ data, initial, lang: locale, design: "moderne" });
   const printer = usePrint(c);
   const { step } = c;
   return (

@@ -197,7 +197,7 @@ export const meters = store<{ buildings: Building[] }>("meters", () => ({
   buildings: [
     // shown on the public pages only when the owner ticks it: the house is a home, its use is personal
     { id: "office", name: { no: "Kontorbygget", en: "The office building" }, readings: [], upgrades: [], public: false },
-    { id: "house", name: { no: "Boligen", en: "The house" }, readings: [], upgrades: [], public: false },
+    { id: "house", name: { no: "Bolighuset", en: "The house" }, readings: [], upgrades: [], public: false },
   ],
 }));
 

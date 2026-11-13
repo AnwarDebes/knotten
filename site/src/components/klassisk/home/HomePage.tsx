@@ -1,4 +1,3 @@
-import type { ComponentType } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Src } from "@/components/klassisk/Source";
@@ -16,17 +15,11 @@ import Journey from "./Journey";
 import RightNow from "./RightNow";
 import { loadPlots } from "@/lib/data";
 import { FACT, dateLong, fmt, word, type Lang } from "@/lib/facts";
-import { plotName } from "@/lib/format";
 import { kHref } from "@/lib/klassisk/locale";
 import { SITE } from "@/lib/meta";
 import { organizationJsonLd } from "@/lib/content/jsonld";
-import { HOME_PHASES, JOURNEY_TEXT, OWNER_PHOTOS, PHOTOS_TEXT, WINTER_SUN_TEXT, energyKeys, klassiskPlotPath, measuresByVerdict, measuresLine, mostWinterSun } from "@/lib/content/home";
+import { HOME_PHASES, JOURNEY_TEXT, OWNER_PHOTOS, PHOTOS_TEXT, WINTER_SUN_TEXT, energyKeys, measuresByVerdict, measuresLine, mostWinterSun } from "@/lib/content/home";
 import { formatOrgNumber, loadPublicSettings } from "@/lib/server/siteSettings";
-
-/** The plot picker's plan and the map journey belong to the plots pages; they take the page's language as `locale`. */
-const inLanguage = <P extends object>(C: ComponentType<P>) => C as ComponentType<P & { locale?: Lang }>;
-const MapJourneyIn = inLanguage(MapJourney);
-const PlanPreviewIn = inLanguage(PlanPreview);
 
 /**
  * The Klassisk front page, in Norwegian at / and in English at /english: the photo hero, then the journey through the
@@ -120,13 +113,13 @@ export default async function HomePage({ locale }: { locale: Lang }) {
               ? "Prosjekteiers egne kart og et terrengkart laget for nettsiden, fra siktlinjen ut til havet og helt ned til den første skissen av boligrekkene. Bla nedover, så zoomer kartet inn."
               : "The project owner's own maps and a terrain map made for the website, from the sight line out to the sea down to the first sketch of the rows of homes. Scroll down, and the map zooms in."}
           </p>
-          <MapJourneyIn locale={locale} />
+          <MapJourney locale={locale} />
         </div>
       </section>
 
       <section className="sec alt kcv" id="tomter" data-journey="tomter">
         <div className="wrap split rev">
-          <PlanPreviewIn locale={locale} />
+          <PlanPreview locale={locale} />
           <Reveal className="stack">
             <div className="eyebrow">{no ? "Tomtene" : "Plots"}</div>
             <h2>{no ? "Rekker mot sør, mot sjøen" : "Rows facing south, towards the sea"}</h2>
@@ -150,8 +143,8 @@ export default async function HomePage({ locale }: { locale: Lang }) {
           <Reveal className="kbest-grid" stagger>
             {best.map((p) => (
               <div key={p.id} className="kbest-card">
+                {/* the passport links to the plot's own page itself (/tomtene/07, /english/tomtene/07) */}
                 <Passport plot={p} locale={locale} variant="klassisk" />
-                <Link className="kbest-link" href={k(klassiskPlotPath(p.id))}>{no ? `Tomtesiden for ${plotName(p.id, true).toLowerCase()}` : `The page for ${plotName(p.id, false).toLowerCase()}`}</Link>
               </div>
             ))}
           </Reveal>

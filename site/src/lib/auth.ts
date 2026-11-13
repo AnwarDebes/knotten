@@ -5,6 +5,7 @@ import { authSecret, findById, loadAuth, type Account } from "./server/accounts"
 import { hmac, safeEqual } from "./server/crypto";
 import { ProblemError } from "./errors";
 import type { Design } from "./design";
+import { loginPagePath } from "./member-paths";
 import { AUTH_COOKIE, can, isAdmin, LEGACY_AUTH_COOKIE, LEGACY_VIEW_COOKIE, PREVIEWS, VIEW_COOKIE, WHO_COOKIE, type Area, type Role, type Session } from "./auth-shared";
 
 /**
@@ -59,11 +60,12 @@ const toSession = (a: Account): Session =>
     : { id: a.id, email: a.email, name: a.name, role: a.role, areas: a.areas, plot: a.plot, org: a.org };
 
 /**
- * The signed token behind this request, checked. A session started before the cookie got its __Host- name is
- * accepted once: where this request may set cookies (a form's server action or a route handler) it moves to the
- * new name and the old cookie is cleared. A page cannot set cookies while it renders, so there it counts as no
- * session; the person logs in once more and the new cookie replaces the old. (Pages that accepted it would send
- * the person in a circle: the front door, src/proxy.ts, knows only the new name.)
+ * The signed token behind this request, checked. A session started before the cookie got its __Host- name is still
+ * accepted, so a remembered login survives the rename. The front doors, the portal and Min side move it to the new
+ * name before the page renders (src/proxy.ts); anywhere else it is moved here when this request may set cookies (a
+ * form's server action or a route handler), and only read while a page renders. The proxy and the pages accept the
+ * same two names, so a page that sends a logged-in person on to the portal or Min side is never sent back to the
+ * login page.
  */
 const sessionToken = cache(async (): Promise<Payload | null> => {
   const jar = await cookies();
@@ -76,8 +78,7 @@ const sessionToken = cache(async (): Promise<Payload | null> => {
     if (p) jar.set(AUTH_COOKIE, old, httpOnlyCookie(Math.max(60, p.e - Math.floor(Date.now() / 1000))));
     clearCookie(jar, LEGACY_AUTH_COOKIE);
   } catch {
-    // rendering a page: cookies are read-only here
-    return null;
+    // rendering a page: cookies are read-only here, so the old cookie is only read
   }
   return p;
 });
@@ -187,7 +188,8 @@ export async function clientIp() {
   return (h.get("x-forwarded-for")?.split(",")[0] || h.get("x-real-ip") || "local").trim().slice(0, 64);
 }
 
-const LOGIN_PATH = /^\/((no|en)\/login|logg-inn)(\/|\?|#|$)/;
+/** The login pages and the pages under them, in both designs and languages: /no/login, /en/login, /logg-inn, /english/logg-inn. */
+const LOGIN_PATH = /^\/((no|en)\/login|(english\/)?logg-inn)(\/|\?|#|$)/;
 
 /**
  * A same-site path to continue to after logging in; anything else, or a login page, falls back to the portal.
@@ -208,9 +210,9 @@ export function safeNext(next: string | null | undefined, locale: string) {
   return path;
 }
 
-/** The login page in a design and language (Klassisk is Norwegian; English opens the Moderne page). */
+/** The login page in a design and language: /logg-inn or /english/logg-inn in Klassisk, /no/login or /en/login in Moderne. */
 export function loginPath(design: Design | undefined, locale: "no" | "en") {
-  return design === "klassisk" && locale === "no" ? "/logg-inn" : `/${locale}/login`;
+  return loginPagePath(design, locale);
 }
 
 /**
@@ -220,9 +222,9 @@ export function loginPath(design: Design | undefined, locale: "no" | "en") {
  */
 export function afterLogout(fd: FormData, sessionDesign?: Design) {
   const to = String(fd.get("to") ?? "").trim().slice(0, 300);
-  const locale: "no" | "en" = fd.get("locale") === "en" || fd.get("lang") === "en" || /^\/en(\/|$)/.test(to) ? "en" : "no";
+  const locale: "no" | "en" = fd.get("locale") === "en" || fd.get("lang") === "en" || /^\/(en|english)(\/|$)/.test(to) ? "en" : "no";
   const asked = fd.get("design");
-  const design: Design = asked === "klassisk" || /^\/logg-inn(\/|$)/.test(to) ? "klassisk" : asked === "moderne" ? "moderne" : (sessionDesign ?? "moderne");
+  const design: Design = asked === "klassisk" || /^\/(english\/)?logg-inn(\/|$)/.test(to) ? "klassisk" : asked === "moderne" ? "moderne" : (sessionDesign ?? "moderne");
   if (to && !LOGIN_PATH.test(to)) {
     const safe = safeNext(to, locale);
     if (safe !== `/${locale}/portal` || to === safe) return safe;

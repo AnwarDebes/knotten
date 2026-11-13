@@ -1,6 +1,6 @@
 /**
  * The Klassisk configurator page, in either language: the page head with its breadcrumb, then the configurator.
- * The route (/konfigurator) passes "no" today; an English Klassisk route can pass "en" without changes here.
+ * Rendered by /konfigurator ("no") and /english/konfigurator ("en").
  */
 import PageHead from "@/components/klassisk/PageHead";
 import type { Lang } from "@/lib/configurator/types";
@@ -14,7 +14,7 @@ export default async function KlassiskPage({ locale, search }: { locale: Lang; s
   const initial = initialFrom(search, data);
   return (
     <>
-      <PageHead title={t.title} crumb={t.crumb}>
+      <PageHead title={t.title} crumb={t.crumb} locale={locale}>
         <p>{t.lede}</p>
       </PageHead>
       <KlassiskConfigurator locale={locale} data={data} initial={initial} />

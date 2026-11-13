@@ -7,8 +7,10 @@
  */
 import { useId } from "react";
 import Link from "next/link";
+import Turnstile, { TURNSTILE_SITE_KEY } from "@/components/Turnstile";
 import { INCLUDED } from "@/lib/configurator/catalog";
 import { CONTACT_NOTICE } from "@/lib/consent";
+import { privacyPath } from "@/lib/member-paths";
 import { kr } from "../text";
 import { picksText, priceSummary, summaryGroups } from "../summaryView";
 import { authLinks, CONSENT_KEYS, consentText, splitNotice, useSave, useSend, useShare } from "../useActions";
@@ -19,7 +21,7 @@ export default function KlassiskSummary({ c, onPrint }: { c: Configurator; onPri
   const share = useShare(c);
   const saver = useSave(c);
   const money = priceSummary(c);
-  const links = authLinks("klassisk", lang, c.returnPath());
+  const links = authLinks("klassisk", lang, c.returnPath);
   return (
     <div className="cfg-summary">
       <div className="cfg-actions">
@@ -161,9 +163,10 @@ function Send({ c }: { c: Configurator }) {
             </label>
           ))}
         </fieldset>
+        {TURNSTILE_SITE_KEY ? <div className="full"><Turnstile locale={lang} onToken={s.onToken} /></div> : null}
         <p className="full small">
           {pre}
-          {link && <Link href="/personvern">{link}</Link>}
+          {link && <Link href={privacyPath("klassisk", lang)}>{link}</Link>}
           {post}
         </p>
         <label className="sr" aria-hidden>{lang === "no" ? "Nettside" : "Website"}<input type="text" name="website" tabIndex={-1} autoComplete="off" /></label>

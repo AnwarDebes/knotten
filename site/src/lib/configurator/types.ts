@@ -140,6 +140,8 @@ export type SendPayload = {
   website?: string;
   /** Milliseconds the form was open (spam brake: very fast submissions are refused). */
   elapsed?: number;
+  /** Cloudflare Turnstile's answer, checked by the server when its keys are set (lib/server/human.ts). */
+  turnstile?: string;
 };
 export type SendResponse = { ok: true; id: string } | { ok: false; error: string };
 

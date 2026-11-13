@@ -8,6 +8,8 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { normalize, summary, totals } from "@/lib/configurator/state";
 import type { EnergyOptions, HouseConfig, Lang, PriceTable, PricesResponse } from "@/lib/configurator/types";
+import type { Design } from "@/lib/design";
+import { configuratorPath } from "@/lib/member-paths";
 import { useEnergyEstimate } from "./useEnergyEstimate";
 import { isStepKey, optionsOf, plotCards, plotNumber, searchFor, STEP_KEYS, type ConfiguratorData, type Initial, type PlotStatus, type StepKey } from "./model";
 import { copy, energyLine } from "./text";
@@ -84,7 +86,7 @@ function focusHeading(h: HTMLElement) {
 
 // ------------------------------------------------------------------------------------------------ the hook
 
-export function useConfigurator({ data, initial, lang }: { data: ConfiguratorData; initial: Initial; lang: Lang }) {
+export function useConfigurator({ data, initial, lang, design }: { data: ConfiguratorData; initial: Initial; lang: Lang; design: Design }) {
   const t = copy(lang);
   const [cfg, setCfg] = useState<HouseConfig>(initial.cfg);
   const [step, setStep] = useState<StepKey>(initial.step);
@@ -240,14 +242,19 @@ export function useConfigurator({ data, initial, lang }: { data: ConfiguratorDat
     return () => window.clearTimeout(id);
   }, [line, touched]);
 
-  /** The link to share: this house, opened at the summary. */
-  const shareUrl = () => `${window.location.origin}${window.location.pathname}${searchFor(cfg, "oppsummering")}`;
-  /** The way back after logging in: this house at the summary. */
-  const returnPath = () => `${window.location.pathname}${searchFor(cfg, "oppsummering")}`;
+  /**
+   * The way back after logging in: this house at the summary, on this design's configurator in this language
+   * (/konfigurator, /english/konfigurator, /no/konfigurator or /en/konfigurator). Worked out from the state alone, so
+   * the summary renders the same on the server (a shared link opens there) as in the browser.
+   */
+  const returnPath = configuratorPath(design, lang, searchFor(cfg, "oppsummering"));
+  /** The link to share: the same address with the site's own origin (asked for only when the visitor shares or prints). */
+  const shareUrl = () => `${window.location.origin}${returnPath}`;
 
   return {
     t,
     lang,
+    design,
     cfg,
     step,
     index,

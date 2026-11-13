@@ -3,6 +3,8 @@ import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { followPlot, followState, unfollowPlot } from "@/lib/server/members";
 import { useSession } from "@/lib/session-client";
+import { loginPagePath } from "@/lib/member-paths";
+import { readAddress } from "@/lib/pages";
 
 /**
  * A "follow this plot" button's state for the plot pages in both designs. The pages are static, so the button asks
@@ -31,8 +33,8 @@ export function useFollow(plotId: string) {
       const r = following ? await unfollowPlot(plotId) : await followPlot(plotId);
       if (r.ok) setFollowing(r.following);
       else if (r.reason === "login") {
-        const lang = /^\/(no|en)(\/|$)/.exec(path)?.[1];
-        router.push(`${lang ? `/${lang}/login` : "/logg-inn"}?next=${encodeURIComponent(path)}`);
+        const { design, lang } = readAddress(path);
+        router.push(`${loginPagePath(design, lang)}?next=${encodeURIComponent(path)}`);
       } else setError(true);
     });
   return { who, following, pending, error, toggle };

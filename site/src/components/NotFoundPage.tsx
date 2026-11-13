@@ -42,7 +42,7 @@ export default function NotFoundPage() {
         <h1>Denne siden finnes ikke</h1>
         <p className="nf-lede">Kanskje du lette etter tomtene, energikonseptet eller dokumentbanken.</p>
         <div className="nf-cta"><Link className="nf-btn" href="/">Til forsiden</Link><Link className="nf-btn ghost" href="/tomtene">Tomtene</Link><Link className="nf-btn ghost" href="/status">Status og spørsmål</Link></div>
-        <p className="nf-en" lang="en">This page does not exist. <Link href="/en" hrefLang="en">Knotten in English</Link></p>
+        <p className="nf-en" lang="en">This page does not exist. <Link href="/english" hrefLang="en">Knotten in English</Link></p>
       </main>
     </>
   );

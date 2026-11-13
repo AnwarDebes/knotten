@@ -7,14 +7,15 @@ import { STORAGE_MESSAGE } from "@/lib/errors";
 import { plotNo } from "@/lib/format";
 import { MT, type MLang } from "@/lib/member-text";
 import { configuratorPath, contactPath, loginPagePath, plotPath } from "@/lib/member-paths";
+import { kHref } from "@/lib/klassisk/locale";
 import { memberPlace, type MinSideData } from "@/lib/server/member-store";
 import {
   KChangePasswordForm, KDeleteAccountForm, KDeleteHouseButton, KEmailChangeForm, KFollowForm, KNotifySwitch, KProfileForm, KResendForm, KSignUpForm, KUnfollowButton,
 } from "./Forms";
 
 /**
- * The sign-up page and Min side in the Klassisk look. Klassisk is Norwegian today; both take the language as a prop
- * and carry English, so an English Klassisk only has to pass "en". The data and the actions are shared with Moderne
+ * The sign-up page and Min side in the Klassisk look, in Norwegian (/registrer, /min-side) and English (/english/registrer,
+ * /english/min-side): both take the language as a prop. The data and the actions are shared with Moderne
  * (lib/server/member-store.ts, lib/server/members.ts).
  */
 type L = { locale: MLang };
@@ -24,7 +25,7 @@ export function KHead({ locale, title, crumb, children, aside }: L & { title: st
   return (
     <section className="phead">
       <div className="wrap">
-        <div className="crumb"><Link href="/">{MT[locale].home}</Link> / {crumb}</div>
+        <div className="crumb"><Link href={kHref("/", locale)}>{MT[locale].home}</Link> / {crumb}</div>
         <div className="row">
           <div>
             <h1>{title}</h1>

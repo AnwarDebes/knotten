@@ -10,6 +10,8 @@ type Name = { name: string; kind: "hill" | "water" | "place" | "road" | "project
 const LIFT: Record<Name["kind"], number> = { hill: 22, water: 8, place: 14, road: 8, project: 6 };
 const RANK: Record<Name["kind"], number> = { project: 0, hill: 1, water: 2, place: 3, road: 4 };
 const EN: Record<string, string> = { Kontorbygget: "The office building", Boligen: "The house", "Lindesnes fyr": "Lindesnes lighthouse" };
+/** The project's own names where the data has an older one: the house is "Bolighuset" everywhere on the site. */
+const NO: Record<string, string> = { Boligen: "Bolighuset" };
 
 // the label chips: white text keeps 4.5:1 or better on their own backgrounds over the brightest sky
 const CHIP = { display: "inline-block", whiteSpace: "nowrap", font: "600 12px/1.2 system-ui, sans-serif", letterSpacing: "0.01em", padding: "3px 8px", borderRadius: 999, transition: "opacity 0.25s", boxShadow: "0 2px 8px rgba(0,0,0,0.18)" } as const;
@@ -85,7 +87,7 @@ export function TwinLabels({ locale, wide }: { locale: "no" | "en"; wide: boolea
       {shown.map((n, i) => (
         <Html key={n.name + n.x} position={[n.x, n.z + LIFT[n.kind], -n.y]} center zIndexRange={[20, 0]} style={HTML_STYLE}>
           <span ref={(el) => { els.current[i] = el; }} style={STYLE[n.kind]}>
-            {locale === "en" ? EN[n.name] ?? n.name : n.name}
+            {locale === "en" ? EN[n.name] ?? n.name : NO[n.name] ?? n.name}
           </span>
         </Html>
       ))}

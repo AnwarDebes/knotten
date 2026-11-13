@@ -7,6 +7,7 @@ import { buildDigest } from "@/lib/server/digest";
 import { audit, changeAuth, findByEmail, findById, issueLink, linkUrl, loadAuth, newAccountId } from "@/lib/server/accounts";
 import { linkMail, memberResetMail } from "@/lib/server/emails";
 import { deleteMemberData } from "@/lib/server/member-store";
+import { deleteSentForLead } from "@/lib/server/configurations";
 import { isStorageUnavailable } from "@/lib/server/kv";
 import { MAIL_ON, sendMail, siteOrigin } from "@/lib/server/mail";
 import { problemOf, STORAGE_MESSAGE } from "@/lib/errors";
@@ -63,7 +64,10 @@ export async function toggleExcluded(fd: FormData) {
 export async function deleteLead(fd: FormData) {
   const s = await actor();
   const id = str(fd, "id");
+  if (!id) return;
   await updateStore(by(s), `slettet interessent ${id}`, (st) => { st.leads = st.leads.filter((x) => x.id !== id); });
+  // the houses the person sent from the configurator belong to the lead: nothing is left behind
+  await deleteSentForLead(id);
   done();
 }
 
@@ -83,7 +87,12 @@ export async function addLead(fd: FormData) {
 
 export async function removeExamples() {
   const s = await actor();
-  await updateStore(by(s), "eksempelinteressenter fjernet", (st) => { st.leads = st.leads.filter((x) => x.source !== "eksempel"); });
+  const gone = await updateStore(by(s), "eksempelinteressenter fjernet", (st) => {
+    const ids = st.leads.filter((x) => x.source === "eksempel").map((x) => x.id);
+    st.leads = st.leads.filter((x) => x.source !== "eksempel");
+    return ids;
+  });
+  await deleteSentForLead(gone);
   done();
 }
 

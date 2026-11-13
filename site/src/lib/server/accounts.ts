@@ -6,6 +6,7 @@ import { forget, giveBack, limitId, take, type Rule, type Verdict } from "./limi
 import { AREAS, type AccountRole, type Area } from "@/lib/auth-shared";
 import type { Design } from "@/lib/design";
 import { CONTACT } from "@/lib/facts";
+import { passwordPagePath } from "@/lib/member-paths";
 
 /**
  * Accounts for the portal: who can log in, with what role and which areas. Kept apart from the CRM records (and
@@ -229,9 +230,12 @@ const LINK_AUDIT: Record<LinkToken["kind"], string> = {
   "email-change": "lenke for ny e-postadresse laget for",
 };
 
-/** The password page a link opens: Klassisk's for Norwegian links made from Klassisk, else the Moderne page in the language. */
+/**
+ * The password page a link opens, in the design and language it was made from: /logg-inn/passord or
+ * /english/logg-inn/passord in Klassisk, /no/login/passord or /en/login/passord in Moderne (lib/member-paths.ts).
+ */
 export function passwordPath(design: Design | undefined, locale: "no" | "en" | undefined) {
-  return design === "klassisk" && locale !== "en" ? "/logg-inn/passord" : `/${locale === "en" ? "en" : "no"}/login/passord`;
+  return passwordPagePath(design, locale === "en" ? "en" : "no");
 }
 /** The whole link for an email or for an administrator to copy. */
 export const linkUrl = (origin: string, token: string, design?: Design, locale?: "no" | "en") => `${origin}${passwordPath(design, locale)}?token=${encodeURIComponent(token)}`;

@@ -1,5 +1,6 @@
 import { DOCS, EED, FACT, dateShort, type Access, type Lang, type T } from "@/lib/facts";
 import { kHref } from "@/lib/klassisk/locale";
+import { loginPagePath } from "@/lib/member-paths";
 import { portalDocPath } from "@/lib/docRegister";
 
 /**
@@ -62,14 +63,15 @@ const ACCESS: Record<Access, T> = { public: L("Offentlig", "Public"), login: L("
 
 /**
  * Where a row leads. A document behind the login opens in the portal (the portal sends a visitor without a login to
- * its login page and back): Norwegian Klassisk through its own login page, the rest straight to the portal address.
- * A public file opens the file; a page of the website opens that page in the same design and language.
+ * its login page and back): Klassisk through its own login page in the page's language (/logg-inn or
+ * /english/logg-inn), Moderne straight to the portal address. A public file opens the file; a page of the website
+ * opens that page in the same design and language.
  */
 export function docHref(d: DocEntry, design: "klassisk" | "moderne", lang: Lang): string {
   const meta: { access: Access; file?: string } = DOCS[d.key];
   if (meta.access === "login") {
     const portal = portalDocPath(d.key, lang);
-    return design === "klassisk" && lang === "no" ? `/logg-inn?next=${encodeURIComponent(portal)}` : portal;
+    return design === "klassisk" ? `${loginPagePath("klassisk", lang)}?next=${encodeURIComponent(portal)}` : portal;
   }
   if (d.page) return design === "klassisk" ? kHref(d.page.klassisk, lang) : `/${lang}${d.page.moderne}`;
   return meta.file ?? (design === "klassisk" ? kHref("/dokumentbank", lang) : `/${lang}/dokumenter`);

@@ -3,6 +3,7 @@ import { newId, readStore, updateStore, type Lead } from "@/lib/store";
 import { consentEvents, type ConsentEvent, type ConsentPurpose } from "@/lib/consent";
 import { consentState, lastContact } from "@/lib/leadConsent";
 import { plotNo } from "@/lib/format";
+import { deleteSentForLead } from "./configurations";
 
 /**
  * The one way a lead is created or updated, whichever form it comes from (interest forms in both designs, the
@@ -139,7 +140,7 @@ export async function forgetLeads(ids: string[], person: { name: string; email: 
   const wanted = new Set(ids.filter(Boolean));
   if (!wanted.size) return 0;
   const names = [person.name.trim(), person.email.trim().toLowerCase()].filter((x) => x.length > 1);
-  return updateStore("Min side", "en interessent slettet seg selv", (s) => {
+  const deleted = await updateStore("Min side", "en interessent slettet seg selv", (s) => {
     const before = s.leads.length;
     const gone = s.leads.filter((l) => wanted.has(l.id));
     for (const l of gone) if (l.name.trim().length > 1) names.push(l.name.trim());
@@ -150,6 +151,9 @@ export async function forgetLeads(ids: string[], person: { name: string; email: 
     });
     return before - s.leads.length;
   });
+  // the houses sent from the configurator belong to the lead: they go with it
+  await deleteSentForLead([...wanted]);
+  return deleted;
 }
 
 /**
@@ -205,10 +209,12 @@ export async function cleanupLeads(at = new Date()) {
   const due = (await readStore()).leads.filter(old);
   if (!due.length) return { leadsDeleted: 0 };
   const ids = new Set(due.map((l) => l.id));
-  const deleted = await updateStore("Opprydding", `slettet ${due.length} interessenter uten kontakt på 24 måneder`, (s) => {
-    const before = s.leads.length;
+  const gone = await updateStore("Opprydding", `slettet ${due.length} interessenter uten kontakt på 24 måneder`, (s) => {
+    const out = s.leads.filter((l) => ids.has(l.id) && old(l)).map((l) => l.id);
     s.leads = s.leads.filter((l) => !(ids.has(l.id) && old(l)));
-    return before - s.leads.length;
+    return out;
   });
-  return { leadsDeleted: deleted };
+  // the houses sent from the configurator belong to the lead: they go with it
+  await deleteSentForLead(gone);
+  return { leadsDeleted: gone.length };
 }

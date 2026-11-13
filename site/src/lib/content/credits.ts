@@ -83,7 +83,7 @@ export const CREDITS: Credit[] = [
   {
     id: "met",
     who: { no: "Meteorologisk institutt", en: "Norwegian Meteorological Institute" },
-    what: { no: "været nå, i Knotten AI og portalen", en: "the weather now, in Knotten AI and the portal" },
+    what: { no: "været nå, på forsidene, i Knotten AI og portalen", en: "the weather now, on the front pages, in Knotten AI and the portal" },
     licence: { no: "NLOD 2.0 og CC BY 4.0", en: "NLOD 2.0 and CC BY 4.0" },
     url: "https://api.met.no/",
     licenceUrl: CC_BY,
@@ -91,7 +91,7 @@ export const CREDITS: Credit[] = [
   {
     id: "prices",
     who: { no: "Nord Pool, via hvakosterstrommen.no", en: "Nord Pool, via hvakosterstrommen.no" },
-    what: { no: "strømprisene time for time i NO2", en: "the hourly power prices in NO2" },
+    what: { no: "strømprisene time for time i NO2, på forsidene, i Knotten AI og portalen", en: "the hourly power prices in NO2, on the front pages, in Knotten AI and the portal" },
     licence: PENDING,
     url: "https://www.hvakosterstrommen.no/",
   },

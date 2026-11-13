@@ -8,6 +8,7 @@ import JsonLd from "@/components/JsonLd";
 import { OPEN_QUESTIONS, STAGES, workPlan } from "@/lib/content/status";
 import { faq, faqJsonLd } from "@/lib/content/faq";
 import { FINAL_PHASE, WORK_PLAN, word, type Lang } from "@/lib/facts";
+import { kHref } from "@/lib/klassisk/locale";
 import type { PublicSettings } from "@/lib/server/siteSettings";
 
 /**
@@ -17,13 +18,13 @@ import type { PublicSettings } from "@/lib/server/siteSettings";
 export default function StatusPage({ locale, settings, orgDisplay }: { locale: Lang; settings: PublicSettings; orgDisplay: string }) {
   const no = locale === "no";
   const kilde = no ? "Kilde" : "Source";
-  const items = faq(locale, { status: settings.release_note[locale], aboutHref: "#om-utbygger", interestHref: "/kontakt", privacyHref: "/personvern" });
+  const items = faq(locale, { status: settings.release_note[locale], aboutHref: "#om-utbygger", interestHref: kHref("/kontakt", locale), privacyHref: kHref("/personvern", locale) });
   const plan = workPlan(locale);
   const lastWeek = FINAL_PHASE.weeks?.[1] ?? 0;
   return (
     <>
       <JsonLd data={faqJsonLd(items, locale)} />
-      <PageHead title={no ? "Status og spørsmål" : "Status and questions"} crumb={no ? "Status og spørsmål" : "Status and questions"} home={no ? "Forside" : "Front page"}>
+      <PageHead title={no ? "Status og spørsmål" : "Status and questions"} crumb={no ? "Status og spørsmål" : "Status and questions"} locale={locale}>
         <p>{no ? "Hvor prosjektet står, hva som ikke er bestemt ennå, og svar på det folk spør om. Der det ikke finnes noe svar ennå, står det her." : "Where the project stands, what is not decided yet, and answers to what people ask. Where there is no answer yet, this page says so."}</p>
       </PageHead>
 
@@ -83,7 +84,7 @@ export default function StatusPage({ locale, settings, orgDisplay }: { locale: L
             <div className="eyebrow">{no ? "Spørsmål og svar" : "Questions and answers"}</div>
             <h2>{no ? "Det folk spør om" : "What people ask"}</h2>
             <p className="lede">{no ? "Svarene bygger bare på det prosjektet har dokumentert. Finner du ikke svaret, spør prosjekteier." : "The answers rest only on what the project has documented. If your answer is not here, ask the project owner."}</p>
-            <div className="cta-row"><Link className="btn" href="/kontakt">{no ? "Meld interesse" : "Register interest"}</Link></div>
+            <div className="cta-row"><Link className="btn" href={kHref("/kontakt", locale)}>{no ? "Meld interesse" : "Register interest"}</Link></div>
           </Reveal>
           <div className="faq">
             {items.map((it, i) => (

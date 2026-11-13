@@ -1,6 +1,7 @@
 import { NextResponse, after } from "next/server";
 import { recordLead } from "@/lib/server/leads";
 import { allow } from "@/lib/server/limit";
+import { humanCheck } from "@/lib/server/human";
 import { recordEvent } from "@/lib/server/stats";
 import { MAIL_ON, sendMail, siteOrigin } from "@/lib/server/mail";
 import { readStore } from "@/lib/store";
@@ -17,9 +18,10 @@ const MIN_ELAPSED_MS = 4000;
 /**
  * A configured house sent to Sigve Simonsen AS from the configurator in either design. The configuration is
  * cleaned and stored, and the person becomes a lead (or an existing lead with the same email is updated) with the
- * configuration on it; the project owner gets an email when email is set up. Spam brakes: JSON from a page on this
- * site only, a hidden field robots fill in, at least four seconds with the form open, and at most five sends per
- * network in ten minutes and three per email address in an hour.
+ * configuration on it; the project owner gets an email when email is set up. Spam brakes, as on the interest form:
+ * JSON from a page on this site only, a hidden field robots fill in, at least four seconds with the form open, at
+ * most five sends per network in ten minutes and three per email address in an hour, and Cloudflare Turnstile when
+ * its keys are set (lib/server/human.ts).
  */
 export async function POST(req: Request) {
   const got = await jsonBody(req);
@@ -29,7 +31,8 @@ export async function POST(req: Request) {
   // robots fill in every field, people never see this one: answer as usual, keep nothing
   if (String(b.website ?? "").trim()) return NextResponse.json({ ok: true, id: newConfigId() } satisfies SendResponse);
   if (typeof b.elapsed !== "number" || !Number.isFinite(b.elapsed) || b.elapsed < MIN_ELAPSED_MS) return fail(400, "too_fast");
-  if (!(await allow("cfg-send", clientIp(req), 5, 10))) return fail(429, "too_many");
+  const ip = clientIp(req);
+  if (!(await allow("cfg-send", ip, 5, 10))) return fail(429, "too_many");
 
   const name = typeof b.name === "string" ? b.name.replace(/\s+/g, " ").trim().slice(0, 120) : "";
   const email = typeof b.email === "string" ? b.email.trim().toLowerCase().slice(0, 200) : "";
@@ -51,6 +54,8 @@ export async function POST(req: Request) {
     }
   }
   if (!(await allow("cfg-send-email", email, 3, 60))) return fail(429, "too_many");
+  // the check that a person sent it, once the cheap checks have passed (each answer can be used once)
+  if (!(await humanCheck(b.turnstile, ip))) return fail(400, "captcha");
 
   const facts = await factsFor(config);
   const id = newConfigId();
@@ -77,8 +82,11 @@ export async function POST(req: Request) {
           `${name} <${email}>${phone ? `, ${phone}` : ""} har sendt et husvalg fra konfiguratoren (${design} utseende, ${locale === "no" ? "norsk" : "engelsk"}).`,
           summary,
           message ? `Melding:\n${message}` : "",
-          `Se husvalget og interessenten i portalen:\n${origin}/no/portal/admin/konfigurator?lead=${encodeURIComponent(lead.id)}`,
-          `Åpne konfiguratoren med disse valgene:\n${origin}${configuratorPath(config, "no")}`,
+          // without the site's address (SITE_URL) a link cannot be made: the place is named instead, as on the interest form's email
+          origin
+            ? `Se husvalget og interessenten i portalen:\n${origin}/no/portal/admin/konfigurator?lead=${encodeURIComponent(lead.id)}`
+            : "Se husvalget og interessenten i portalen under Husvalg og priser.",
+          origin ? `Åpne konfiguratoren med disse valgene:\n${origin}${configuratorPath(config, "no")}` : "",
         ].filter(Boolean).join("\n\n"),
       );
     });

@@ -155,6 +155,3 @@ export const WINTER_SUN_TEXT: T = {
   no: `Solpasset er regnet ut fra terrenget rundt hver tomt den 21. desember, i stuehøyde. Det er tallet en kjøper på ${LATITUDE} grader nord faktisk lurer på.`,
   en: `The sun passport is computed from the terrain around each plot on 21 December, at living-room height. It is the number a buyer at ${LATITUDE} degrees north actually wonders about.`,
 };
-
-/** The Klassisk plot page of a plot: "plot-07" -> "/tomtene/07" (add the language with kHref). */
-export const klassiskPlotPath = (id: string) => `/tomtene/${id.replace(/^plot-/, "")}`;

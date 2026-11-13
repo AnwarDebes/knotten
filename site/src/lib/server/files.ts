@@ -6,12 +6,16 @@ import { PRIVATE_DIR, STORAGE } from "./kv";
 
 /**
  * Where uploaded documents are kept. On a normal server: site/data/private/files (not in git).
- * On Vercel: Vercel Blob as private files (set BLOB_READ_WRITE_TOKEN by connecting a Blob store
- * to the project). Files are never linked to directly; every download goes through the portal,
+ * On Vercel: Vercel Blob as private files, once a Blob store is connected to the project. Vercel connects a store
+ * in one of two ways: with BLOB_READ_WRITE_TOKEN, or (newer stores) with BLOB_STORE_ID and the deployment's own
+ * OIDC token. Either one switches Blob on; no token is passed to put, get or del, so @vercel/blob picks the
+ * credential the deployment has. Files are never linked to directly; every download goes through the portal,
  * which checks who is asking and writes it in the log.
  */
-const BLOB = !!process.env.BLOB_READ_WRITE_TOKEN;
+const BLOB = !!(process.env.BLOB_READ_WRITE_TOKEN?.trim() || process.env.BLOB_STORE_ID?.trim());
 export const FILES_ON = BLOB || STORAGE === "file";
+/** Where uploads go: "blob" (Vercel Blob), "file" (this server's disk) or "off" (uploads are switched off). */
+export const FILE_STORE: "blob" | "file" | "off" = BLOB ? "blob" : STORAGE === "file" ? "file" : "off";
 /** Vercel takes at most 4.5 MB in one request; a normal server takes more. */
 export const MAX_BYTES = process.env.VERCEL ? 4 * 1024 * 1024 : 25 * 1024 * 1024;
 const DIR = path.join(PRIVATE_DIR, "files");

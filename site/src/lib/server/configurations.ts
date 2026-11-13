@@ -145,10 +145,12 @@ export async function deleteSent(id: string): Promise<void> {
   });
 }
 
-/** When a lead is deleted: its sent configurations go too. */
-export async function deleteSentForLead(lead: string): Promise<void> {
+/** When a lead is deleted (or several at once): its sent configurations go too. */
+export async function deleteSentForLead(lead: string | readonly string[]): Promise<void> {
+  const gone = new Set(typeof lead === "string" ? [lead] : lead);
+  if (!gone.size) return;
   await mutate<Records, void>(KEY, seed, (r) => {
-    r.sent = (r.sent ?? []).filter((x) => x.lead !== lead);
+    r.sent = (r.sent ?? []).filter((x) => !gone.has(x.lead));
   });
 }
 

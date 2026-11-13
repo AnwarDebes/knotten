@@ -7,8 +7,10 @@
  */
 import { useId } from "react";
 import Link from "next/link";
+import Turnstile, { TURNSTILE_SITE_KEY } from "@/components/Turnstile";
 import { INCLUDED } from "@/lib/configurator/catalog";
 import { CONTACT_NOTICE } from "@/lib/consent";
+import { privacyPath } from "@/lib/member-paths";
 import { kr } from "../text";
 import { picksText, priceSummary, summaryGroups } from "../summaryView";
 import { authLinks, CONSENT_KEYS, consentText, splitNotice, useSave, useSend, useShare } from "../useActions";
@@ -19,7 +21,7 @@ export default function ModerneSummary({ c, onPrint }: { c: Configurator; onPrin
   const share = useShare(c);
   const saver = useSave(c);
   const money = priceSummary(c);
-  const links = authLinks("moderne", lang, c.returnPath());
+  const links = authLinks("moderne", lang, c.returnPath);
   const tone = card?.status === "available" ? "chip-pine" : card?.status === "reserved" ? "chip-amber" : "";
   return (
     <div className="mt-6 grid gap-5">
@@ -183,9 +185,10 @@ function Send({ c }: { c: Configurator }) {
             </label>
           ))}
         </fieldset>
+        {TURNSTILE_SITE_KEY ? <div className="sm:col-span-2"><Turnstile locale={lang} onToken={s.onToken} /></div> : null}
         <p className="sm:col-span-2 provenance">
           {pre}
-          {link && <Link href={`/${lang}/personvern`} className="underline underline-offset-2">{link}</Link>}
+          {link && <Link href={privacyPath("moderne", lang)} className="underline underline-offset-2">{link}</Link>}
           {post}
         </p>
         <label className="absolute -left-[9999px] w-px h-px overflow-hidden" aria-hidden>

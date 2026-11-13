@@ -1,14 +1,16 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
+import { isPrivatePath } from "@/lib/pages";
 
 /**
  * Counts page views for the owner's statistics (src/app/api/collect). No cookies, nothing stored
  * in the browser, nothing about the person: the page, where the visit came from, and which design.
  * Phone or computer is read on the server from the browser's name; the window size is never sent.
- * Browsers that ask not to be tracked (Do Not Track, Global Privacy Control) send nothing.
+ * Browsers that ask not to be tracked (Do Not Track, Global Privacy Control) send nothing. The pages behind a
+ * login and the forms that lead there (the portal, the login and password pages, sign-up and Min side, in both
+ * designs and languages) are never sent; the server skips them as well.
  */
-const SKIP = /^\/((no|en)\/(portal|login|min-side|registrer)|logg-inn|min-side|registrer)(\/|$)/;
 
 function send(body: object) {
   try {
@@ -32,7 +34,8 @@ export default function Track({ design }: { design: "klassisk" | "moderne" }) {
     // the first view of a page load carries the real referrer; later in-site navigation comes from the previous page
     const ref = prev.current === null ? document.referrer : `${location.origin}${prev.current}`;
     prev.current = path;
-    if (!SKIP.test(path)) send({ p: path, r: ref, d: design });
+    // (the server keeps at most 100 characters of the path and 300 of the referrer, and reads a small body only)
+    if (!isPrivatePath(path)) send({ p: path.slice(0, 100), r: ref.slice(0, 300), d: design });
   }, [path, design]);
   return null;
 }

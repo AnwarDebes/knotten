@@ -6,6 +6,7 @@ import { kHref, type KLocale } from "@/lib/klassisk/locale";
 import { assumption, dateShort, fmt, STATUS_LABEL } from "@/lib/facts";
 import { CHECK_IT, DATA_ROOM, FIGURES_PRINCIPLE, INVESTORS_PAGE, INVESTOR_FIGURES, PUBLIC_PARTNERS, QA_HEAD, investorQA } from "@/lib/content/investors";
 import { leadQueryFor } from "@/lib/leadForm";
+import { loginPagePath } from "@/lib/member-paths";
 
 /**
  * "Investorer og samarbeid" / "Investors and partners" in the Klassisk look, in both languages: rendered by
@@ -13,7 +14,7 @@ import { leadQueryFor } from "@/lib/leadForm";
  * the Moderne page.
  */
 export default function InvestorsPage({ locale: l }: { locale: KLocale }) {
-  const dataRoom = l === "no" ? `/logg-inn?next=${encodeURIComponent("/no/portal/investor")}` : "/en/portal/investor";
+  const dataRoom = `${loginPagePath("klassisk", l)}?next=${encodeURIComponent(`/${l}/portal/investor`)}`;
   const contact = (role: "investor" | "access") => kHref(`/kontakt${leadQueryFor(role, "klassisk")}`, l);
   const prov = (provisional?: boolean) => (provisional ? STATUS_LABEL.foreløpig[l] : STATUS_LABEL.fastsatt[l]);
   return (

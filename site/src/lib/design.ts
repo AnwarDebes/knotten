@@ -1,3 +1,4 @@
+import { ROLE_PARAM, roleFromParam } from "./forms";
 import { kHref, kSplit, type KLocale } from "./klassisk/locale";
 import { PATTERNS, matchKlassisk, matchModerne, type Match } from "./pages";
 
@@ -58,12 +59,11 @@ export function toKlassisk(modernePath: string): string {
 /**
  * The two designs name the same choices differently: Klassisk's contact form takes `?tomt=07&rolle=investor`,
  * Moderne's interest form `?plot=plot-07&purpose=invest`. A switch keeps the query string (a link's `token` on the
- * password pages, anything else) and translates these: the plot, the purpose, and `next` on the login pages (a page
- * of the design being left is sent to its twin). The configurator writes the same state in both designs, so its
- * query string is kept as it is.
+ * password pages, anything else) and translates these: the plot, who is getting in touch (every role, by the one
+ * table the forms read too: ROLE_PARAM in lib/forms.ts), and `next` on the login pages (a page of the design being
+ * left is sent to its twin). The configurator writes the same state in both designs, so its query string is kept as
+ * it is.
  */
-export const ROLLE_TO_PURPOSE: Record<string, string> = { investor: "invest", tilgang: "access" };
-const PURPOSE_TO_ROLLE: Record<string, string> = Object.fromEntries(Object.entries(ROLLE_TO_PURPOSE).map(([k, v]) => [v, k]));
 
 const asString = (q: URLSearchParams) => {
   const s = q.toString();
@@ -101,12 +101,12 @@ export function queryToModerne(search: string, page = ""): string {
   const q = new URLSearchParams(search);
   if (SAME_QUERY.test(page)) return asString(q);
   const tomt = plotNo(q.get("tomt"));
-  const rolle = q.get("rolle");
+  const role = roleFromParam(q.get("rolle"));
   q.delete("tomt");
   q.delete("rolle");
   // the plot picker with a plot open becomes that plot's page (toModerneHref), not a query
   if (tomt && page !== "/tomtene") q.set("plot", `plot-${tomt}`);
-  if (rolle && ROLLE_TO_PURPOSE[rolle]) q.set("purpose", ROLLE_TO_PURPOSE[rolle]);
+  if (role) q.set("purpose", ROLE_PARAM[role].purpose);
   const next = q.get("next");
   if (next) q.set("next", nextTo("moderne", next));
   return asString(q);
@@ -117,11 +117,11 @@ export function queryToKlassisk(search: string, page = ""): string {
   const q = new URLSearchParams(search);
   if (SAME_QUERY.test(page)) return asString(q);
   const plot = plotNo(q.get("plot"));
-  const purpose = q.get("purpose");
+  const role = roleFromParam(q.get("purpose"));
   q.delete("plot");
   q.delete("purpose");
   if (plot) q.set("tomt", plot);
-  if (purpose && PURPOSE_TO_ROLLE[purpose]) q.set("rolle", PURPOSE_TO_ROLLE[purpose]);
+  if (role) q.set("rolle", ROLE_PARAM[role].rolle);
   const next = q.get("next");
   if (next) q.set("next", nextTo("klassisk", next));
   return asString(q);

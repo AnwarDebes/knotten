@@ -1146,7 +1146,6 @@ footer.site .fcontact { margin-top: 18px; }
 .kbest .kj-head h3 { font-size: clamp(1.5rem, 2.4vw, 1.9rem); }
 .kbest-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: start; }
 .kbest-card { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
-.kbest-link { font-weight: 500; font-size: 0.95rem; }
 @media (max-width: 900px) { .kbest-grid { grid-template-columns: minmax(0, 1fr); } }
 
 .kenergy { margin-top: clamp(40px, 5vw, 64px); }

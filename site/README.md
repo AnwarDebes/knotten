@@ -108,7 +108,7 @@ In the admin, Users and access lists project accounts and buyer accounts apart. 
 
 | Mode | When | Records | Files |
 |---|---|---|---|
-| kv | one complete pair is set: `KV_REST_API_URL` and `KV_REST_API_TOKEN`, or `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (Vercel's Redis/Upstash integration sets them) | Redis over HTTPS, keys `<KV_PREFIX>:*` | Vercel Blob, private (`BLOB_READ_WRITE_TOKEN`) |
+| kv | one complete pair is set: `KV_REST_API_URL` and `KV_REST_API_TOKEN`, or `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (Vercel's Redis/Upstash integration sets them) | Redis over HTTPS, keys `<KV_PREFIX>:*` | Vercel Blob, private (`BLOB_READ_WRITE_TOKEN`, or `BLOB_STORE_ID` with the deployment's OIDC token) |
 | file | no database and not on Vercel: a computer or one normal server process | `data/crm.json` (leads, plots, news, settings) and `data/private/*.json` | `data/private/files/` |
 | temp | on Vercel without a database | nothing is kept: the site fails closed (below) | none |
 
@@ -129,7 +129,7 @@ Retention: `/api/cron/cleanup` (daily, `vercel.json`, with the `CRON_SECRET` bea
 
 `data/private/` holds password hashes, the session secret, uploaded files, counters and, in tests, the email outbox. It is in `.gitignore` and must never be committed.
 
-`/api/health` answers `{ ok, storage, mail, siteUrl, turnstile, model, region, version }` (plus `authSecret`, `cron` and `env`) without any secret, and 503 when records cannot be kept. Use it after every deployment.
+`/api/health` tells anyone only whether the site is up and can keep records: `{ ok, storage }`, with `storage` `"ok"` or `"unavailable"`, and 503 when records cannot be kept (for an uptime monitor). A logged-in administrator also gets what the deployment runs on: `{ ok, storage, files, mail, siteUrl, turnstile, model, region, version, authSecret, cron, env }`, where `storage` is `kv`, `kv-unreachable`, `file` or `temp` and `files` is `blob`, `file` or `off`. Names and states only, never a key, a token or anyone's address. Use it after every deployment, logged in.
 
 To test the Redis path without a database: run a small HTTP server that answers Upstash's REST commands (`GET`, `SET` with `NX`/`EX`, `MGET`, `INCRBY`, `EXPIRE`, `TTL`, `GETDEL`, `PING`, the statistics' `HINCRBY`/`HGETALL`/`SADD`, and `EVAL` of the four scripts in `kv.ts`, which name themselves on their first line) and point `KV_REST_API_URL` at it.
 
@@ -145,9 +145,9 @@ To test the Redis path without a database: run a small HTTP server that answers 
 | `SITE_URL` | yes | the public address, e.g. `https://knotten.no`. Links in emails use only this (or Vercel's production domain, `VERCEL_PROJECT_PRODUCTION_URL`), never the address a request claims; also robots.txt and the sitemap |
 | `KV_REST_API_URL`, `KV_REST_API_TOKEN` | yes | set by the Redis integration (or `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`) |
 | `KV_PREFIX` | no | the start of every Redis key; default `knotten`, and `knotten-preview` on preview deployments |
-| `BLOB_READ_WRITE_TOKEN` | for documents | set by the Blob integration; without it uploads are switched off |
+| `BLOB_READ_WRITE_TOKEN` or `BLOB_STORE_ID` | for documents | set when a Blob store is connected to the project: older stores get the token, newer ones the store id and sign in with the deployment's OIDC token (`VERCEL_OIDC_TOKEN`, provided by Vercel). Either one switches uploads on; without both they are switched off |
 | `MAIL_FROM` and `RESEND_API_KEY` or `SMTP_URL` | recommended | email for invitations, password links, "your password was changed" and alerts about new leads, e.g. `Knotten <post@knotten.no>`. Resend needs the sender's domain verified; `SMTP_URL` is any mail server, e.g. `smtps://user:password@smtp.example.com:465`. Without email the portal shows the links to copy and queues password requests for the administrators; a failed send is queued the same way and shown in Settings |
-| `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | recommended | Cloudflare Turnstile on the interest forms; the server checks each answer. Without them the forms rely on the hidden field, the time check and the limits per network and address |
+| `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | recommended | Cloudflare Turnstile on the public forms (the interest form, sign-up and the configurator's "send the setup"), in both designs; the server checks each answer. Without them the forms rely on the hidden field, the time check and the limits per network and address |
 | `CRON_SECRET` | yes | a long random text; Vercel Cron sends it to the weekly summary and the nightly cleanup, so nobody else can start them |
 | `ANTHROPIC_API_KEY`, `KNOTTEN_AI_MODEL` | optional | lets Knotten AI hand questions the data does not cover to a hosted language model (the key, and the model's name in `KNOTTEN_AI_MODEL`). Without both, the assistant answers from the data only |
 | `KNOTTEN_SETUP_CODE` | optional | a code of your own for the first-time setup; otherwise one is made, shared by all servers, and written to the server log. Remove it after the setup |

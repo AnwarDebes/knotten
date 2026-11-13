@@ -1,8 +1,11 @@
 import { AREAS, AREA_LABEL, type Area } from "./auth-shared";
 import { CONSENT_TEXT, type ConsentPurpose } from "./consent";
 import { CONTACT, type Lang, type T } from "./facts";
+import { LEAD_ROLES, ROLE_PARAM, roleFromParam, type LeadRole } from "./forms";
 import { plotsFromQuery } from "./member-paths";
 import { plotNo } from "./format";
+
+export { LEAD_ROLES, type LeadRole };
 
 /**
  * One interest form for both designs ("Meld interesse" / "Register interest"): the fields, the choices, the words
@@ -20,9 +23,6 @@ const L = (no: string, en: string): T => ({ no, en });
 /** The four purposes the project's lead records use (lib/store.ts). */
 export type LeadPurpose = "buy" | "invest" | "partner" | "curious";
 
-export type LeadRole = "buyer" | "follow" | "investor" | "municipality" | "research" | "press" | "access";
-export const LEAD_ROLES: readonly LeadRole[] = ["buyer", "follow", "investor", "municipality", "research", "press", "access"];
-
 type RoleInfo = {
   label: T;
   /** The lead purpose it is counted under. */
@@ -31,49 +31,37 @@ type RoleInfo = {
   org: boolean;
   /** The form offers the plots. */
   plots: boolean;
-  /** Its name in a Klassisk address (/kontakt?rolle=tilgang) and in a Moderne one (/no/interesse?purpose=access). */
-  rolle: string;
-  purposeParam: string;
 };
 
 export const ROLE: Record<LeadRole, RoleInfo> = {
-  buyer: { label: L("Boligkjøper", "Home buyer"), purpose: "buy", org: false, plots: true, rolle: "kjoper", purposeParam: "buy" },
-  follow: { label: L("Følger med på prosjektet", "Following the project"), purpose: "curious", org: false, plots: true, rolle: "folge", purposeParam: "follow" },
-  investor: { label: L("Investor eller samarbeidspartner", "Investor or partner"), purpose: "invest", org: true, plots: true, rolle: "investor", purposeParam: "invest" },
-  municipality: { label: L("Kommune eller offentlig aktør", "Municipality or public body"), purpose: "partner", org: true, plots: false, rolle: "kommune", purposeParam: "municipality" },
-  research: { label: L("Forsker eller student", "Researcher or student"), purpose: "partner", org: true, plots: false, rolle: "forsker", purposeParam: "research" },
-  press: { label: L("Presse", "Press"), purpose: "curious", org: true, plots: false, rolle: "presse", purposeParam: "press" },
-  access: { label: L("Trenger tilgang til prosjektportalen", "Need access to the project portal"), purpose: "partner", org: true, plots: false, rolle: "tilgang", purposeParam: "access" },
+  buyer: { label: L("Boligkjøper", "Home buyer"), purpose: "buy", org: false, plots: true },
+  follow: { label: L("Følger med på prosjektet", "Following the project"), purpose: "curious", org: false, plots: true },
+  investor: { label: L("Investor eller samarbeidspartner", "Investor or partner"), purpose: "invest", org: true, plots: true },
+  municipality: { label: L("Kommune eller offentlig aktør", "Municipality or public body"), purpose: "partner", org: true, plots: false },
+  research: { label: L("Forsker eller student", "Researcher or student"), purpose: "partner", org: true, plots: false },
+  press: { label: L("Presse", "Press"), purpose: "curious", org: true, plots: false },
+  access: { label: L("Trenger tilgang til prosjektportalen", "Need access to the project portal"), purpose: "partner", org: true, plots: false },
 };
 
 export const isLeadRole = (v: unknown): v is LeadRole => typeof v === "string" && (LEAD_ROLES as readonly string[]).includes(v);
-
-/** Older addresses and older forms: Moderne's four purposes and Klassisk's role names. */
-const ALIASES: Record<string, LeadRole> = { curious: "follow", partner: "investor", "kjøper": "buyer", boligkjoper: "buyer", "boligkjøper": "buyer" };
-
-function roleFrom(v: string | undefined): LeadRole | null {
-  const s = (v ?? "").trim().toLowerCase();
-  if (!s) return null;
-  for (const r of LEAD_ROLES) if (ROLE[r].purposeParam === s || ROLE[r].rolle === s || r === s) return r;
-  return ALIASES[s] ?? null;
-}
 
 type Q = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
 
 /**
- * The choices an address asks for: `?purpose=access` or `?rolle=tilgang` (any role by either name), and plots as
- * `?plot=plot-07` or `?tomt=7` / `?tomt=07`, one or several (repeated or separated by commas).
+ * The choices an address asks for: `?purpose=access` or `?rolle=tilgang` (any role by either name, from the one
+ * table in lib/forms.ts that the design switch reads too), and plots as `?plot=plot-07` or `?tomt=7` / `?tomt=07`,
+ * one or several (repeated or separated by commas).
  */
 export function leadQuery(q: Q): { role: LeadRole; plots: string[] } {
-  const role = roleFrom(one(q.purpose)) ?? roleFrom(one(q.rolle)) ?? "buyer";
+  const role = roleFromParam(one(q.purpose)) ?? roleFromParam(one(q.rolle)) ?? "buyer";
   const plots = plotsFromQuery({ tomt: q.tomt, plot: q.plot }).filter((p) => Number(p.slice(5)) >= 1);
   return { role, plots };
 }
 
-/** The address of the form for a role: the Klassisk contact page or the Moderne interest page. */
+/** The query string of the form for a role: `?rolle=` on the Klassisk contact page, `?purpose=` on the Moderne interest page. */
 export function leadQueryFor(role: LeadRole, design: "klassisk" | "moderne"): string {
-  return design === "klassisk" ? `?rolle=${ROLE[role].rolle}` : `?purpose=${ROLE[role].purposeParam}`;
+  return design === "klassisk" ? `?rolle=${ROLE_PARAM[role].rolle}` : `?purpose=${ROLE_PARAM[role].purpose}`;
 }
 
 // ------------------------------------------------------------------ the portal area someone asks access to

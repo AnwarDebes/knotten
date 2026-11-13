@@ -218,6 +218,9 @@ export async function setup(_: FormState, fd: FormData): Promise<FormState> {
       // the seeded owner's company stays only when the owner is the one setting up
       const org = a.email === email ? a.org : undefined;
       Object.assign(a, { email, name, org, role: "superadmin", areas: [...AREAS], password: hash, status: "active", sv: a.sv + 1, last_login: new Date().toISOString(), logins: (a.logins ?? 0) + 1, design, lang: locale });
+      // an address that already had a buyer's own account becomes a project account: a member never enters the
+      // portal (can() in lib/auth-shared.ts), and the super administrator must
+      delete a.kind;
       audit(s, email, "første oppsett: superadministrator opprettet");
       return { ...a };
     });

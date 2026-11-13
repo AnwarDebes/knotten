@@ -4,7 +4,10 @@ import { allow } from "@/lib/server/limit";
 import { recordEvent } from "@/lib/server/stats";
 import { mutate } from "@/lib/server/kv";
 import { takeModelCall } from "@/lib/server/aiBudget";
-import { isJson, isSameOrigin } from "@/lib/server/requestGuard";
+import { isJson, isSameOrigin, readTextCapped } from "@/lib/server/requestGuard";
+
+/** The largest body read: a question of 500 characters, the language and the design, with room to spare. */
+const MAX_BODY = 8_000;
 
 /**
  * Questions to Knotten AI, from either design in either language (the body says which: `locale` "no" or "en", `design`
@@ -16,7 +19,15 @@ import { isJson, isSameOrigin } from "@/lib/server/requestGuard";
  */
 export async function POST(req: Request) {
   if (!isJson(req) || !isSameOrigin(req)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
-  const body = (await req.json().catch(() => null)) as { q?: unknown; locale?: unknown; design?: unknown } | null;
+  // a question is at most 500 characters: the body is read up to a few kilobytes, never more
+  const text = await readTextCapped(req, MAX_BODY).catch(() => "");
+  if (text === null) return NextResponse.json({ error: "too_large" }, { status: 413 });
+  let body: { q?: unknown; locale?: unknown; design?: unknown } | null;
+  try {
+    body = JSON.parse(text) as { q?: unknown; locale?: unknown; design?: unknown } | null;
+  } catch {
+    body = null;
+  }
   const q = typeof body?.q === "string" ? body.q.trim().slice(0, 500) : "";
   const lang = body?.locale === "en" ? "en" : "no";
   // the design the question is asked from: the answer's links go to that design's own pages (Moderne unless said)

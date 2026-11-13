@@ -154,8 +154,8 @@ const near0 = new THREE.Vector3(1e9, 1e9, 1e9);
 
 /**
  * How far out the detailed trees reach, as a share of the usual 70 m, and the 3D trees, as a share of
- * the usual 260 m, beyond which painted cards stand in (the walk lowers both: indoors the forest is seen
- * only through the windows).
+ * the usual 260 m, beyond which painted cards stand in. Both stay at 1: the walk keeps the forest at full
+ * detail, outdoors and through the windows alike (the 3D quality is never lowered for speed).
  */
 export const forestDetail = { scale: 1, near: 1 };
 
@@ -359,7 +359,7 @@ export const TwinForest = forwardRef<THREE.Group, { month: number; day?: number;
   useEffect(() => { last.current.copy(near0); }, [near, close]);   // new meshes start empty: fill them on the next frame
   useFrame(() => {
     const c = camera.position;
-    // on foot the detailed trees come closer in (indoors they are seen only through the windows)
+    // the reach of the detailed and the 3D trees (forestDetail); a change refills them at once
     const k = forestDetail.scale, kn = forestDetail.near;
     if (`${k}|${kn}` !== lastScale.current) { lastScale.current = `${k}|${kn}`; last.current.copy(near0); }
     if (c.distanceToSquared(last.current) < 144) return;

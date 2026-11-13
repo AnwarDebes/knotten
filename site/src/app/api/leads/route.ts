@@ -3,6 +3,7 @@ import { readStore, type Lead } from "@/lib/store";
 import { recordLead, type LeadSource } from "@/lib/server/leads";
 import { limitId, take } from "@/lib/server/limit";
 import { humanCheck } from "@/lib/server/human";
+import { readTextCapped } from "@/lib/server/requestGuard";
 import { recordEvent } from "@/lib/server/stats";
 import { configuredOrigin, MAIL_ON, sendMail, siteOrigin } from "@/lib/server/mail";
 import { isStorageUnavailable, STORAGE } from "@/lib/server/kv";
@@ -14,6 +15,8 @@ import { FACT } from "@/lib/facts";
 
 const PURPOSE_NO: Record<Lead["purpose"], string> = { buy: "kjøpe bolig", invest: "investere", partner: "samarbeide", curious: "følge med" };
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+/** The largest body read, in bytes: the form's fields at their longest, with room to spare. */
+const MAX_BODY = 20_000;
 
 const fail = (error: LeadErrorCode, status: number) => NextResponse.json({ error }, { status, headers: { "Cache-Control": "no-store" } });
 const hostOf = (u: string | null) => {
@@ -41,8 +44,9 @@ function sameOrigin(req: Request) {
 export async function POST(req: Request) {
   if (!(req.headers.get("content-type") ?? "").toLowerCase().startsWith("application/json")) return fail("bad_request", 415);
   if (!sameOrigin(req)) return fail("bad_request", 403);
-  const text = await req.text().catch(() => "");
-  if (text.length > 20000) return fail("bad_request", 413);
+  // at most 20 kB is read: a larger body is refused before the rest of it is read
+  const text = await readTextCapped(req, MAX_BODY).catch(() => "");
+  if (text === null) return fail("bad_request", 413);
   let body: Record<string, unknown>;
   try {
     const parsed = JSON.parse(text) as unknown;

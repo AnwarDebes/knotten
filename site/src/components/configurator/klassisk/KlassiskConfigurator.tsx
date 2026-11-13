@@ -4,7 +4,7 @@
  * The house configurator in the Klassisk design: a numbered strip of steps like the project's phases, the step
  * itself in the main column, and the model's picture with the energy figures in the margin, as in a printed
  * brochure. On a phone the picture comes first and the energy figures ride in a small panel at the bottom.
- * Norwegian today; every word is also here in English (locale), so an English Klassisk can use it as it is.
+ * In Norwegian at /konfigurator and in English at /english/konfigurator (locale).
  */
 import type { Lang } from "@/lib/configurator/types";
 import { useConfigurator, type Configurator } from "../useConfigurator";
@@ -18,7 +18,7 @@ import { KlassiskIncluded, KlassiskStepOptions } from "./KlassiskOptions";
 import KlassiskSummary from "./KlassiskSummary";
 
 export default function KlassiskConfigurator({ locale, data, initial }: { locale: Lang; data: ConfiguratorData; initial: Initial }) {
-  const c = useConfigurator({ data, initial, lang: locale });
+  const c = useConfigurator({ data, initial, lang: locale, design: "klassisk" });
   const printer = usePrint(c);
   const { step } = c;
   return (

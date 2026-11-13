@@ -1,4 +1,5 @@
 import type { Design } from "./design";
+import { ROLE_PARAM } from "./forms";
 import { kHref } from "./klassisk/locale";
 
 /**
@@ -48,9 +49,9 @@ export function plotPath(design: Design | undefined, locale: Lang, plotId: strin
   return at(design, locale, `/tomtene/${plotId.replace(/^plot-/, "").padStart(2, "0")}`, `/tomter/${plotId}`);
 }
 
-/** Where people who were invited ask for access to the portal: the interest form with the access purpose. */
+/** Where people who were invited ask for access to the portal: the interest form with the access role (lib/forms.ts). */
 export function contactPath(design: Design | undefined, locale: Lang) {
-  return at(design, locale, "/kontakt?rolle=tilgang", "/interesse?purpose=access");
+  return at(design, locale, `/kontakt?rolle=${ROLE_PARAM.access.rolle}`, `/interesse?purpose=${ROLE_PARAM.access.purpose}`);
 }
 
 /** Plots preselected on the sign-up page: ?tomt=7 (Klassisk's name) or ?plot=plot-07 (Moderne's), one or several. */

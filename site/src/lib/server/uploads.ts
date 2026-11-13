@@ -7,6 +7,7 @@ import { configuredOrigin } from "./mail";
 import { FILES_ON, MAX_BYTES, prettySize, removeFile, saveFile, safeName } from "./files";
 import { take } from "./limit";
 import { DOC_CATEGORIES, docs, meters, parseMeterCsv, rid, type Audience, type DocCategory } from "./records";
+import { readCapped } from "./requestGuard";
 
 /**
  * Uploads in the portal: documents and meter data. They come to route handlers (POST /api/files and POST
@@ -43,30 +44,6 @@ export function fromThisSite(req: Request): boolean {
   const configured = configuredOrigin();
   if (configured) allowed.add(new URL(configured).host.toLowerCase());
   return allowed.has(host);
-}
-
-/** The body, read up to `max` bytes; null when it is larger (the rest is never read). */
-async function readCapped(req: Request, max: number): Promise<Uint8Array | null> {
-  const declared = Number(req.headers.get("content-length") ?? "");
-  if (Number.isFinite(declared) && declared > max) return null;
-  if (!req.body) return new Uint8Array(0);
-  const reader = req.body.getReader();
-  const parts: Uint8Array[] = [];
-  let total = 0;
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    total += value.byteLength;
-    if (total > max) {
-      await reader.cancel().catch(() => undefined);
-      return null;
-    }
-    parts.push(value);
-  }
-  const out = new Uint8Array(total);
-  let at = 0;
-  for (const p of parts) { out.set(p, at); at += p.byteLength; }
-  return out;
 }
 
 /** Who may send an upload to a route, and what they are told when they may not. */

@@ -28,7 +28,7 @@ export default async function ExistingBuildings({ params }: { params: Promise<{ 
       <PageHead
         eyebrow={no ? "Energi" : "Energy"}
         title={no ? "Eksisterende bygg" : "Existing buildings"}
-        lede={no ? `Kontorbygget (${FACT.offices_now} kontorer i dag) og boligen står allerede. Målt forbruk gir historikken, viser effekten av tiltak før og etter, og blir sammenligningsgrunnlaget for de nye boligene. Energiregnskapet bruker i dag en arbeidsforutsetning på ${fmt(BUDGET.office_kwh, lang)} kWh i året for kontoret.` : `The office building (${FACT.offices_now} offices today) and the house already stand. Measured consumption gives the history, shows the effect of upgrades before and after, and becomes the basis of comparison for the new homes. The energy budget uses a working assumption of ${fmt(BUDGET.office_kwh, "en")} kWh a year for the office today.`}
+        lede={no ? `Kontorbygget (${FACT.offices_now} kontorer i dag) og bolighuset står allerede. Målt forbruk gir historikken, viser effekten av tiltak før og etter, og blir sammenligningsgrunnlaget for de nye boligene. Energiregnskapet bruker i dag en arbeidsforutsetning på ${fmt(BUDGET.office_kwh, lang)} kWh i året for kontoret.` : `The office building (${FACT.offices_now} offices today) and the house already stand. Measured consumption gives the history, shows the effect of upgrades before and after, and becomes the basis of comparison for the new homes. The energy budget uses a working assumption of ${fmt(BUDGET.office_kwh, "en")} kWh a year for the office today.`}
       />
       {buildings.map((b) => (
         <Section

@@ -4,6 +4,7 @@ import { kvPing, STORAGE } from "@/lib/server/kv";
 import { configuredOrigin, MAIL_PROVIDER } from "@/lib/server/mail";
 import { authSecretSource } from "@/lib/server/accounts";
 import { MODEL_ON } from "@/lib/server/assistant";
+import { FILE_STORE } from "@/lib/server/files";
 
 export const dynamic = "force-dynamic";
 
@@ -12,9 +13,9 @@ const NO_STORE = { "Cache-Control": "no-store" };
 /**
  * Is the site up, and can it keep records? Anyone may ask (an uptime monitor, the person deploying): the answer is
  * only that, and 503 when records cannot be kept. A logged-in administrator also sees what the deployment runs
- * on, for a quick check after a release: where records are kept, how email goes out, the public address, the spam
- * check, the language model, the region and the version. Names and states only; no keys, tokens or addresses of
- * people.
+ * on, for a quick check after a release: where records and uploaded files are kept, how email goes out, the public
+ * address, the spam check, the language model, the region and the version. Names and states only; no keys, tokens or
+ * addresses of people.
  */
 export async function GET() {
   const reachable = await kvPing();
@@ -28,6 +29,7 @@ export async function GET() {
     {
       ok,
       storage: STORAGE === "kv" ? (reachable ? "kv" : "kv-unreachable") : STORAGE,
+      files: FILE_STORE,
       mail: MAIL_PROVIDER ?? "off",
       siteUrl: configuredOrigin(),
       turnstile: !!(process.env.TURNSTILE_SECRET_KEY && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY),

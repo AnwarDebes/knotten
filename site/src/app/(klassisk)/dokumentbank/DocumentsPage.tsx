@@ -2,6 +2,7 @@ import Link from "next/link";
 import PageHead from "@/components/klassisk/PageHead";
 import Reveal from "@/components/klassisk/Reveal";
 import { type KLocale } from "@/lib/klassisk/locale";
+import { loginPagePath } from "@/lib/member-paths";
 import { DOCUMENTS_PAGE, DOC_GROUPS, docRows, portalDocuments, type DocRow } from "@/lib/content/documents";
 
 /**
@@ -23,7 +24,7 @@ function Row({ d }: { d: DocRow }) {
 }
 
 export default function DocumentsPage({ locale: l }: { locale: KLocale }) {
-  const login = l === "no" ? `/logg-inn?next=${encodeURIComponent(portalDocuments("no"))}` : portalDocuments("en");
+  const login = `${loginPagePath("klassisk", l)}?next=${encodeURIComponent(portalDocuments(l))}`;
   return (
     <>
       <PageHead title={DOCUMENTS_PAGE.title[l]} crumb={DOCUMENTS_PAGE.title[l]} locale={l} aside={<Link className="btn ghost" href={login}>{DOCUMENTS_PAGE.login[l]}</Link>}>

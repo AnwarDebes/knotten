@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { readTextCapped } from "@/lib/server/requestGuard";
 
 /**
  * The checks every configurator route makes before it reads a body: JSON only, from a page on this site, not
@@ -31,13 +32,21 @@ export function clientIp(req: Request) {
 
 export const fail = (status: number, error: string) => NextResponse.json({ ok: false, error }, { status, headers: { "Cache-Control": "no-store" } });
 
-/** The JSON body, or the answer to give when it is not JSON, too large, or not from this site. */
+/**
+ * The JSON body, or the answer to give when it is not JSON, too large, or not from this site. At most `max` bytes are
+ * read (lib/server/requestGuard.ts readTextCapped): a larger body is refused with 413 and the rest is never read.
+ */
 export async function jsonBody(req: Request, max = 20_000): Promise<{ body: unknown } | { error: NextResponse }> {
   if (!/^application\/json\b/i.test(req.headers.get("content-type") ?? "")) return { error: fail(415, "json_only") };
   if (!sameOrigin(req)) return { error: fail(403, "cross_origin") };
-  if (Number(req.headers.get("content-length") ?? 0) > max) return { error: fail(413, "too_large") };
-  const text = await req.text();
-  if (text.length > max) return { error: fail(413, "too_large") };
+  let text: string | null;
+  try {
+    text = await readTextCapped(req, max);
+  } catch {
+    // the connection broke off while the body was read
+    return { error: fail(400, "invalid_json") };
+  }
+  if (text === null) return { error: fail(413, "too_large") };
   try {
     return { body: JSON.parse(text) as unknown };
   } catch {

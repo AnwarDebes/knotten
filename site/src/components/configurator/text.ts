@@ -4,6 +4,7 @@
  * everywhere on the site.
  */
 import { CONTACT, fmt, fmtRound } from "@/lib/facts";
+import { leadErrorText } from "@/lib/forms";
 import type { EnergyEstimate, Lang } from "@/lib/configurator/types";
 import type { PlotStatus } from "./model";
 
@@ -171,6 +172,8 @@ export function copy(lang: Lang) {
     sendInvalidEmail: no ? "Sjekk e-postadressen." : "Check the email address.",
     sendTooMany: no ? "Mange meldinger fra denne adressen på kort tid. Vent noen minutter og prøv igjen." : "Many messages from this address in a short time. Wait a few minutes and try again.",
     sendTooFast: no ? "Skjemaet ble sendt veldig raskt. Vent et øyeblikk og prøv igjen." : "The form was sent very quickly. Wait a moment and try again.",
+    // the same words as the interest form (lib/forms.ts)
+    sendCaptcha: leadErrorText("captcha", lang),
 
     // print
     printTitle: no ? "Huset mitt på Knotten" : "My house at Knotten",

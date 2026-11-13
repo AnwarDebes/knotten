@@ -8,6 +8,8 @@ import { useEffect, useEffectEvent, useId, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { CONSENT_TEXT } from "@/lib/consent";
 import type { HouseConfig, Lang, SavedConfig, SaveResponse, SendPayload, SendResponse } from "@/lib/configurator/types";
+import type { Design } from "@/lib/design";
+import { loginPagePath, minSidePath, registerPath } from "@/lib/member-paths";
 import type { Configurator } from "./useConfigurator";
 
 // ------------------------------------------------------------------------------------------------ share
@@ -100,12 +102,13 @@ export function useSave(c: Configurator) {
   return { state, save, reset: () => setState({ kind: "idle" }) };
 }
 
-/** Where to log in or sign up so the visitor comes back to this house. */
-export function authLinks(design: "klassisk" | "moderne", lang: Lang, back: string) {
-  const next = encodeURIComponent(back);
-  return design === "klassisk"
-    ? { login: `/logg-inn?next=${next}`, signup: `/registrer?next=${next}`, mine: "/min-side" }
-    : { login: `/${lang}/login?next=${next}`, signup: `/${lang}/registrer?next=${next}`, mine: `/${lang}/min-side` };
+/**
+ * Where to log in or sign up so the visitor comes back to this house, in the configurator's own design and language
+ * (/logg-inn and /english/logg-inn in Klassisk, /no/login and /en/login in Moderne; lib/member-paths.ts).
+ */
+export function authLinks(design: Design, lang: Lang, back: string) {
+  const next = `?next=${encodeURIComponent(back)}`;
+  return { login: `${loginPagePath(design, lang)}${next}`, signup: `${registerPath(design, lang)}${next}`, mine: minSidePath(design, lang) };
 }
 
 // ------------------------------------------------------------------------------------------------ send
@@ -115,9 +118,12 @@ export type SendState = { kind: "idle" } | { kind: "sending" } | { kind: "sent";
 export const CONSENT_KEYS = ["updates", "plot_alerts"] as const;
 export const consentText = (k: (typeof CONSENT_KEYS)[number], lang: Lang) => CONSENT_TEXT[k].text[lang];
 
-export function useSend(c: Configurator, design: "klassisk" | "moderne") {
+export function useSend(c: Configurator, design: Design) {
   const [state, setState] = useState<SendState>({ kind: "idle" });
   const opened = useRef<number | null>(null);
+  // the answer from Cloudflare Turnstile (components/Turnstile.tsx), when its keys are set; the server checks it
+  const token = useRef("");
+  const onToken = (v: string) => { token.current = v; };
   // the thank-you replaces the form: the keyboard and the screen reader are taken to it
   const doneId = useId();
   useEffect(() => {
@@ -143,6 +149,7 @@ export function useSend(c: Configurator, design: "klassisk" | "moderne") {
       locale: c.lang,
       website: String(f.get("website") ?? ""),
       elapsed: opened.current === null ? 0 : Date.now() - opened.current,
+      turnstile: token.current,
     };
     setState({ kind: "sending" });
     try {
@@ -152,13 +159,13 @@ export function useSend(c: Configurator, design: "klassisk" | "moderne") {
       const code = j && !j.ok ? j.error : "";
       setState({
         kind: "error",
-        message: /email/.test(code) ? c.t.sendInvalidEmail : /many|limit|rate/.test(code) || r.status === 429 ? c.t.sendTooMany : /fast|quick/.test(code) ? c.t.sendTooFast : c.t.sendError,
+        message: code === "captcha" ? c.t.sendCaptcha : /email/.test(code) ? c.t.sendInvalidEmail : /many|limit|rate/.test(code) || r.status === 429 ? c.t.sendTooMany : /fast|quick/.test(code) ? c.t.sendTooFast : c.t.sendError,
       });
     } catch {
       setState({ kind: "error", message: c.t.sendError });
     }
   };
-  return { state, submit, onFocus, doneId };
+  return { state, submit, onFocus, onToken, doneId };
 }
 
 /** The privacy notice with its last words as the link to the privacy statement. */
