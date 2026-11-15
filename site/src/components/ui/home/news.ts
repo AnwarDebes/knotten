@@ -1,28 +1,11 @@
-import { unstable_cache } from "next/cache";
-import { readStore, type NewsItem } from "@/lib/store";
+import type { NewsItem } from "@/lib/store";
+import { loadNews } from "@/lib/data";
 
 /**
- * The newest published news for the front pages of both designs. Kept in Next's data cache like the public
- * settings (lib/server/siteSettings.ts), so the front pages stay static: the administrator's news actions refresh
- * every page (revalidatePath("/", "layout")), which marks this entry stale as well. Server only (the store reads
- * files or Redis).
+ * The newest published news for the front pages of both designs: the same cached read as the news pages
+ * (lib/server/publicRecords.ts), so the front pages stay static and the administrator's news actions refresh the
+ * teasers together with the news pages. Server only.
  */
-export const HOME_NEWS_TAG = "home-news";
-
-const cached = unstable_cache(
-  async (): Promise<NewsItem[]> => {
-    const { news } = await readStore();
-    return news.filter((n) => n.published).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
-  },
-  ["home-news-v1"],
-  { tags: [HOME_NEWS_TAG] },
-);
-
-/** The `n` newest published items, newest first; none when the store cannot be read (the section is then left out). */
 export async function latestNews(n = 2): Promise<NewsItem[]> {
-  try {
-    return (await cached()).slice(0, n);
-  } catch {
-    return [];
-  }
+  return (await loadNews()).slice(0, n);
 }

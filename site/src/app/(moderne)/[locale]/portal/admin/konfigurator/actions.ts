@@ -1,8 +1,9 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { refresh } from "next/cache";
 import { actor } from "@/lib/auth";
 import { OPTION_BY_ID } from "@/lib/configurator/catalog";
 import { deleteSent, priceKeys, setPrices } from "@/lib/server/configurations";
+import { refreshPublic } from "@/lib/server/publicRecords";
 import type { PriceTable } from "@/lib/configurator/types";
 
 /** The administrator's side of the house configurator: the price table and the sent configurations. */
@@ -51,7 +52,7 @@ export async function savePrices(_: PriceState, fd: FormData): Promise<PriceStat
     return { error: english ? `Not saved. Write whole kroner (a minus for a deduction) or leave the field empty for "on request": ${bad.join("; ")}.` : `Ikke lagret. Skriv hele kroner (minus for fradrag), eller la feltet stå tomt for «pris på forespørsel»: ${bad.join("; ")}.` };
   }
   const saved = await setPrices(table, by(s));
-  revalidatePath("/", "layout");
+  refreshPublic("prices");
   const n = Object.keys(saved).length;
   return { ok: english ? `Saved: ${n} ${n === 1 ? "price" : "prices"}. The configurator shows them within a minute.` : `Lagret: ${n} ${n === 1 ? "pris" : "priser"}. Konfiguratoren viser dem innen et minutt.` };
 }
@@ -60,5 +61,6 @@ export async function deleteSentConfig(fd: FormData) {
   await actor("admin");
   const id = String(fd.get("id") ?? "");
   if (/^cfg-[a-z0-9]{1,40}$/.test(id)) await deleteSent(id);
-  revalidatePath("/", "layout");
+  // (a sent configuration is shown in the portal only: this page is rendered again, no public page is)
+  refresh();
 }

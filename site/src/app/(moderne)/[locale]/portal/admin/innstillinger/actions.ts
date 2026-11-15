@@ -1,8 +1,7 @@
 "use server";
-import { revalidatePath, updateTag } from "next/cache";
 import { actor } from "@/lib/auth";
 import { updateStore, type CompanyFacts } from "@/lib/store";
-import { SETTINGS_TAG } from "@/lib/server/siteSettings";
+import { refreshPublic } from "@/lib/server/publicRecords";
 
 type State = { error?: string; ok?: string } | undefined;
 
@@ -39,7 +38,6 @@ export async function saveCompany(_: State, fd: FormData): Promise<State> {
   }
   if (email && !EMAIL.test(email)) return { error: en ? "The email address does not look right." : "E-postadressen ser ikke riktig ut." };
   await updateStore(s.name || s.email, "selskapsopplysninger lagret", (st) => { st.settings.company = company; });
-  updateTag(SETTINGS_TAG);
-  revalidatePath("/", "layout");
+  refreshPublic("settings");
   return { ok: en ? "Saved. The public pages show the new details." : "Lagret. De offentlige sidene viser de nye opplysningene." };
 }

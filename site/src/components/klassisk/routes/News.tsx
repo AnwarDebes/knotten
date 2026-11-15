@@ -10,7 +10,8 @@ import { newsText } from "./text";
 
 /**
  * Nyheter in the Klassisk design, in Norwegian (/nyheter) and English (/english/nyheter): what the administrator has
- * published in the portal, newest first, the same items as Moderne's news page.
+ * published in the portal, newest first, the same items as Moderne's news page. A static page: the administrator's
+ * news actions refresh it (lib/server/publicRecords.ts).
  */
 export default async function KlassiskNews({ locale }: { locale: KLocale }) {
   const no = locale === "no";

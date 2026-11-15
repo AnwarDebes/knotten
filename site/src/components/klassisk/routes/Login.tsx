@@ -9,7 +9,7 @@ import { CONTACT } from "@/lib/facts";
 import { KLoginForm, KSetupForm } from "@/components/klassisk/AuthForms";
 import ForgetWho from "@/components/klassisk/ForgetWho";
 import { logout } from "@/app/(moderne)/[locale]/login/actions";
-import { STORAGE } from "@/lib/server/kv";
+import { isStorageUnavailable, STORAGE } from "@/lib/server/kv";
 import { STORAGE_MESSAGE } from "@/lib/errors";
 import { MT } from "@/lib/member-text";
 import { contactPath, minSidePath, registerPath } from "@/lib/member-paths";
@@ -35,9 +35,14 @@ export default async function KlassiskLogin({ locale, search }: { locale: KLocal
   const p = PHOTOS.sniksfjorden;
   const session = await getSession();
   if (session && next) redirect(safeNext(next, locale));
-  // without storage nobody can have an account yet: say so instead of showing forms that cannot work
-  const noStorage = !session && STORAGE === "temp";
-  const firstRun = !session && !noStorage && (await needsSetup());
+  // without storage nobody can have an account yet: say so instead of showing forms that cannot work. The same
+  // when the database does not answer (the check for a first run reads the accounts): the form could not log anyone in
+  let noStorage = !session && STORAGE === "temp";
+  const firstRun = !session && !noStorage && (await needsSetup().catch((e) => {
+    if (!isStorageUnavailable(e)) throw e;
+    noStorage = true;
+    return false;
+  }));
   const code = firstRun ? await setupCode() : undefined;
   const owner = firstRun ? (await loadAuth()).accounts.find((a) => a.role === "superadmin") : undefined;
   const m = MT[locale];

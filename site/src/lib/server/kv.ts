@@ -15,6 +15,11 @@ import { PROBLEM_DIGEST } from "../errors";
  *   public pages still render, and every write throws StorageUnavailableError, which forms and actions turn into
  *   "storage is not set up yet".
  *
+ * Redis is asked over the network, so every call has a time limit (three seconds for a read, five for a write). No
+ * answer in time, no connection, or a refusal (a plan with no commands left this month refuses them all) is the
+ * same StorageUnavailableError: forms and actions fail closed with their message, /api/health says so, and the
+ * public pages carry on with what they last read (lib/server/publicRecords.ts).
+ *
  * Every record set is one JSON document under one key, changed through `mutate`. In Redis each document has a
  * version beside it; `mutate` reads both, applies the change and writes back only if the version is unchanged
  * (a compare-and-set in one Lua script), and otherwise reads again and retries. Upstash's REST API runs Lua
@@ -38,12 +43,16 @@ export function fileFor(key: string) {
 export const PRIVATE_DIR = path.join(ROOT, "private");
 
 // ------------------------------------------------------------------ errors
-/** A write while the hosting has no storage (Vercel without a database). Forms show STORAGE_MESSAGE from lib/errors. */
+/**
+ * Records cannot be read or saved right now: the hosting has no storage (Vercel without a database), or the
+ * database gave no usable answer (`why` says which: too slow, out of reach, or a refusal). Forms show
+ * STORAGE_MESSAGE from lib/errors.
+ */
 export class StorageUnavailableError extends Error {
   readonly code = "storage_unavailable";
   readonly digest = PROBLEM_DIGEST.storage;
-  constructor(key = "") {
-    super(`Storage is not set up: nothing can be saved${key ? ` (${key})` : ""}`);
+  constructor(key = "", why?: string, cause?: unknown) {
+    super(why ? `Storage does not answer: ${why}${key ? ` (${key})` : ""}` : `Storage is not set up: nothing can be saved${key ? ` (${key})` : ""}`, cause === undefined ? undefined : { cause });
     this.name = "StorageUnavailableError";
   }
 }
@@ -59,37 +68,93 @@ export class StorageBusyError extends Error {
 }
 
 // ------------------------------------------------------------------ Redis over HTTPS
-const TIMEOUT_MS = 5000;
+type Command = (string | number)[];
+/** No answer within this long is a failure. A read gives up sooner than a write, so a page never waits long for one. */
+const READ_TIMEOUT_MS = 3000;
+const WRITE_TIMEOUT_MS = 5000;
+const READS = new Set(["GET", "MGET", "TTL", "HGETALL", "PING"]);
+const isRead = (c: Command) => READS.has(String(c[0]).toUpperCase());
 const dataKey = (key: string) => `${KV_PREFIX}:${key}`;
 const versionKey = (key: string) => `${KV_PREFIX}:ver:${key}`;
 const valueKey = (key: string) => `${KV_PREFIX}:x:${key}`;
 
-async function post<T>(body: unknown, suffix = ""): Promise<T> {
-  const res = await fetch(`${REDIS!.url}${suffix}`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${REDIS!.token}`, "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-    cache: "no-store",
-    signal: AbortSignal.timeout(TIMEOUT_MS),
-  });
-  const json = (await res.json().catch(() => null)) as T | null;
-  if (!res.ok || json === null) {
-    const error = (json as { error?: string } | null)?.error;
-    throw new Error(`kv request failed: ${error ?? res.status}`);
+/** The command and its key for the server log: "GET knotten:crm", "EVAL cas knotten:crm". Never a value. */
+function describe(c: Command): string {
+  const name = String(c[0]).toUpperCase();
+  if (name !== "EVAL") return `${name}${typeof c[1] === "string" ? ` ${c[1]}` : ""}`;
+  return `EVAL ${/^-- knotten:(\w+)/.exec(String(c[1]))?.[1] ?? "script"} ${String(c[3] ?? "")}`.trim();
+}
+
+/** When a command last worked and last failed in this server process (the health check reads them). */
+const answered = { ok: 0, failed: 0 };
+let logged = 0;
+let unlogged = 0;
+
+/**
+ * Every failure is the one typed error. The reason goes to the server log, at most one line in ten seconds, so a
+ * database that is down for an hour does not fill the log.
+ */
+function unavailable(what: string, why: string, cause?: unknown): StorageUnavailableError {
+  const now = Date.now();
+  answered.failed = now;
+  if (now - logged > 10_000) {
+    console.error(`[knotten] storage: ${why} (${what})${unlogged ? `; ${unlogged} more failures since the last line` : ""}`);
+    logged = now;
+    unlogged = 0;
+  } else {
+    unlogged++;
+  }
+  return new StorageUnavailableError(what, why, cause);
+}
+
+async function post<T>(body: unknown, suffix: string, read: boolean, what: string): Promise<T> {
+  const timeoutMs = read ? READ_TIMEOUT_MS : WRITE_TIMEOUT_MS;
+  let got: { ok: boolean; status: number; text: string } | null = null;
+  for (let attempt = 1; !got; attempt++) {
+    try {
+      const res = await fetch(`${REDIS!.url}${suffix}`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${REDIS!.token}`, "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        cache: "no-store",
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      got = { ok: res.ok, status: res.status, text: await res.text() };
+    } catch (e) {
+      const slow = (e as { name?: string } | null)?.name === "TimeoutError";
+      // a connection that broke off (a socket the other side closed while this server slept) says nothing about
+      // the database: a read is asked once more. A write is not: it may have arrived, and must not be made twice.
+      if (read && !slow && attempt === 1) continue;
+      throw unavailable(what, slow ? `no answer within ${timeoutMs / 1000} seconds` : "the database could not be reached", e);
+    }
+  }
+  let json: T | null = null;
+  try {
+    json = JSON.parse(got.text) as T;
+  } catch { /* not JSON: an error page from something on the way */ }
+  if (!got.ok || json === null) {
+    const error = (json as { error?: unknown } | null)?.error;
+    throw unavailable(what, `the database answered ${got.status}${typeof error === "string" ? `: ${error.slice(0, 200)}` : ""}`);
   }
   return json;
 }
 
-async function redis<T = unknown>(command: (string | number)[]): Promise<T> {
-  const json = await post<{ result?: T; error?: string }>(command);
-  if (json.error) throw new Error(`kv ${command[0]} failed: ${json.error}`);
+async function redis<T = unknown>(command: Command): Promise<T> {
+  const what = describe(command);
+  const json = await post<{ result?: T; error?: string }>(command, "", isRead(command), what);
+  if (json.error) throw unavailable(what, `the database refused the command: ${String(json.error).slice(0, 200)}`);
+  // (PING costs nothing and may be answered when nothing else is, so it does not count as a command that worked)
+  if (command[0] !== "PING") answered.ok = Date.now();
   return json.result as T;
 }
 
-async function pipeline<T = unknown>(commands: (string | number)[][]): Promise<T[]> {
-  const out = await post<{ result?: T; error?: string }[]>(commands, "/pipeline");
-  const bad = out.find((r) => r.error);
-  if (bad) throw new Error(`kv pipeline failed: ${bad.error}`);
+async function pipeline<T = unknown>(commands: Command[]): Promise<T[]> {
+  if (!commands.length) return [];
+  const what = `${commands.length} commands, the first ${describe(commands[0])}`;
+  const out = await post<{ result?: T; error?: string }[]>(commands, "/pipeline", commands.every(isRead), what);
+  const bad = Array.isArray(out) ? out.find((r) => r.error) : { error: "the answer is not a list" };
+  if (bad) throw unavailable(what, `the database refused a command: ${String(bad.error).slice(0, 200)}`);
+  answered.ok = Date.now();
   return out.map((r) => r.result as T);
 }
 
@@ -116,10 +181,14 @@ if redis.call('SET', KEYS[1], ARGV[1], 'NX') then
   return 1
 end
 return 0`,
-  /** Count, and start the window with the first count. */
+  /**
+   * Count, and start the window with the first count: a key that was not there holds exactly the step afterwards.
+   * (The script is one atomic step, so a counter never exists without its expiry; asking for the time left on
+   * every count would be one more command each time.)
+   */
   incr: `-- knotten:incr
 local n = redis.call('INCRBY', KEYS[1], ARGV[2])
-if redis.call('TTL', KEYS[1]) < 0 then redis.call('EXPIRE', KEYS[1], ARGV[1]) end
+if n == tonumber(ARGV[2]) then redis.call('EXPIRE', KEYS[1], ARGV[1]) end
 return n`,
 } as const;
 
@@ -327,11 +396,17 @@ export async function ttl(key: string): Promise<number> {
   return x.exp ? Math.ceil((x.exp - now) / 1000) : -1;
 }
 
-/** True when the database answers (always true for files). */
+/**
+ * True when the storage takes commands (always true for files). PING costs nothing, but a database may answer it
+ * and still refuse everything else (a plan with no commands left this month), so when the last real command in this
+ * server process failed, or none has worked for five minutes, one small read is tried as well.
+ */
 export async function kvPing(): Promise<boolean> {
   if (STORAGE !== "kv") return STORAGE === "file";
   try {
-    return (await redis<string>(["PING"])) === "PONG";
+    if ((await redis<string>(["PING"])) !== "PONG") return false;
+    if (answered.failed > answered.ok || Date.now() - answered.ok > 5 * 60_000) await redis(["GET", valueKey("health")]);
+    return true;
   } catch {
     return false;
   }
@@ -369,11 +444,22 @@ export async function readCounters(key: string): Promise<Record<string, number>>
   return (await readJSON<Record<string, number>>(key)) ?? {};
 }
 
-/** Add a member to a set that forgets itself after `ttlSec`; true when the member was new. */
+/** When this server process last set the expiry of a set (see addUnique). A handful of keys: one per day in use. */
+const expirySet = new Map<string, number>();
+
+/**
+ * Add a member to a set that forgets itself after `ttlSec`; true when the member was new. In Redis the expiry is
+ * sent with this process's first member and again when half of it has passed, not with every member: the set
+ * always has one, and a page view costs one command less.
+ */
 export async function addUnique(key: string, member: string, ttlSec: number): Promise<boolean> {
   if (STORAGE === "temp") throw new StorageUnavailableError(key);
   if (STORAGE === "kv") {
+    const now = Date.now();
+    if (now - (expirySet.get(key) ?? 0) < (ttlSec * 1000) / 2) return Number(await redis(["SADD", dataKey(key), member])) === 1;
     const [added] = await pipeline<number>([["SADD", dataKey(key), member], ["EXPIRE", dataKey(key), ttlSec]]);
+    if (expirySet.size > 16) expirySet.clear();
+    expirySet.set(key, now);
     return Number(added) === 1;
   }
   return mutate<{ until: number; members: string[] }, boolean>(key, () => ({ until: Date.now() + ttlSec * 1000, members: [] }), (v) => {

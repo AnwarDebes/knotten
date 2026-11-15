@@ -1,11 +1,11 @@
 import "server-only";
-import { revalidatePath } from "next/cache";
 import { getSession } from "@/lib/auth";
 import { AREAS, can, isAdmin, type Session } from "@/lib/auth-shared";
 import { internalDoc } from "@/lib/docRegister";
 import { configuredOrigin } from "./mail";
 import { FILES_ON, MAX_BYTES, prettySize, removeFile, saveFile, safeName } from "./files";
 import { take } from "./limit";
+import { refreshPublicFromRoute } from "./publicRecords";
 import { DOC_CATEGORIES, docs, meters, parseMeterCsv, rid, type Audience, type DocCategory } from "./records";
 import { readCapped } from "./requestGuard";
 
@@ -138,7 +138,7 @@ export async function uploadDocument(fd: FormData, s: Session): Promise<Reply> {
     await removeFile(key);
     return result === "gone" ? answer(404, { error: say(fd, "Fant ikke dokumentet. Last siden på nytt.", "The document was not found. Reload the page.") }) : answer(403, { error: notYours });
   }
-  revalidatePath("/", "layout");
+  // (documents are shown in the portal only, and the form refreshes its own page: no public page is made again)
   return answer(200, { ok: result === "version" ? say(fd, "Ny versjon lastet opp.", "New version uploaded.") : say(fd, `«${title}» er lastet opp.`, `"${title}" is uploaded.`) });
 }
 
@@ -168,7 +168,8 @@ export async function importMeterReadings(fd: FormData): Promise<Reply> {
     return true;
   });
   if (!ok) return answer(404, { error: say(fd, "Fant ikke bygget. Last siden på nytt.", "The building was not found. Reload the page.") });
-  revalidatePath("/", "layout");
+  // the public pages show a published building's readings
+  refreshPublicFromRoute("meters");
   const first = readings[0].month, last = readings[readings.length - 1].month;
   return answer(200, { ok: say(fd, `${readings.length} måneder lest inn (${first} til ${last}) fra ${rows} linjer${skipped ? `; ${skipped} linjer uten dato eller tall ble hoppet over` : ""}.`, `${readings.length} months read (${first} to ${last}) from ${rows} lines${skipped ? `; ${skipped} lines without a date or figure were skipped` : ""}.`) });
 }

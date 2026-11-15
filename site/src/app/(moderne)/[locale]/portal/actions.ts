@@ -1,11 +1,12 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 import { actor, can, clearPreviewCookie, getRealSession, getSession, isAdmin, setPreviewCookie, type Area, type Session } from "@/lib/auth";
 import { AREAS, PREVIEWS } from "@/lib/auth-shared";
 import { newId, readStore, updateStore } from "@/lib/store";
 import { removeFile } from "@/lib/server/files";
 import { DOC_CATEGORIES, THREAD_AREAS, docs, meters, residents, rid, threads, workspace, type Audience, type DocCategory, type ThreadArea } from "@/lib/server/records";
+import { refreshPublic } from "@/lib/server/publicRecords";
 import { recordEvent } from "@/lib/server/stats";
 import { MAIL_ON, sendMail, siteOrigin } from "@/lib/server/mail";
 import { ProblemError } from "@/lib/errors";
@@ -16,13 +17,16 @@ import { ProblemError } from "@/lib/errors";
  * who is acting and whether they may, on its own; the pages' links are not a lock. Uploads (documents and
  * meter exports) go to route handlers with their own size limit instead (lib/server/uploads.ts), so these
  * actions, like every server action, keep Next's small default body limit.
+ *
+ * What changes here stays inside the portal, so an action ends with refresh(): the page the person is on is
+ * rendered again and no public page is. The two things the website shows (a milestone put on the news page, and
+ * the published meter readings) name their records with refreshPublic instead.
  */
 export type ActionState = { error?: string; ok?: string; link?: string } | undefined;
 
 const str = (fd: FormData, k: string, max = 400) => String(fd.get(k) ?? "").trim().slice(0, max);
 const en = (fd: FormData) => fd.get("lang") === "en";
 const say = (fd: FormData, no: string, eng: string) => (en(fd) ? eng : no);
-const refresh = () => revalidatePath("/", "layout");
 const who = (s: Session) => s.name || s.email;
 
 /**
@@ -240,7 +244,7 @@ export async function publishMilestone(fd: FormData) {
     });
     await workspace.change((ws) => { const x = ws.milestones.find((y) => y.id === id); if (x) { x.news_id = newsId; x.public = true; } });
   }
-  refresh();
+  refreshPublic("news");
 }
 
 // ------------------------------------------------------------------ residents
@@ -265,7 +269,7 @@ export async function addUpgrade(_: ActionState, fd: FormData): Promise<ActionSt
     const b = m.buildings.find((x) => x.id === id);
     if (b) { b.upgrades.push({ id: rid("u"), date, title, detail: str(fd, "detail", 600) || undefined, cost_nok: cost }); b.upgrades.sort((a, c) => a.date.localeCompare(c.date)); }
   });
-  refresh();
+  refreshPublic("meters");
   return { ok: say(fd, "Tiltaket er lagt inn.", "The upgrade is added.") };
 }
 
@@ -273,7 +277,7 @@ export async function removeUpgrade(fd: FormData) {
   await actor("admin");
   const id = str(fd, "building", 40), uid = str(fd, "id", 40);
   await meters.change((m) => { const b = m.buildings.find((x) => x.id === id); if (b) b.upgrades = b.upgrades.filter((u) => u.id !== uid); });
-  refresh();
+  refreshPublic("meters");
 }
 
 export async function saveBuilding(fd: FormData) {
@@ -281,14 +285,14 @@ export async function saveBuilding(fd: FormData) {
   const id = str(fd, "building", 40);
   const area = Number(str(fd, "area_m2").replace(",", ".")) || undefined;
   await meters.change((m) => { const b = m.buildings.find((x) => x.id === id); if (b) { b.area_m2 = area; b.public = fd.get("public") === "on"; } });
-  refresh();
+  refreshPublic("meters");
 }
 
 export async function clearReadings(fd: FormData) {
   await actor("admin");
   const id = str(fd, "building", 40);
   await meters.change((m) => { const b = m.buildings.find((x) => x.id === id); if (b) { b.readings = []; b.source = undefined; b.updated = new Date().toISOString(); } });
-  refresh();
+  refreshPublic("meters");
 }
 
 // ------------------------------------------------------------------ "view as": see the portal as someone else

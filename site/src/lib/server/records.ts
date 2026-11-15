@@ -202,6 +202,16 @@ export const meters = store<{ buildings: Building[] }>("meters", () => ({
 }));
 
 /**
+ * The buildings whose readings the owner has published, as stored at this moment (none until one is ticked and has
+ * readings). A building that is not published never leaves the portal. The public pages read this through their
+ * cache: readPublishedMeters in lib/server/publicRecords.ts.
+ */
+export async function loadPublishedMeters(): Promise<Building[]> {
+  const stored = await readJSON<{ buildings?: Building[] }>("meters");
+  return (stored?.buildings ?? []).filter((b) => b.public && b.readings.length > 0);
+}
+
+/**
  * Reads a meter export (Elhub's "Måleverdier" download, a supplier's CSV, or a plain list of
  * months) and sums it per month. Accepts ; or , between columns and decimal commas. The date is
  * the first column that looks like one (31.12.2025, 2025-12-31 or 2025-12), the value the last

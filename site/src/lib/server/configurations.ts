@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { mutate, readJSON } from "./kv";
 import { OPTIONS, STEPS } from "@/lib/configurator/catalog";
 import { loadPlotFacts } from "@/lib/configurator/plots.server";
@@ -42,9 +43,17 @@ export class ConfigLimitError extends Error {
   }
 }
 
-async function read(): Promise<Records> {
+/** The records as they are stored at this moment: every call asks the storage. */
+async function load(): Promise<Records> {
   return { ...seed(), ...((await readJSON<Partial<Records>>(KEY)) ?? {}) };
 }
+
+/**
+ * The records for a page: asked once per render, however many of its parts need them (React keeps the answer for
+ * that render only; outside a render every call asks the storage). Changes never start from here: mutate reads
+ * the stored records itself.
+ */
+const read = cache(load);
 
 export function newConfigId() {
   return `cfg-${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
@@ -176,8 +185,17 @@ export function cleanPrices(raw: unknown): PriceTable {
   return out;
 }
 
+/** The price table as the administrator's own page shows it: read from storage. */
 export async function getPrices(): Promise<PriceTable> {
   return cleanPrices((await read()).prices ?? {});
+}
+
+/**
+ * The price table as stored at this moment, and nothing else from these records (saved and sent configurations
+ * belong to people). The public pages read it through their cache: readPublicPrices in lib/server/publicRecords.ts.
+ */
+export async function loadPrices(): Promise<PriceTable> {
+  return cleanPrices((await load()).prices ?? {});
 }
 
 export async function pricesChanged(): Promise<{ at: string; by: string } | null> {

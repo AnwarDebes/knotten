@@ -3,7 +3,7 @@ import Nav from "@/components/ui/Nav";
 import PageHead from "@/components/ui/PageHead";
 import Src from "@/components/ui/Source";
 import { MeterView } from "@/components/portal/MeterView";
-import { meters } from "@/lib/server/records";
+import { readPublishedMeters } from "@/lib/server/publicRecords";
 import { BUILDINGS, BUILDINGS_LEDE, BUILDING_STATUS, METER_STEPS, NOT_MEASURED, meterName } from "@/lib/content/buildings";
 import { pageMeta } from "@/lib/meta";
 import { isLocale } from "@/lib/i18n";
@@ -20,9 +20,8 @@ export default async function Existing({ params }: { params: Promise<{ locale: s
   if (!isLocale(l)) notFound();
   const locale = l as Locale;
   const no = locale === "no";
-  const { buildings: all } = await meters.read();
   // only buildings whose readings the owner has published; until then the page shows no empty panels
-  const measured = all.filter((m) => m.public && m.readings.length > 0);
+  const measured = await readPublishedMeters();
   return (
     <>
       <Nav locale={locale} />

@@ -15,9 +15,10 @@ export const generateMetadata = pageMeta("/nyheter", {
   en: { title: "News", description: "What has happened in the project, as it happens." },
 });
 
-export const dynamic = "force-dynamic";
-
-/** What the administrator has published, newest first; the same items as Klassisk's news page. */
+/**
+ * What the administrator has published, newest first; the same items as Klassisk's news page. A static page: the
+ * administrator's news actions refresh it (lib/server/publicRecords.ts).
+ */
 export default async function News({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: l } = await params;
   if (!isLocale(l)) notFound();

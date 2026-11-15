@@ -238,7 +238,7 @@ export async function leadsFollowAddress(before: Account, next: string) {
 }
 
 // ------------------------------------------------------------------ Min side
-export type FollowedPlot = { id: string; n: string; status: "unreleased" | "available" | "reserved" | "sold"; price_nok?: number; note?: string };
+export type FollowedPlot = { id: string; n: string; status: "unreleased" | "available" | "reserved" | "sold"; price_nok?: number };
 
 /** Everything Min side shows, read once. */
 export async function minSideData(uid: string) {
@@ -247,7 +247,7 @@ export async function minSideData(uid: string) {
   if (!account) return null;
   const follows: FollowedPlot[] = member.plots
     .filter((id) => commercial[id])
-    .map((id) => ({ id, n: plotNo(id), status: commercial[id].status, price_nok: commercial[id].price_nok, note: commercial[id].note }));
+    .map((id) => ({ id, n: plotNo(id), status: commercial[id].status, price_nok: commercial[id].price_nok }));
   const change = auth.tokens.find((t) => t.uid === uid && t.kind === "email-change" && Date.parse(t.expires) > Date.now());
   return {
     account,

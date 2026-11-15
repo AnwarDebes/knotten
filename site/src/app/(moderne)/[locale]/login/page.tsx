@@ -11,7 +11,7 @@ import { LoginForm, SetupForm } from "@/components/auth/AuthForms";
 import ClearWho from "@/components/auth/ClearWho";
 import { logout } from "./actions";
 import { isLocale } from "@/lib/i18n";
-import { STORAGE } from "@/lib/server/kv";
+import { isStorageUnavailable, STORAGE } from "@/lib/server/kv";
 import { STORAGE_MESSAGE } from "@/lib/errors";
 import { MT } from "@/lib/member-text";
 import { contactPath, minSidePath, registerPath } from "@/lib/member-paths";
@@ -31,9 +31,14 @@ export default async function Login({ params, searchParams }: { params: Promise<
   const other = no ? "en" : "no";
   const session = await getSession();
   if (session && next) redirect(safeNext(next, locale));
-  // without storage nobody can have an account yet: say so instead of showing forms that cannot work
-  const noStorage = !session && STORAGE === "temp";
-  const firstRun = !session && !noStorage && (await needsSetup());
+  // without storage nobody can have an account yet: say so instead of showing forms that cannot work. The same
+  // when the database does not answer (the check for a first run reads the accounts): the form could not log anyone in
+  let noStorage = !session && STORAGE === "temp";
+  const firstRun = !session && !noStorage && (await needsSetup().catch((e) => {
+    if (!isStorageUnavailable(e)) throw e;
+    noStorage = true;
+    return false;
+  }));
   const code = firstRun ? await setupCode() : undefined;
   const owner = firstRun ? (await loadAuth()).accounts.find((a) => a.role === "superadmin") : undefined;
   const m = MT[locale];

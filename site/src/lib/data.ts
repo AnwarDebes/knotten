@@ -1,7 +1,8 @@
 import { promises as fs } from "fs";
 import path from "path";
 import type { PlotsFile, Plot } from "./types";
-import { readStore } from "./store";
+import type { NewsItem, PublicSettings } from "./store";
+import { readPublicPlots, readPublicSettings, readPublishedNews } from "./server/publicRecords";
 // read at build time: the server bundles leave public/twin out (next.config.ts)
 import HOUSES from "../../public/twin/houses.json";
 
@@ -21,8 +22,8 @@ export async function loadPlot(id: string): Promise<Plot | undefined> {
   return plots.find((p) => p.id === id);
 }
 
-/** Plot status/price overlay. In production this is the `plot` table; here a small JSON. */
-export type PlotCommercial = { id: string; status: "available" | "reserved" | "sold" | "unreleased"; price_nok?: number; note?: string; house_type: { no: string; en: string } };
+/** A plot's status and price as the administrator set them, with the model's house on it. */
+export type PlotCommercial = { id: string; status: "available" | "reserved" | "sold" | "unreleased"; price_nok?: number; house_type: { no: string; en: string } };
 
 /** Which of the model's example houses have a lower floor under the view side (public/twin/houses.json). */
 const LOWER = new Set((HOUSES as { houses: { id: string; lower?: boolean }[] }).houses.filter((h) => h.lower).map((h) => h.id));
@@ -36,26 +37,30 @@ export function houseLabel(p: Plot): { no: string; en: string } {
   return LOWER.has(p.id) ? { no: "Modell: 1 etasje og underetasje", en: "Model: one floor and a lower floor" } : { no: "Modell: 1 etasje", en: "Model: one floor" };
 }
 
-/** Status, price and note per plot, as the administrator set them; unreleased until then. */
+/**
+ * Status and price per plot, as the administrator set them; unreleased until then. The administrator's note on a
+ * plot is for the portal only (it may name a buyer) and is not part of this. Like the news and the settings below,
+ * this is read through the public pages' cache (lib/server/publicRecords.ts): a change in the admin shows on the
+ * next page load, and the pages render even when storage does not answer.
+ */
 export async function loadCommercial(): Promise<Record<string, PlotCommercial>> {
-  const { plots } = await loadPlots();
-  const store = await readStore();
+  const [{ plots }, set] = await Promise.all([loadPlots(), readPublicPlots()]);
   const out: Record<string, PlotCommercial> = {};
   for (const p of plots) {
-    const s = store.plots[p.id];
-    out[p.id] = { id: p.id, status: s?.status ?? "unreleased", price_nok: s?.price_nok, note: s?.note, house_type: houseLabel(p) };
+    const s = set[p.id];
+    out[p.id] = { id: p.id, status: s?.status ?? "unreleased", price_nok: s?.price_nok, house_type: houseLabel(p) };
   }
   return out;
 }
 
 /** Published news, newest first. */
-export async function loadNews() {
-  const store = await readStore();
-  return store.news.filter((n) => n.published).sort((a, b) => b.date.localeCompare(a.date));
+export async function loadNews(): Promise<NewsItem[]> {
+  return readPublishedNews();
 }
 
-export async function loadSettings() {
-  return (await readStore()).settings;
+/** The settings a public page shows: the status line and the company facts. */
+export async function loadSettings(): Promise<PublicSettings> {
+  return readPublicSettings();
 }
 
 export { fmtHours, sunLabel } from "./format";

@@ -1,5 +1,5 @@
 "use server";
-import { revalidatePath } from "next/cache";
+import { refresh } from "next/cache";
 import { actor, type Session } from "@/lib/auth";
 import { AREAS, type AccountRole, type Area } from "@/lib/auth-shared";
 import { KPI_KEYS, LEAD_STATUSES, PLOT_STATUSES, newId, readStore, updateStore, type KpiTargets, type LeadStatus, type PlotStatus } from "@/lib/store";
@@ -9,6 +9,7 @@ import { linkMail, memberResetMail } from "@/lib/server/emails";
 import { deleteMemberData } from "@/lib/server/member-store";
 import { deleteSentForLead } from "@/lib/server/configurations";
 import { isStorageUnavailable } from "@/lib/server/kv";
+import { refreshPublic } from "@/lib/server/publicRecords";
 import { MAIL_ON, sendMail, siteOrigin } from "@/lib/server/mail";
 import { problemOf, STORAGE_MESSAGE } from "@/lib/errors";
 import type { Design } from "@/lib/design";
@@ -21,7 +22,11 @@ export type PromoteState = (NonNullable<AdminState> & { id?: string; plot?: stri
 const str = (fd: FormData, k: string, max = 400) => String(fd.get(k) ?? "").trim().slice(0, max);
 const en = (fd: FormData) => fd.get("lang") === "en";
 const say = (fd: FormData, no: string, eng: string) => (en(fd) ? eng : no);
-const done = () => revalidatePath("/", "layout");
+/**
+ * After a change that only the portal shows (leads, accounts, targets): this page is rendered again. The public
+ * pages are not touched; a change they show names its records with refreshPublic instead.
+ */
+const done = () => refresh();
 const by = (s: Session) => s.name || s.email;
 const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const PLOT_ID = /^plot-\d{2}$/;
@@ -107,7 +112,7 @@ export async function savePlot(fd: FormData) {
   await updateStore(by(s), `tomt ${id}: ${status}${price ? `, ${price} kr` : ""}`, (st) => {
     st.plots[id] = { id, status, price_nok: price || undefined, note: str(fd, "note", 300) || undefined, updated: new Date().toISOString() };
   });
-  done();
+  refreshPublic("plots");
 }
 
 export async function setAllPlots(fd: FormData) {
@@ -118,7 +123,7 @@ export async function setAllPlots(fd: FormData) {
   await updateStore(by(s), `alle tomter: ${status}`, (st) => {
     for (const id of ids) st.plots[id] = { ...(st.plots[id] ?? { id }), id, status, updated: new Date().toISOString() };
   });
-  done();
+  refreshPublic("plots");
 }
 
 // ------------------------------------------------------------------ news
@@ -137,21 +142,21 @@ export async function saveNews(fd: FormData) {
     if (i >= 0) st.news[i] = item; else st.news.unshift(item);
     st.news.sort((a, b) => b.date.localeCompare(a.date));
   });
-  done();
+  refreshPublic("news");
 }
 
 export async function toggleNews(fd: FormData) {
   const s = await actor();
   const id = str(fd, "id");
   await updateStore(by(s), `nyhet vist/skjult ${id}`, (st) => { const n = st.news.find((x) => x.id === id); if (n) n.published = !n.published; });
-  done();
+  refreshPublic("news");
 }
 
 export async function deleteNews(fd: FormData) {
   const s = await actor();
   const id = str(fd, "id");
   await updateStore(by(s), `nyhet slettet ${id}`, (st) => { st.news = st.news.filter((x) => x.id !== id); });
-  done();
+  refreshPublic("news");
 }
 
 // ------------------------------------------------------------------ settings and targets
@@ -162,7 +167,8 @@ export async function saveSettings(fd: FormData) {
   await updateStore(by(s), "innstillinger lagret", (st) => {
     st.settings = { ...st.settings, release_note: { no: str(fd, "release_no", 300), en: str(fd, "release_en", 300) }, contact_email: EMAIL.test(email) ? email : st.settings.contact_email, contact_phone: str(fd, "contact_phone", 40), weekly_digest: fd.get("weekly_digest") === "on", digest_lang: str(fd, "digest_lang") === "en" ? "en" : "no" };
   });
-  done();
+  // the status line is on both front pages, the plot pages, the picker and the configurator
+  refreshPublic("settings");
 }
 
 /** Send this week's summary now, to check how it looks in the inbox. */

@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { cache } from "react";
 import { CONTACT } from "./facts";
 import { RELEASE_NOTE } from "./content/status";
 import { mutate, readJSON, STORAGE } from "./server/kv";
@@ -138,12 +139,40 @@ async function firstRun(): Promise<Store> {
 /** Pages read side by side; they share one first run. */
 let firstRunning: Promise<Store> | null = null;
 
-export async function readStore(): Promise<Store> {
+/** The records as they are stored at this moment: every call asks the storage. */
+export async function loadStore(): Promise<Store> {
   const s = await readJSON<Partial<Store>>("crm");
   if (s) return complete(s);
   firstRunning ??= firstRun().finally(() => { firstRunning = null; });
   return complete(await firstRunning);
 }
+
+/**
+ * The records for a page: asked once per render, however many of its layouts and parts need them (React keeps the
+ * answer for that render only). Outside a render, in a server action or a route handler, every call asks the storage,
+ * so what is read after a change is never an older copy. Changes never start from here: updateStore reads the
+ * stored records itself.
+ */
+export const readStore = cache(loadStore);
+
+// ------------------------------------------------------------------ what the public pages may show
+/** A plot as a visitor sees it: status and price. Never the administrator's note, which may name a buyer. */
+export type PublicPlot = { status: PlotStatus; price_nok?: number };
+/** The status line and the company facts: the only settings a public page shows. */
+export type PublicSettings = { release_note: { no: string; en: string }; company: CompanyFacts };
+
+/**
+ * The three parts of the records that every visitor may see, cut out of the full records. Only these go into the
+ * shared cache of the public pages (lib/server/publicRecords.ts): no lead, note, target or address for alerts.
+ */
+export const publicPlots = (s: Store): Record<string, PublicPlot> =>
+  Object.fromEntries(Object.entries(s.plots).map(([id, p]) => [id, { status: p.status, ...(typeof p.price_nok === "number" ? { price_nok: p.price_nok } : {}) }]));
+/** Published news, newest first. */
+export const publishedNews = (s: Store): NewsItem[] => s.news.filter((n) => n.published).sort((a, b) => b.date.localeCompare(a.date));
+export const publicSettings = (s: Store): PublicSettings => ({ release_note: { ...s.settings.release_note }, company: { ...s.settings.company } });
+
+/** The records before anything is stored: where the public pages start, and what they show when nothing can be read. */
+export const seedStore = (): Store => complete({});
 
 /**
  * Read, change, write, without losing a change made by someone else at the same moment (lib/server/kv.ts). `fn`

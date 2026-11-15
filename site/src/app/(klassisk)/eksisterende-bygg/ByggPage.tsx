@@ -3,7 +3,8 @@ import Reveal from "@/components/klassisk/Reveal";
 import { Src } from "@/components/klassisk/Source";
 import MeterChart, { MeterYears } from "@/components/klassisk/MeterChart";
 import { BUILDINGS, BUILDINGS_LEDE, BUILDING_STATUS, METER_STEPS, NOT_MEASURED, meterName } from "@/lib/content/buildings";
-import { beforeAfter, meters, type Building } from "@/lib/server/records";
+import { beforeAfter, type Building } from "@/lib/server/records";
+import { readPublishedMeters } from "@/lib/server/publicRecords";
 import type { SourceId } from "@/lib/facts";
 import type { KLocale } from "@/lib/klassisk/locale";
 
@@ -49,9 +50,8 @@ export default async function ByggPage({ locale }: { locale: KLocale }) {
   const en = locale === "en";
   const L = locale;
   const S = (id: SourceId) => <Src id={id} label={en ? "Source" : undefined} />;
-  const { buildings } = await meters.read();
   // only buildings whose readings the owner has published; until then the page says so in one line instead of empty charts
-  const measured = buildings.filter((b) => b.public && b.readings.length > 0);
+  const measured = await readPublishedMeters();
   const title = en ? "Existing buildings" : "Eksisterende bygg";
   return (
     <>
