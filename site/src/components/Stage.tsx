@@ -17,8 +17,8 @@ import Dial, { type DialValue } from "./ui/Dial";
 import Passport from "./ui/Passport";
 import type { CameraPreset } from "./scene/KnottenScene";
 import WalkHud from "./walk/WalkHud";
-import { addLook, requestClick, setLive, subscribeWalk, walkState, walkVersion, type WalkStart } from "./scene/house/walkState";
-import { houseFigures, type HouseFigures } from "./walk/liveFigures";
+import { addLook, requestClick, setLive, subscribeWalk, walkState, walkVersion, type LiveFigures, type WalkStart } from "./scene/house/walkState";
+import { houseFigures } from "./walk/liveFigures";
 import { useTapFocus } from "./scene/tapFocus";
 import { has3d } from "./scene/has3d";
 import type { HouseFit } from "@/lib/house/plan";
@@ -252,7 +252,7 @@ export default function Stage({ plots, locale, initialPlot = null, initialMode =
   // (the dial moves in quarter hours; the house's figures change by the hour, so they are worked out, and its screens
   // redrawn, only when the hour or the month changes)
   const dialMonth = dial.month, dialHour = Math.floor(dial.hour);
-  const live = useMemo<HouseFigures | null>(() => {
+  const live = useMemo<LiveFigures | null>(() => {
     const r = simOut?.result;
     if (!r || visit < 0 || visit >= r.homes) return null;
     return houseFigures(r, visit, simHour, { month: dialMonth, day: dialDay, hour: dialHour });
@@ -520,8 +520,9 @@ export default function Stage({ plots, locale, initialPlot = null, initialMode =
             <div className={k ? ks.ctlRow : "flex flex-wrap items-end gap-3"}>
               <div className={k ? ks.panel : "pointer-events-auto glass p-3 md:p-4 grid gap-3 max-w-[520px]"}>
                 <div className={k ? `seg ${ks.seg}` : "seg"} role="group" aria-label={no ? "Visning" : "View"}>
+                  {/* (the view that is on is filled: Klassisk's .seg does it from aria-pressed, Moderne with its white pill on the glass) */}
                   {tabs.map((tb) => (
-                    <button key={tb.key} aria-pressed={mode === tb.key} onClick={() => pick(tb.key)}>{tb.label}</button>
+                    <button key={tb.key} aria-pressed={mode === tb.key} onClick={() => pick(tb.key)} className={!k && mode === tb.key ? "!bg-white !text-ink" : undefined}>{tb.label}</button>
                   ))}
                 </div>
                 <p className={k ? ks.sub : "text-[14px] text-white/90 max-w-[46ch] hidden sm:block"}>

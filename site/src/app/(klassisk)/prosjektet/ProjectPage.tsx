@@ -7,9 +7,10 @@ import { kHref, type KLocale } from "@/lib/klassisk/locale";
 import { COLLAB, GOALS, GOALS_HEAD, PLACE, PLAN_HEAD, PRINCIPLES, PRINCIPLES_HEAD, PROJECT_PAGE, SUCCESS, SUCCESS_HEAD, TRACKS, TRACKS_HEAD, projectPhases } from "@/lib/content/project";
 import { DOCUMENTS_PAGE } from "@/lib/content/documents";
 import { CONTACT_PAGE } from "@/lib/content/contact";
+import { MAP } from "@/lib/content/maps";
 
-/** The sketch on the project owner's site plan, as Klassisk serves it (lib/klassisk/maps.ts has the same file). */
-const SKETCH = { src: "/img/skisse-situasjonsplan.png", w: 1234, h: 777 };
+/** The project owner's site plan sketch, from the shared list of maps (its file and its size are named there). */
+const SKETCH = MAP.skisse;
 
 /**
  * "Om prosjektet" / "About the project" in the Klassisk look, in both languages: rendered by /prosjektet and

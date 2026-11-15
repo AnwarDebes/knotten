@@ -11,9 +11,6 @@
 import type { YearResult } from "@/lib/sim/run";
 import type { LiveFigures } from "../scene/house/walkState";
 
-/** The live figures, and what the house's own meter has counted this year (the screens draw it). */
-export type HouseFigures = LiveFigures & { meterKwh: number };
-
 // the simulation's battery: 90 % round trip, split evenly between charging and discharging (lib/sim/run.ts)
 const EC = Math.sqrt(0.9), ED = Math.sqrt(0.9);
 
@@ -58,7 +55,7 @@ export function houseGrid(r: YearResult, k: number, h: number) {
 }
 
 /** The house's figures at hour h of the simulated year; `local` is the moment the visitor has chosen. */
-export function houseFigures(r: YearResult, k: number, h: number, local: { month: number; day: number; hour: number }): HouseFigures {
+export function houseFigures(r: YearResult, k: number, h: number, local: { month: number; day: number; hour: number }): LiveFigures {
   let yearPv = 0, yearUse = 0;
   for (let i = 0; i < r.pv[k].length; i++) { yearPv += r.pv[k][i]; yearUse += r.load[k][i]; }
   // the meter of a new house, counting from 1 January: everything that has come in through it, hour by hour

@@ -12,9 +12,6 @@ import type { LiveFigures } from "./walkState";
 
 export type Screen = { canvas: HTMLCanvasElement; ctx: CanvasRenderingContext2D; texture: THREE.CanvasTexture };
 
-/** The house's figures; the page's simulation also gives what the house's own meter has counted this year (kWh). */
-export type ScreenFigures = LiveFigures & { meterKwh?: number };
-
 export function makeScreen(): Screen {
   const canvas = document.createElement("canvas");
   canvas.width = 1024; canvas.height = 1024;
@@ -28,7 +25,7 @@ export function makeScreen(): Screen {
 const n1 = (v: number, no: boolean) => (Math.abs(v) < 10 ? v.toFixed(1) : v.toFixed(0)).replace(".", no ? "," : ".");
 const MONTHS = { no: ["jan", "feb", "mar", "apr", "mai", "jun", "jul", "aug", "sep", "okt", "nov", "des"], en: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] };
 
-export function drawScreens(s: Screen, f: ScreenFigures | null, locale: "no" | "en", plotNo: number) {
+export function drawScreens(s: Screen, f: LiveFigures | null, locale: "no" | "en", plotNo: number) {
   const g = s.ctx, no = locale === "no";
   g.save();
   // ---------------- the energy screen (1024 x 512, top half of the canvas)
@@ -87,7 +84,7 @@ export function drawScreens(s: Screen, f: ScreenFigures | null, locale: "no" | "
   // the house's own meter since 1 January (from the grid or the neighbours), as the simulation has it
   g.fillStyle = "#a6b39a"; g.fillRect(0, 768, 512, 256);
   g.fillStyle = "#1c241a"; g.font = "700 76px ui-monospace, monospace";
-  const reading = f?.meterKwh !== undefined ? Math.round(f.meterKwh) : 0;
+  const reading = f ? Math.round(f.meterKwh) : 0;
   g.fillText(String(reading).padStart(6, "0"), 30, 900);
   g.font = "600 34px ui-monospace, monospace"; g.fillText("kWh  HAN", 340, 960);
   // ---------------- the thermostat (256 x 256 at x 512, y 768)

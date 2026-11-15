@@ -1,5 +1,6 @@
 import { BUDGET, EED, FACT, MEASURES, MEASURES_COMPARED, STATUS_SOLAR, fmt, fmtRound, type Lang, type Measure, type SourceId, type T } from "@/lib/facts";
 import type { Plot } from "@/lib/types";
+import { PHOTO, type PhotoKey } from "./photos";
 
 /**
  * What both front pages show (Klassisk at / and /english, Moderne at /no and /en), written once so the two designs say
@@ -40,12 +41,15 @@ export function homeFacts(lang: Lang): HomeFact[] {
   ];
 }
 
-/** The project owner's photos of the place as it is today (public/assets/incoming/web), with what each shows; `pos` keeps
- * the part the caption speaks of in the frame when the photo is cropped. */
+/** One of the photos in the shared list (photos.ts names its file and its size), with the front pages' own caption. */
+const shared = (key: PhotoKey, caption: T, pos?: string) => ({ src: PHOTO[key].src, w: PHOTO[key].w, h: PHOTO[key].h, caption, ...(pos ? { pos } : {}) });
+
+/** The project owner's photos of the place as it is today, with what each shows; `pos` keeps the part the caption
+ * speaks of in the frame when the photo is cropped. */
 export const OWNER_PHOTOS: { src: string; w: number; h: number; caption: T; pos?: string }[] = [
-  { src: "/assets/incoming/web/photo_fjord_wide.webp", w: 721, h: 435, caption: { no: "Utsikten sørover mot Sniksfjorden og havet.", en: "The view south towards Sniksfjorden and the sea." } },
-  { src: "/assets/incoming/web/photo_fjord_farm.webp", w: 1331, h: 1331, caption: { no: "Gårdene, veien og elva nedenfor feltet.", en: "The farms, the road and the river below the field." } },
-  { src: "/assets/incoming/web/photo_sea_summer.webp", w: 649, h: 892, pos: "50% 85%", caption: { no: "Sommer over fjorden, med havet i glipen mellom åsene.", en: "Summer over the fjord, with the sea in the gap between the hills." } },
+  shared("viewWide", { no: "Utsikten sørover mot Sniksfjorden og havet.", en: "The view south towards Sniksfjorden and the sea." }),
+  shared("view2", { no: "Gårdene, veien og elva nedenfor feltet.", en: "The farms, the road and the river below the field." }),
+  shared("summer", { no: "Sommer over fjorden, med havet i glipen mellom åsene.", en: "Summer over the fjord, with the sea in the gap between the hills." }, "50% 85%"),
 ];
 
 /** Where the photos were taken, as far as the project owner has said. */

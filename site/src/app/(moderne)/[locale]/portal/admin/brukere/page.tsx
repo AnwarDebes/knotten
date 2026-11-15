@@ -4,7 +4,8 @@ import { loadAuth, type Account } from "@/lib/server/accounts";
 import { MAIL_ON, recentMailFailures } from "@/lib/server/mail";
 import { loadPlots } from "@/lib/data";
 import { readMembers } from "@/lib/server/member-store";
-import { dismissResetRequest, inviteUser, promoteMember, setUserStatus, updateUser, userLink } from "../actions";
+import { dismissResetRequest, inviteUser, setUserStatus, updateUser, userLink } from "../actions";
+import { PromoteForm, Promotions } from "./Promote";
 import NoAccess from "@/components/portal/NoAccess";
 import { ActionForm, ConfirmButton } from "@/components/portal/forms";
 import { Notice, PageHead, Section, initials, when } from "@/components/portal/ui";
@@ -39,6 +40,8 @@ export default async function Users({ params }: { params: Promise<{ locale: stri
   const accounts = [...auth.accounts].filter((a) => a.kind !== "member").sort((a, b) => order[a.role] - order[b.role] || a.name.localeCompare(b.name));
   // buyers' own accounts, newest first
   const buyers = auth.accounts.filter((a) => a.kind === "member").sort((a, b) => b.created.localeCompare(a.created));
+  // the project accounts that are residents of a plot today: the answer to "Gjør til beboer" is shown while it holds
+  const residents = accounts.filter((a) => a.plot && a.areas.includes("resident")).map((a) => `${a.id}:${a.plot}`);
   const mayManage = (a: Account) => a.id !== session.id && (superadmin || a.role === "user");
   const L = { no, locale };
   return (
@@ -135,9 +138,11 @@ export default async function Users({ params }: { params: Promise<{ locale: stri
         </Section>
       </div>
 
-      <Section title={no ? `Kjøperkontoer (${buyers.length})` : `Buyer accounts (${buyers.length})`} sub={no ? "Kontoer kjøpere har opprettet selv på nettsiden. De ser bare Min side, aldri portalen eller dokumentene der. Når en kjøper flytter inn, gjør kontoen til beboer på tomten." : "Accounts buyers made themselves on the website. They see Min side only, never the portal or its documents. When a buyer moves in, make the account a resident of the plot."}>
+      <Section title={no ? `Kjøperkontoer (${buyers.length})` : `Buyer accounts (${buyers.length})`} sub={no ? "Kontoer kjøpere har opprettet selv på nettsiden. De ser bare Min side, aldri portalen eller dokumentene der. Når en kjøper flytter inn, gjør kontoen til beboer på tomten." : "Accounts buyers made themselves on the website. They see My page only, never the portal or its documents. When a buyer moves in, make the account a resident of the plot."}>
+        {/* "Gjør til beboer" moves an account out of this list: its answer is kept around the list, not in the row that goes */}
+        <Promotions residents={residents}>
         {buyers.length === 0 ? (
-          <div className="panel p-5 text-[14.5px] text-ink-2">{no ? "Ingen kjøperkontoer ennå. Kjøpere oppretter dem selv på siden «Opprett konto»." : "No buyer accounts yet. Buyers make them themselves on the \"Create an account\" page."}</div>
+          <div className="panel p-5 text-[14.5px] text-ink-2">{no ? "Ingen kjøperkontoer ennå. Kjøpere oppretter dem selv på siden «Opprett konto»." : "No buyer accounts yet. Buyers make them themselves on the \"Create account\" page."}</div>
         ) : (
           <div className="panel divide-y divide-[var(--line)]">
             {buyers.map((a) => {
@@ -164,8 +169,8 @@ export default async function Users({ params }: { params: Promise<{ locale: stri
                         <details className="w-full sm:w-auto">
                           <summary className="cursor-pointer text-fjord list-none">{no ? "Gjør til beboer" : "Make a resident"}</summary>
                           <div className="mt-3 max-w-[420px]">
-                            <ActionForm action={promoteMember} submit={no ? "Gjør til beboer" : "Make a resident"} className="grid gap-3" resetOnSuccess={false}>
-                              <input type="hidden" name="id" value={a.id} /><input type="hidden" name="lang" value={locale} />
+                            <PromoteForm id={a.id} submit={no ? "Gjør til beboer" : "Make a resident"}>
+                              <input type="hidden" name="lang" value={locale} />
                               <label className="grid gap-1.5 text-[13.5px]">
                                 <span className="font-medium text-ink-2">{no ? "Tomten som blir hjemmet" : "The plot that becomes the home"}</span>
                                 <select name="plot" defaultValue={follows[0] ?? ""} className="input !py-2" required>
@@ -174,7 +179,7 @@ export default async function Users({ params }: { params: Promise<{ locale: stri
                                 </select>
                               </label>
                               <p className="text-[13px] text-muted">{no ? "Kontoen blir en prosjektkonto med området Mitt hjem for tomten, og logger inn i portalen fra da av." : "The account becomes a project account with the My home area for the plot, and logs into the portal from then on."}</p>
-                            </ActionForm>
+                            </PromoteForm>
                           </div>
                         </details>
                       )}
@@ -198,6 +203,7 @@ export default async function Users({ params }: { params: Promise<{ locale: stri
             })}
           </div>
         )}
+        </Promotions>
       </Section>
 
       {superadmin && (

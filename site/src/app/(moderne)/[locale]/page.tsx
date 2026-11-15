@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Locale } from "@/lib/i18n";
@@ -23,6 +24,8 @@ import { latestNews } from "@/components/ui/home/news";
 import JsonLd from "@/components/JsonLd";
 import { organizationJsonLd } from "@/lib/content/jsonld";
 import { HOME_PHASES, OWNER_PHOTOS, PHOTOS_TEXT, WINTER_SUN_TEXT, energyKeys, homeFacts, measuresByVerdict, measuresLine, mostWinterSun } from "@/lib/content/home";
+import { MAP } from "@/lib/content/maps";
+import { PHOTO } from "@/lib/content/photos";
 import { formatOrgNumber, loadPublicSettings } from "@/lib/server/siteSettings";
 
 export const generateMetadata = pageMeta("", {
@@ -136,8 +139,8 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
           <div className="grid gap-4 md:grid-cols-3">
             {OWNER_PHOTOS.map((ph) => (
               <figure key={ph.src} className="frame">
-                {/* eslint-disable-next-line @next/next/no-img-element -- the owner's photos, already sized for the web */}
-                <img src={ph.src} alt={ph.caption[locale]} width={ph.w} height={ph.h} className="w-full aspect-[4/3] object-cover" style={ph.pos ? { objectPosition: ph.pos } : undefined} loading="lazy" decoding="async" />
+                {/* the owner's photos from the shared list (src/lib/content/photos.ts), sized for the screen as on the view page */}
+                <Image src={ph.src} alt={ph.caption[locale]} width={ph.w} height={ph.h} sizes="(max-width: 768px) 100vw, 460px" quality={85} className="w-full aspect-[4/3] object-cover" style={ph.pos ? { objectPosition: ph.pos } : undefined} />
                 <figcaption className="provenance px-4 py-3">{ph.caption[locale]}</figcaption>
               </figure>
             ))}
@@ -164,7 +167,7 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
           </div>
         </div>
         <div className="rise rise-late grid gap-3 content-start">
-          <ProofSlider photo="/assets/incoming/web/view_from_grillbu.webp" model="/renders/web/grillbu_photo_match.webp" labels={[no ? "Fotografi" : "Photograph", no ? "Modell" : "Model"]} />
+          <ProofSlider photo={PHOTO.view.src} model="/renders/web/grillbu_photo_match.webp" labels={[no ? "Fotografi" : "Photograph", no ? "Modell" : "Model"]} />
           <p className="provenance max-w-[60ch]">
             {no
               ? "Utsiktsbildet er tatt ved naboens grillbu. Modellkameraet står der bildet er tatt, funnet ved å passe horisonten og gårdene i bildet mot Kartverkets terrengmodell: 1,9 meter over bakken, mot 176 grader. Dra i skillet."
@@ -256,8 +259,8 @@ export default async function Landing({ params }: { params: Promise<{ locale: st
       {/* 9. what is there today, and what is planned */}
       <section className="wrap section-tight grid gap-8 lg:grid-cols-[1fr_1fr] items-center">
         <figure className="rise frame">
-          {/* eslint-disable-next-line @next/next/no-img-element -- the owner's cadastral map, shown as it is */}
-          <img src="/assets/incoming/web/knotten_map.webp" alt={no ? "Knotten på eiendomskartet med de planlagte byggene i grønt" : "Knotten on the cadastral map with the planned buildings in green"} className="w-full" loading="lazy" />
+          {/* the owner's cadastral map from the shared list (src/lib/content/maps.ts), the file as it is, as the map journey above shows it */}
+          <Image src={MAP.bygg.src} alt={no ? "Knotten på eiendomskartet med de planlagte byggene i grønt" : "Knotten on the cadastral map with the planned buildings in green"} width={MAP.bygg.w} height={MAP.bygg.h} unoptimized className="w-full h-auto" />
           <figcaption className="provenance px-4 py-3">{no ? "Knotten på eiendomskartet. Kontorbygget og bolighuset ved Rødbergsveien er der i dag; de to grønne byggene er planlagt." : "Knotten on the cadastral map. The office building and the house by Rødbergsveien are there today; the two green buildings are planned."}</figcaption>
         </figure>
         <div className="rise rise-late">

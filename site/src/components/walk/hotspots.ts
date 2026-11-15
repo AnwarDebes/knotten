@@ -65,6 +65,8 @@ export const HOTSPOTS: Record<string, HotspotInfo> = {
     },
     measure: "energy_display",
     source: "tiltak",
+    // the reading on the meter's own screen: what has come in through it this year, up to the hour on the dial
+    live: (f, no) => (no ? `Nå: måleren viser ${n0(f.meterKwh, no)} kWh siden 1. januar.` : `Now: the meter reads ${n0(f.meterKwh, no)} kWh since 1 January.`),
   },
   greywater: {
     title: { no: "Varmegjenvinning fra dusjvannet", en: "Heat recovery from the shower water" },

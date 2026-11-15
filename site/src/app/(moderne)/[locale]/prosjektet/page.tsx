@@ -5,11 +5,11 @@ import type { Locale } from "@/lib/i18n";
 import { isLocale } from "@/lib/i18n";
 import Nav from "@/components/ui/Nav";
 import PageHead from "@/components/ui/PageHead";
-import Incoming from "@/components/ui/Incoming";
 import Src from "@/components/ui/Source";
 import { pageMeta } from "@/lib/meta";
 import { COLLAB, GOALS, GOALS_HEAD, PLACE, PLAN_HEAD, PRINCIPLES, PRINCIPLES_HEAD, PROJECT_PAGE, SUCCESS, SUCCESS_HEAD, TRACKS, TRACKS_HEAD, projectPhases } from "@/lib/content/project";
 import { DOCUMENTS_PAGE } from "@/lib/content/documents";
+import { MAP } from "@/lib/content/maps";
 
 export const generateMetadata = pageMeta("/prosjektet", {
   no: { title: PROJECT_PAGE.title.no, description: PROJECT_PAGE.description.no },
@@ -30,6 +30,7 @@ export default async function Project({ params }: { params: Promise<{ locale: st
   const platform = TRACKS.find((t) => t.id === "platform")!;
   const phases = projectPhases(locale);
   const p = PLACE.photo;
+  const sketch = MAP.skisse;
 
   return (
     <>
@@ -151,7 +152,11 @@ export default async function Project({ params }: { params: Promise<{ locale: st
               <Link className="btn btn-ghost" href={`/${locale}/kontakt`}>{no ? "Kontakt" : "Contact"}</Link>
             </div>
           </div>
-          <Incoming file="site_plan_sketch.webp" alt={COLLAB.sketch.alt[locale]} caption={COLLAB.sketch.caption[locale]} />
+          {/* the project owner's site plan sketch, from the shared list of maps (src/lib/content/maps.ts) */}
+          <figure>
+            <Image src={sketch.src} alt={COLLAB.sketch.alt[locale]} width={sketch.w} height={sketch.h} sizes="(max-width: 1024px) 100vw, 50vw" quality={85} className="w-full h-auto rounded-[var(--radius-lg)]" />
+            <figcaption className="provenance mt-2.5">{COLLAB.sketch.caption[locale]}</figcaption>
+          </figure>
         </div>
       </section>
 

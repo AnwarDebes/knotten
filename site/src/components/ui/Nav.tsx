@@ -30,10 +30,11 @@ function account(session: Who | null, locale: Locale): { href: string; text: str
 }
 
 /**
- * The header: the logo, one sentence about the place on the front page (on the other pages, the page you are on),
- * the language, the account and Meld interesse, and the menu. It floats over the page and turns to glass once you
- * scroll. The menu opens as a sheet with every page from the page registry (src/lib/pages.ts) in large type. On a
- * phone the account and Meld interesse stay in the bar; the language moves into the sheet.
+ * The header: the logo, the page you are on (nothing on the front page, whose headline right below says it; one
+ * sentence about the place on an address the site does not know), the language, the account and Meld interesse, and
+ * the menu. It floats over the page and turns to glass once you scroll. The menu opens as a sheet with every page
+ * from the page registry (src/lib/pages.ts) in large type. On a phone the account and Meld interesse stay in the
+ * bar; the language moves into the sheet.
  */
 export default function Nav({ locale }: { locale: Locale; dark?: boolean }) {
   const d = t(locale);
@@ -84,7 +85,8 @@ export default function Nav({ locale }: { locale: Locale; dark?: boolean }) {
   const rest = here.replace(/^\/(no|en)(?=\/|$)/, "");
   const found = matchModerne(rest);
   const exact = found && !found.pattern ? found.page : null;
-  const section = found && found.page.key !== "home" && found.page.key !== "portal" ? found.page : null;
+  const home = found?.page.key === "home";
+  const section = found && !home && found.page.key !== "portal" ? found.page : null;
   const mark = (x: Page) => (exact?.key === x.key ? "page" : section?.key === x.key ? "true" : undefined);
   const acct = account(session, locale);
   const interest = moderneLink(page("interest"), locale) ?? p("/interesse");
@@ -108,7 +110,7 @@ export default function Nav({ locale }: { locale: Locale; dark?: boolean }) {
               <span className="sr-only">{no ? "Du er her: " : "You are here: "}</span>
               {label(section, locale, true)}
             </Link>
-          ) : (
+          ) : home ? null : (
             <p className={`hidden lg:block max-w-[44ch] text-[15px] leading-snug text-center transition-opacity ${scrolled ? "opacity-0" : "opacity-80"}`}>
               {no ? `Planlagt som Norges mest energivennlige boligfelt. Rundt ${FACT.plots} boliger på Knotten i Lindesnes, over Sniksfjorden.` : `Planned as Norway's most energy-friendly housing development. About ${FACT.plots} homes on Knotten in Lindesnes, above Sniksfjorden.`}
             </p>

@@ -51,7 +51,7 @@ export default function WalkHud({ locale, plots, fits, live, onExit, variant = "
 
   // where you are, and what this house is
   const whereCard = (
-    <div className={k ? ks.card : "absolute left-3 top-3 md:left-5 md:top-5 pointer-events-auto glass px-3.5 py-2.5 max-w-[min(78vw,360px)]"}>
+    <div className={k ? ks.card : "pointer-events-auto glass px-3.5 py-2.5"}>
       <div className={k ? ks.whereSub : "text-[12px] text-white/65"}>{plot ? `${no ? "Tomt" : "Plot"} ${plotNo(plot.id)} · ${no ? "eksempelhus i modellen" : "example house in the model"}` : ""}</div>
       <div className={k ? ks.room : "display text-[20px] md:text-[22px] leading-tight"}>{w.flying ? (no ? "På vei til huset ..." : "On the way to the house ...") : where}{levelName && !w.flying ? <span className={k ? ks.level : "text-[14px] text-white/70"}>{` · ${levelName}`}</span> : null}</div>
       <button className={k ? `linkish ${ks.about}` : "mt-1 text-[12.5px] underline text-white/75 hover:text-white"} onClick={() => setAbout((a) => !a)}>{no ? "Om huset" : "About the house"}</button>
@@ -69,8 +69,8 @@ export default function WalkHud({ locale, plots, fits, live, onExit, variant = "
 
   return (
     <div className={k ? ks.hud : "absolute inset-0 pointer-events-none"}>
-      {/* (in Klassisk the figures stand under the card, so the two never cover the plan of the floor) */}
-      {k ? <div className={ks.leftCol}>{whereCard}{livePanel}</div> : whereCard}
+      {/* the left column: where you are, with the house's figures under it, so the two never cover the plan of the floor */}
+      <div className={k ? ks.leftCol : "absolute left-3 top-3 md:left-5 md:top-5 flex flex-col items-start gap-2.5 max-w-[min(78vw,360px)] max-h-[calc(100%-150px)] overflow-auto pointer-events-none"}>{whereCard}{livePanel}</div>
 
       {/* the plan of the floor you are on */}
       {fit && (
@@ -114,8 +114,6 @@ export default function WalkHud({ locale, plots, fits, live, onExit, variant = "
         </div>
       </div>
 
-      {!k && livePanel}
-
       {touch && <Stick k={k} no={no} />}
     </div>
   );
@@ -133,7 +131,7 @@ function LivePanel({ live, locale, k }: { live: LiveFigures; locale: Locale; k: 
     [live.share >= 0 ? (no ? "Fra naboene" : "From neighbours") : (no ? "Til naboene" : "To neighbours"), `${n1(Math.abs(live.share))} kW`],
   ];
   return (
-    <div className={k ? ks.live : "absolute right-3 bottom-[148px] md:right-5 md:bottom-[218px] pointer-events-auto glass px-3.5 py-2.5 w-[210px] hidden sm:block"} onPointerDown={(e) => e.stopPropagation()}>
+    <div className={k ? ks.live : "pointer-events-auto glass px-3.5 py-2.5 w-[210px] hidden sm:block"} onPointerDown={(e) => e.stopPropagation()}>
       <div className={k ? ks.liveHead : "text-[12px] text-white/65"}>{no ? "Dette huset nå, i simuleringen" : "This house now, in the simulation"}</div>
       <dl className={k ? ks.liveList : "mt-1 grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 text-[13.5px]"}>
         {rows.map(([key, v]) => (<Fragment key={key}><dt className={k ? undefined : "text-white/80"}>{key}</dt><dd className={k ? undefined : "text-right tabular-nums"}>{v}</dd></Fragment>))}

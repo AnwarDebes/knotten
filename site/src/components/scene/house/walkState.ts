@@ -41,12 +41,16 @@ export const walkState = {
   version: 0,
 };
 
-/** The visited house at the simulation's hour. */
+/**
+ * The visited house at the simulation's hour, in one shape for everyone: the page works the figures out
+ * (walk/liveFigures.ts); the house's screens (screens.ts), the walk's panel (walk/WalkHud.tsx) and its spots
+ * (walk/hotspots.ts) read them.
+ */
 export type LiveFigures = {
   pv: number; use: number; hp: number; soc: number; grid: number; share: number;
   temp: number; price: number; cop: number; hour: number; day: number; month: number;
   yearPv: number; yearUse: number; selfUse: number; batteryKwh: number; kwp: number; offline: boolean;
-  /** what the house's own electricity meter has counted since 1 January up to this hour, kWh (the meter's screen shows it) */
+  /** what the house's own electricity meter has counted since 1 January up to this hour, kWh (the meter's screen and its spot in the walk show it) */
   meterKwh: number;
 };
 

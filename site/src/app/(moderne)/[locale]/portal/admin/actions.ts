@@ -15,6 +15,8 @@ import type { Design } from "@/lib/design";
 
 /** The administration: leads, plots, news, settings, and who may use the portal. */
 export type AdminState = { error?: string; ok?: string; link?: string } | undefined;
+/** The answer to "Gjør til beboer": also which account it was about, and the plot that became the home. */
+export type PromoteState = (NonNullable<AdminState> & { id?: string; plot?: string }) | undefined;
 
 const str = (fd: FormData, k: string, max = 400) => String(fd.get(k) ?? "").trim().slice(0, max);
 const en = (fd: FormData) => fd.get("lang") === "en";
@@ -346,13 +348,16 @@ export async function setUserStatus(fd: FormData) {
  * A buyer becomes a resident: the account turns into a project account with the resident area and the plot that
  * is their home, and from then on logs into the portal instead of Min side. Only an active account (a person who
  * has logged in) can be promoted; the leads, followed plots and saved houses stay as they are.
+ *
+ * The account leaves the list of buyer accounts with this, and its form goes with it. So the answer says which
+ * account it was about and names the person: the page keeps it by the list (brukere/Promote.tsx).
  */
-export async function promoteMember(_: AdminState, fd: FormData): Promise<AdminState> {
+export async function promoteMember(_: PromoteState, fd: FormData): Promise<PromoteState> {
+  const id = str(fd, "id", 40);
   try {
     const me = await actor();
-    const id = str(fd, "id", 40);
     const plot = str(fd, "plot", 20);
-    if (!/^plot-\d{2}$/.test(plot)) return { error: say(fd, "Velg tomten som blir hjemmet.", "Choose the plot that becomes the home.") };
+    if (!PLOT_ID.test(plot)) return { id, error: say(fd, "Velg tomten som blir hjemmet.", "Choose the plot that becomes the home.") };
     const out = await changeAuth((st) => {
       const a = findById(st, id);
       if (!a || a.kind !== "member") return "missing";
@@ -363,15 +368,24 @@ export async function promoteMember(_: AdminState, fd: FormData): Promise<AdminS
       a.areas = ["resident"];
       a.plot = plot;
       audit(st, me.email, `endret ${a.email}: beboer på tomt ${Number(plot.slice(5))}`);
-      return "ok";
+      return { name: a.name || a.email };
     });
-    if (out === "missing") return { error: say(fd, "Kjøperkontoen finnes ikke lenger.", "The buyer account no longer exists.") };
-    if (out === "forbidden") return { error: say(fd, "Du har ikke tilgang til å gjøre dette.", "You do not have access to do this.") };
-    if (out === "inactive") return { error: say(fd, "Bare en aktiv konto kan bli beboer. Personen må ha bekreftet og logget inn først.", "Only an active account can become a resident. The person must have confirmed and logged in first.") };
+    if (out === "missing") return { id, error: say(fd, "Kjøperkontoen finnes ikke lenger.", "The buyer account no longer exists.") };
+    if (out === "forbidden") return { id, error: say(fd, "Du har ikke tilgang til å gjøre dette.", "You do not have access to do this.") };
+    if (out === "inactive") return { id, error: say(fd, "Bare en aktiv konto kan bli beboer. Personen må ha bekreftet og logget inn først.", "Only an active account can become a resident. The person must have confirmed and logged in first.") };
     done();
-    return { ok: say(fd, `Kontoen er nå beboer på tomt ${Number(plot.slice(5))}. Neste innlogging går til portalen, Mitt hjem.`, `The account is now a resident of plot ${Number(plot.slice(5))}. The next login goes to the portal, My home.`) };
+    const n = Number(plot.slice(5));
+    return {
+      id,
+      plot,
+      ok: say(
+        fd,
+        `${out.name} er nå beboer på tomt ${n} og står blant prosjektkontoene. Neste innlogging går til portalen, Mitt hjem.`,
+        `${out.name} is now a resident of plot ${n} and is listed with the project accounts. The next login goes to the portal, My home.`,
+      ),
+    };
   } catch (e) {
-    return refused(e, fd);
+    return { id, ...refused(e, fd) };
   }
 }
 
