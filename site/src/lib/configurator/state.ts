@@ -1,11 +1,9 @@
 /**
  * The configurator's state: defaults, cleaning, the shareable link and the summary rows.
- * Pure functions, no React, no Node: the pages, the 3D preview, the API routes and the tests all use them.
+ * Pure functions, no React, no Node: the pages, the 3D preview and the API routes all use them.
  */
 import { OPTIONS, OPTION_BY_ID, STEPS } from "./catalog";
 import type { Choice, HouseConfig, Lang, OptionDef, PriceTable, SummaryRow } from "./types";
-
-export const EMPTY: HouseConfig = { v: 1, plot: null, sel: {} };
 
 /** Plot facts the rules need. lowerFloor comes from public/twin/houses.json (18 of 30 houses have one). */
 export type PlotFacts = { id: string; index: number; lowerFloor: boolean };

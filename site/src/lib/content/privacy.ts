@@ -27,12 +27,23 @@ export type PrivacyContext = {
   minSideHref: string;
 };
 
+/** The mail server named in SMTP_URL ("smtp.example.com"), or null when there is none to read. */
+function smtpHost(url: string | undefined): string | null {
+  try {
+    return (url?.trim() && new URL(url.trim()).hostname) || null;
+  } catch {
+    return null;
+  }
+}
+
 /**
- * Which email service and spam protection are switched on, read from the server's settings. Whether Knotten AI
- * uses a language model comes from the assistant itself (MODEL_ON in lib/server/assistant.ts).
+ * Which email service and spam protection are switched on, read from the server's settings as lib/server/mail.ts
+ * reads them: Resend when RESEND_API_KEY is set, otherwise the mail server in SMTP_URL, each with MAIL_FROM. Whether
+ * Knotten AI uses a language model comes from the assistant itself (MODEL_ON in lib/server/assistant.ts).
  */
 export function privacySwitches(env: Record<string, string | undefined> = process.env) {
-  const mailProvider = env.RESEND_API_KEY && env.MAIL_FROM ? "Resend" : env.SMTP_HOST ? env.SMTP_HOST : null;
+  const from = env.MAIL_FROM?.trim();
+  const mailProvider = !from ? null : env.RESEND_API_KEY?.trim() ? "Resend" : smtpHost(env.SMTP_URL);
   const turnstileOn = !!(env.TURNSTILE_SECRET_KEY && env.NEXT_PUBLIC_TURNSTILE_SITE_KEY);
   return { mailProvider, turnstileOn };
 }

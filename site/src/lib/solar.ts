@@ -35,14 +35,6 @@ export function solarPosition(date: Date, lat = SITE.lat, lon = SITE.lon) {
   return { elevation, azimuth: az };
 }
 
-/** Direction *to* the sun in three.js space (x east, y up, z = -north). */
-export function sunVector(date: Date) {
-  const { elevation, azimuth } = solarPosition(date);
-  const el = (Math.max(elevation, -8) * Math.PI) / 180;
-  const az = (azimuth * Math.PI) / 180;
-  return { x: Math.cos(el) * Math.sin(az), y: Math.sin(el), z: -Math.cos(el) * Math.cos(az), elevation, azimuth };
-}
-
 /** Build a UTC date from a CET/CEST wall-clock time at Knotten. */
 export function knottenTime(year: number, month: number, day: number, hourLocal: number) {
   const summer = month >= 4 && month <= 10; // close enough for the dial; DST edges do not matter here

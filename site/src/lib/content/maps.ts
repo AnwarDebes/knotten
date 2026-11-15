@@ -129,14 +129,6 @@ export const MAP: Record<MapKey, SharedMap> = {
 /** The order to read them in, from the coast down to the plot: the map journeys and the maps pages follow it. */
 export const MAP_ORDER: MapKey[] = ["siktlinje", "terreng", "eiendom", "omrade", "bygg", "skisse", "profil", "grillbu"];
 
-/** One map in one language, in the shape the Klassisk pages have always read (src/lib/klassisk/maps.ts). */
-export type LocalMap = { src: string; w: number; h: number; alt: string; title: string; text: string; credit: string };
-
-export function mapIn(key: MapKey, lang: Lang): LocalMap {
-  const m = MAP[key];
-  return { src: m.src, w: m.w, h: m.h, alt: m.alt[lang], title: m.title[lang], text: m.text[lang], credit: m.credit[lang] };
-}
-
 /** "Kart 3 av 8" / "Map 3 of 8". */
 export const mapCount = (i: number, lang: Lang) => (lang === "no" ? `${i + 1} av ${MAP_ORDER.length}` : `${i + 1} of ${MAP_ORDER.length}`);
 

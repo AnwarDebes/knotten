@@ -500,4 +500,3 @@ export function interiorMaterials(screen: THREE.Texture) {
     screen: scr,
   };
 }
-export type InteriorMaterials = ReturnType<typeof interiorMaterials>;

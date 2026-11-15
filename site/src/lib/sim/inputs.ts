@@ -36,12 +36,6 @@ export function weatherOf(j: EnergyInputs): Weather {
   };
 }
 
-let cached: Promise<EnergyInputs> | null = null;
-export function loadInputs(): Promise<EnergyInputs> {
-  if (!cached) cached = fetch("/twin/energy.json").then((r) => { if (!r.ok) throw new Error(`energy.json ${r.status}`); return r.json(); }).catch((e) => { cached = null; throw e; });
-  return cached;
-}
-
 /** UTC hour of the year (0..8759) to a Date in the simulation year. */
 export function hourDate(year: number, h: number) {
   return new Date(Date.UTC(year, 0, 1) + h * 3600 * 1000);

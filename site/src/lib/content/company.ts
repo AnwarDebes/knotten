@@ -1,4 +1,4 @@
-import { CONTACT, INTERNSHIP, OFFICES, fmt, type Lang, type T } from "@/lib/facts";
+import { CONTACT, INTERNSHIP, OFFICES, fmt, type Lang } from "@/lib/facts";
 import type { CompanyFacts } from "@/lib/store";
 
 /**
@@ -13,8 +13,6 @@ export type CompanyBlock = {
   uia: { title: string; text: string };
   registry?: { label: string; href: string };
 };
-
-const t = (lang: Lang, v: T) => v[lang];
 
 /** The organisation number's own page in Brønnøysundregistrene, so anyone can check it. */
 export const brregUrl = (org: string) => `https://virksomhet.brreg.no/nb/oppslag/enheter/${org.replace(/\D/g, "")}`;
@@ -57,6 +55,3 @@ export function companyBlock(lang: Lang, company: CompanyFacts, orgDisplay: stri
 export function orgLine(lang: Lang, orgDisplay: string): string {
   return orgDisplay ? `${lang === "no" ? "Org.nr." : "Org. no."} ${orgDisplay}` : "";
 }
-
-export const ROLE: T = CONTACT.role;
-export const roleText = (lang: Lang) => t(lang, ROLE);

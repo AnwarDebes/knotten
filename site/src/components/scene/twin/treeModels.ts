@@ -359,5 +359,4 @@ export function shadowCone() {
   return g;
 }
 
-export const SPECIES_NAMES = ["spruce", "pine", "birch", "oak"] as const;
 export const MODELS = [spruce, pine, birch, oak];

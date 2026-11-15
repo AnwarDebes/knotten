@@ -11,7 +11,6 @@ import { PATTERNS, matchKlassisk, matchModerne, type Match } from "./pages";
  * No Node or browser imports here: the proxy, the server and the client all read this file.
  */
 export type Design = "klassisk" | "moderne";
-export const DEFAULT_DESIGN: Design = "klassisk";
 export const DESIGN_COOKIE = "knotten_design";
 
 /** The Moderne path (after the language) for a Klassisk page path without /english, or null when the registry has none. */

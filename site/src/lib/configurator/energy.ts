@@ -5,7 +5,7 @@
  * public/twin/energy.json) the house runs hour by hour through the same simulation as the energy pages
  * (src/lib/sim): its plot's roof pitch, direction and measured terrain horizon, the buyer's choices, and the energy
  * budget's household and heat. The house is counted on its own: no sharing with the neighbours, no shared plant.
- * Without `sim` (the first paint, before the page's worker answers) it is a quick overslag from the budget's own
+ * Without `sim` (the first paint, before the page's worker answers) it is a quick estimate from the budget's own
  * figures, with the bill and the power cut left open. Every figure is provisional, and the method text says how
  * each choice is counted. The assumptions the budget does not have are in src/lib/facts/model.ts.
  */
@@ -19,7 +19,7 @@ import { MODEL_MODULES } from "./palette";
 import { resolved, type PlotFacts } from "./state";
 import type { EnergyEstimate, EnergyOptions, HouseConfig, T2 } from "./types";
 
-/** The simulation's inputs, loaded once (the page's worker, the server or a test passes them in). */
+/** The simulation's inputs, loaded once (the page's worker or the server passes them in). */
 export type SimInputs = { inputs: EnergyInputs; weather: Weather };
 
 type Prices = NonNullable<EnergyOptions["prices"]>;

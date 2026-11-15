@@ -112,7 +112,3 @@ export function setHidden(i: number, hidden: boolean) {
 export function isHidden(i: number) {
   return i >= 0 && i < MAX_HOUSES && data[at(i, LOOK.flags)] > 0.5;
 }
-
-export function modulesOf(i: number) {
-  return i >= 0 && i < MAX_HOUSES ? data[at(i, LOOK.style) + 2] : MODEL_MODULES;
-}

@@ -90,16 +90,6 @@ export function Notice({ tone = "info", children }: { tone?: "info" | "ok" | "wa
   return <div className={`rounded-[var(--radius)] px-4 py-3 text-[14px] ${cls}`} role={tone === "warn" ? "alert" : undefined}>{children}</div>;
 }
 
-export function Field({ label, children, hint, className = "" }: { label: string; children: React.ReactNode; hint?: string; className?: string }) {
-  return (
-    <label className={`grid gap-1.5 text-[13.5px] ${className}`}>
-      <span className="text-ink-2 font-medium">{label}</span>
-      {children}
-      {hint && <span className="text-[12.5px] text-muted">{hint}</span>}
-    </label>
-  );
-}
-
 /** Dates and times for people in Norway, whatever the server's clock is set to. */
 export function when(iso: string | undefined, locale: "no" | "en", withTime = true) {
   if (!iso) return "";

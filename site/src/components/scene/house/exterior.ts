@@ -249,7 +249,7 @@ export function drawMovable(B: Builders, m: Movable, floorY: number, seed: numbe
 /** Ground height relative to the main floor at a house-local point. */
 export type GroundFn = (u: number, v: number) => number;
 
-/** A carport with storage beside the house (house frame), from the placement check (site.ts). */
+/** A carport with storage beside the house (house frame), from the placement check (custom.ts). */
 export type Carport = {
   u0: number; u1: number; v0: number; v1: number;
   /** the slab's top above the main floor */

@@ -119,11 +119,6 @@ export function customInterior(o: HouseOptions) {
   return o.flip || o.lower !== "finished" || o.stove !== "none" || o.terrace !== "model" || !!o.floor || o.plank !== "model" || !!o.wall || !!o.kitchen || !!o.worktop || o.bath !== "model";
 }
 
-/** A stable key of what the house's own geometry depends on (rebuild when it changes). */
-export function geometryKey(o: HouseOptions) {
-  return [o.flip, o.terrace, o.railing, o.parking, o.chargers, o.stove, o.lower].join("|");
-}
-
 /** A stable key of what the inside depends on. */
 export function interiorKey(o: HouseOptions) {
   return [o.flip, o.lower, o.stove, o.terrace, o.floor, o.plank, o.wall, o.kitchen, o.worktop, o.bath, o.bathColour].join("|");

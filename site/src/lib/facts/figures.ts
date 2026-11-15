@@ -1,12 +1,11 @@
-import { BUDGET, EED, OFFICES, SHARED_PANELS, STATUS_SOLAR } from "./energy";
-import type { SourceId } from "./sources";
+import { BUDGET, OFFICES, SHARED_PANELS } from "./energy";
 import type { T } from "./core";
 
 /**
- * The headline figures, once, for both designs. Moderne shows them as figure cards (ASSUMPTIONS,
- * `assumption()`), Klassisk as the "Kilder og forutsetninger" table (FIGURES). Both lists read the
- * same values below, so a figure changed here changes in both designs. Checked against
- * knotten-source-informations on 27 September 2026.
+ * The headline figures, once, for both designs: the facts themselves (FACT) and the figure cards with their
+ * source, date and provisional flag (ASSUMPTIONS, `assumption()`). The "Kilder og forutsetninger" table of both
+ * designs (src/lib/content/sources.ts) reads the same values, so a figure changed here changes everywhere.
+ * Checked against knotten-source-informations on 27 September 2026.
  */
 export const FACT = {
   plots: 30, // the owner: "rundt 30 tomter"
@@ -39,9 +38,8 @@ export const FACT = {
 };
 
 const nb = (n: number) => n.toLocaleString("nb-NO");
-const about = (n: number, step: number) => `ca. ${nb(Math.round(n / step) * step)}`;
 
-/** Moderne's figure cards. Unit, source and label are in both languages, so the English pages stay English. */
+/** The figure cards. Unit, source and label are in both languages, so the English pages stay English. */
 export type Assumption = {
   key: string;
   value: number;
@@ -93,33 +91,3 @@ export function assumption(key: string): Assumption {
   if (!a) throw new Error(`missing assumption ${key}`);
   return a;
 }
-
-/** Klassisk's "Kilder og forutsetninger" table: one row per number, same rows as before. */
-export const FIGURES: {
-  what: string;
-  value: string;
-  unit: string;
-  src: SourceId;
-  status: "Fastsatt" | "Foreløpig" | "Beregnet" | "Verifisert";
-  owner: string;
-}[] = [
-  { what: "Antall tomter", value: `rundt ${FACT.plots}`, unit: "tomter", src: "sigve30", status: "Foreløpig", owner: "Prosjekteier" },
-  { what: "Samlet areal for eiendommene", value: nb(FACT.parcel_m2), unit: "m²", src: "areal", status: "Fastsatt", owner: "Kartverket og prosjekteier" },
-  { what: "Maks stigning på vei, målet", value: nb(FACT.road_grade_pct), unit: "%", src: "vei", status: "Foreløpig", owner: "Prosjekteier" },
-  { what: "Terrengprofil, lengde", value: nb(FACT.profile_m), unit: "m", src: "profil", status: "Fastsatt", owner: "Norgeskart" },
-  { what: "Terrengprofil, høyde", value: `0 til ${FACT.knotten_m}`, unit: "moh", src: "profil", status: "Fastsatt", owner: "Norgeskart" },
-  { what: "Kontorer ferdig i dag", value: nb(FACT.offices_now), unit: "kontorer", src: "kontor", status: "Fastsatt", owner: "Prosjekteier" },
-  { what: "Kontorer etter utvidelse", value: nb(FACT.offices_after), unit: "kontorer", src: "kontor", status: "Fastsatt", owner: "Prosjekteier" },
-  { what: "Felles solanlegg, scenario", value: `ca. ${FACT.panels}`, unit: "paneler", src: "paneler", status: "Foreløpig", owner: "Prosjekteier" },
-  { what: "Samlet energibehov", value: `${about(BUDGET.demand_total_kwh, 10000)} ±${BUDGET.demand_range_pct} %`, unit: "kWh/år", src: "budsjett", status: "Foreløpig", owner: "Energisporet" },
-  { what: "Selvforsyning strøm", value: nb(BUDGET.results.self_sufficiency_pct), unit: "%", src: "selvforsyning", status: "Foreløpig", owner: "Energisporet" },
-  { what: "Solstrøm fra 1 350 m²", value: about(STATUS_SOLAR.annual_kwh, 1000), unit: "kWh/år", src: "sol", status: "Foreløpig", owner: "Energisporet" },
-  { what: "Energibrønner", value: `${EED.boreholes} x ${Math.round(EED.depth_m)}`, unit: "stk x m", src: "eed", status: "Beregnet", owner: "Energisporet" },
-  { what: "Besparelse per bolig", value: about(BUDGET.results.saving_per_home_nok, 1000), unit: "kr/år", src: "besparelse", status: "Foreløpig", owner: "Energisporet" },
-  { what: "Solstrøm i energiregnskapet", value: nb(BUDGET.pv.annual_kwh), unit: "kWh/år", src: "sol", status: "Foreløpig", owner: "Energisporet" },
-  { what: "Batterikapasitet samlet", value: nb(BUDGET.battery.total_kwh), unit: "kWh", src: "budsjett", status: "Foreløpig", owner: "Energisporet" },
-  { what: "CO₂ spart per år", value: about(BUDGET.results.co2_saved_kg, 1000), unit: "kg", src: "co2", status: "Foreløpig", owner: "Energisporet" },
-  { what: "Løkkeheia, høyde", value: nb(FACT.lokkeheia_m), unit: "moh", src: "hoyder", status: "Fastsatt", owner: "Norkart" },
-  { what: "Audna, lengde", value: nb(FACT.audna_km), unit: "km", src: "audna", status: "Verifisert", owner: "Store norske leksikon" },
-  { what: "Vigeland, innbyggere 2026", value: nb(FACT.vigeland_pop), unit: "personer", src: "vigeland", status: "Verifisert", owner: "SSB" },
-];

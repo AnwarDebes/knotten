@@ -17,8 +17,6 @@ export type FaqContext = {
   privacyHref: string;
 };
 
-export const FAQ_IDS = ["for-sale", "when", "plot-or-house", "price", "sea-view", "zoning-plan", "interest", "who"] as const;
-
 export function faq(lang: Lang, ctx: FaqContext): FaqItem[] {
   const no = lang === "no";
   const status = (ctx.status || RELEASE_NOTE[lang]).trim();

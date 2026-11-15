@@ -1,4 +1,4 @@
-import { FACT, WORK_PLAN, cap, weeks, type Lang, type SourceId, type T } from "@/lib/facts";
+import { WORK_PLAN, cap, weeks, type Lang, type SourceId, type T } from "@/lib/facts";
 
 /**
  * Where the project stands and what is not decided yet, for the "Status og spørsmål" pages of both designs.
@@ -74,6 +74,3 @@ export const OPEN_QUESTIONS: { title: T; text: T; src?: SourceId }[] = [
     src: "regulering",
   },
 ];
-
-/** "30 tomter i fire rekker" from the facts, for the page's lede. */
-export const fieldLine = (lang: Lang) => (lang === "no" ? `rundt ${FACT.plots} tomter` : `about ${FACT.plots} plots`);

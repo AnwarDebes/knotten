@@ -6,7 +6,7 @@ import { hmac, safeEqual } from "./server/crypto";
 import { ProblemError } from "./errors";
 import type { Design } from "./design";
 import { loginPagePath } from "./member-paths";
-import { AUTH_COOKIE, can, isAdmin, LEGACY_AUTH_COOKIE, LEGACY_VIEW_COOKIE, PREVIEWS, VIEW_COOKIE, WHO_COOKIE, type Area, type Role, type Session } from "./auth-shared";
+import { AUTH_COOKIE, can, isAdmin, LEGACY_AUTH_COOKIE, LEGACY_VIEW_COOKIE, PREVIEWS, VIEW_COOKIE, WHO_COOKIE, type Area, type Session } from "./auth-shared";
 
 /**
  * Sessions: after a correct password the server sets a signed, httpOnly cookie that scripts in
@@ -123,10 +123,6 @@ export const getSession = cache(async (): Promise<Session | null> => {
   }
 });
 
-export async function getRole(): Promise<Role> {
-  return (await getSession())?.role ?? "public";
-}
-
 /**
  * Set the cookies after a successful login (Server Functions only). `design` is where the person logged in, so a
  * later logout lands on the same design's login page; when not given, the current session's design is kept.
@@ -235,19 +231,13 @@ export function afterLogout(fd: FormData, sessionDesign?: Design) {
 }
 
 /**
- * For portal pages and their actions: the session, or a redirect to the login page (with the way
- * back). When `area` is given and the person may not open it, the result is null and the page
- * shows "no access" instead.
+ * For portal pages: the session, or a redirect to the login page (with the way back). Whether the person may
+ * open the page's area is checked by portalPage (lib/server/portal.ts), which shows "no access" otherwise.
  */
 export async function requireSession(locale: string, here: string): Promise<Session> {
   const s = await getSession();
   if (!s) redirect(`/${locale}/login?next=${encodeURIComponent(here)}`);
   return s;
-}
-
-export async function requireArea(locale: string, here: string, area: Area | "admin" | "superadmin"): Promise<{ session: Session; ok: boolean }> {
-  const session = await requireSession(locale, here);
-  return { session, ok: can(session, area) };
 }
 
 /**

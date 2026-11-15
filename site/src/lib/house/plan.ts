@@ -297,8 +297,3 @@ export function roomArea(r: Room, lower: boolean) {
   if (r.id === "hall" && lower) return a - (STAIR.u1 - STAIR.u0) * (r.rect.v1 - STAIR.top);
   return a;
 }
-
-/** Window and door area in the outer walls (for the envelope figures). */
-export function glazedArea(lower: boolean) {
-  return OPENINGS.filter((o) => keep(o, lower)).reduce((s, o) => s + o.w * (o.z1 - o.z0), 0);
-}

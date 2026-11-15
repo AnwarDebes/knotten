@@ -1,6 +1,7 @@
 {
-  "name": "site",
+  "name": "knotten",
   "version": "0.1.0",
+  "description": "Knotten: the website, the project portal and the measured 3D twin for the planned homes at Rødberg in Lindesnes",
   "private": true,
   "scripts": {
     "dev": "next dev",

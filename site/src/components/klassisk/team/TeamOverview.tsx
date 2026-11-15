@@ -19,7 +19,7 @@ const COPY = {
   },
 };
 
-/** Klassisk's team page: the project owner first, then the project group with their tracks. Norwegian at /teamet. */
+/** Klassisk's team page, in Norwegian (/teamet) and English (/english/teamet): the project owner first, then the project group with their tracks. */
 export default function TeamOverview({ locale }: { locale: Lang }) {
   const c = COPY[locale];
   const owner = TEAM.find((p) => p.group === "owner");

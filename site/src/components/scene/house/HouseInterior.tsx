@@ -3,7 +3,7 @@ import { use, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 import { useFrame, useThree } from "@react-three/fiber";
 import type { Plot } from "@/lib/types";
-import { HOUSE, OPENINGS, keep, vaultAt, type HouseFit, type RoomId } from "@/lib/house/plan";
+import { HOUSE, vaultAt, type HouseFit, type RoomId } from "@/lib/house/plan";
 import { customInterior, interiorKey } from "@/lib/house/options";
 import { Builders } from "./kit";
 import { fitFor, houseMatrix, loadHouses } from "./frame";
@@ -263,9 +263,4 @@ function lightLook(c: CustomBuild, look: InteriorLook): LightLook {
   const sky = (t: number) => (t + Math.sin(2 * t) / 2) / Math.PI;
   const lowerShade = depth > HOUSE.terraceDepth ? sky(Math.atan2(1.3, depth)) / sky(Math.atan2(1.3, HOUSE.terraceDepth)) : undefined;
   return { rho, lowerShade };
-}
-
-/** Openings of the house that a visitor walks through (for the walk's door logic and the plan). */
-export function walkDoors(lower: boolean) {
-  return OPENINGS.filter((o) => keep(o, lower) && (o.kind === "entry" || o.kind === "slide" || o.kind === "garden"));
 }

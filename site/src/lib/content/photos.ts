@@ -98,8 +98,6 @@ export const PHOTO: Record<PhotoKey, SharedPhoto> = {
 
 /** The project owner's photos of the view, in the order the pages show them. */
 export const VIEW_PHOTOS: PhotoKey[] = ["view", "view2", "viewWide", "summer"];
-/** The photos of the area from Wikimedia Commons, from the fjord inland. */
-export const AREA_PHOTOS: PhotoKey[] = ["sniksfjorden", "spangereid", "vigeland", "snig", "audna"];
 
 /** "Rolfsteinar, Wikimedia Commons", or the company for the owner's own photos. */
 export function photoCredit(p: SharedPhoto): string {

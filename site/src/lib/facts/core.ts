@@ -5,7 +5,7 @@
  */
 export type Lang = "no" | "en";
 
-/** A text in both languages. Klassisk is Norwegian only and reads `.no`. */
+/** A text in both languages. */
 export type T = { no: string; en: string };
 
 /** How sure a figure is, in the words the "Kilder og forutsetninger" page uses. */

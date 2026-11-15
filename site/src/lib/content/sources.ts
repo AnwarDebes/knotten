@@ -20,9 +20,8 @@ import {
 
 /**
  * "Kilder og forutsetninger" / "Sources and assumptions" in both designs: one row per number the website shows, with
- * its value, unit, status, who owns it and the source behind its chip. The rows bring together the figure cards
- * (ASSUMPTIONS) and the old Klassisk table (FIGURES), every value read from src/lib/facts, in both languages.
- * A figure added to a page gets a row here too.
+ * its value, unit, status, who owns it and the source behind its chip. Every value is read from src/lib/facts, in
+ * both languages. A figure added to a page gets a row here too.
  */
 
 // ------------------------------------------------------------------ sources the facts module does not hold yet
@@ -142,9 +141,6 @@ export const SOURCE_GROUPS: SourceGroup[] = [
     ],
   },
 ];
-
-/** Every row, in table order. */
-export const SOURCE_ROWS: SourceRow[] = SOURCE_GROUPS.flatMap((g) => g.rows);
 
 // ------------------------------------------------------------------ the page around the table
 /** The four statuses, in the order the legend explains them. */

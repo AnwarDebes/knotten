@@ -50,7 +50,7 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
-  // the floating "N" badge in dev confused reviewers; it never ships to production anyway
+  // no floating "N" badge in dev: it is not part of the site, and it never ships to production anyway
   devIndicators: false,
   poweredByHeader: false,
   // next dev must not write tool instruction files into the project
@@ -69,7 +69,7 @@ const nextConfig: NextConfig = {
   // the server reads only public/data at run time: the 3D, the images and the documents stay out of the server
   // bundles, and so do the private records (password hashes, the session secret, uploads), whatever is on disk
   outputFileTracingExcludes: {
-    "/*": ["./data/private/**/*", "./data/leads.json", "./public/twin/**/*", "./public/renders/**/*", "./public/img/**/*", "./public/assets/**/*", "./public/docs/**/*", "./public/draco/**/*", "./public/models/**/*"],
+    "/*": ["./data/private/**/*", "./data/leads.json", "./public/twin/**/*", "./public/renders/**/*", "./public/img/**/*", "./public/assets/**/*", "./public/docs/**/*", "./public/draco/**/*"],
   },
   async headers() {
     return [

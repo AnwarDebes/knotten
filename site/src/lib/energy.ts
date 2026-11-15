@@ -2,7 +2,7 @@
  * The portal's energy figures, on the same model as the energy simulator (src/lib/sim): each roof's
  * real pitch, direction and horizon, the Perez sky model and the PVGIS module model for the panels,
  * the energy budget's use in the rhythm of real NO2 households, and the heat pumps on the borehole
- * field. The functions keep their old names and shapes, so the portal pages did not change.
+ * field.
  *
  *   pvForPlot   a plot's solar power at an instant under a typical sky (0.75 of a clear sky), kW
  *   loadProfile a home's average use at a local hour in a month (household and heat pump), kW
@@ -11,7 +11,7 @@
  */
 import type { EnergyFrame, Plot } from "./types";
 import { solarPosition } from "./solar";
-import { PV_KWP_PER_HOME, BUDGET } from "./facts";
+import { PV_KWP_PER_HOME } from "./facts";
 import energy from "../../public/twin/energy.json";
 import plotsFile from "../../public/data/plots.json";
 import { weatherOf, hourOf, localOf, HOURS, type EnergyInputs } from "./sim/inputs";
@@ -20,8 +20,6 @@ import { runYear, type YearResult } from "./sim/run";
 import { BASE, BUDGET_SCENARIO, homesOf } from "./sim/scenario";
 
 const KWP = PV_KWP_PER_HOME;
-const BATTERY = BUDGET.battery.per_home_kwh;
-const HUB = 400;
 const inputs = energy as unknown as EnergyInputs;
 const YEAR = inputs.year;
 const D2R = Math.PI / 180;
@@ -49,7 +47,7 @@ function clearSky(elevation: number, doy: number) {
 
 const panels = new WeakMap<Plot, ReturnType<typeof preparePanel>>();
 
-/** A plot's solar power (kW) at an instant under a typical sky, 0.75 of a clear sky (as before). */
+/** A plot's solar power (kW) at an instant under a typical sky, 0.75 of a clear sky. */
 export function pvForPlot(plot: Plot, date: Date) {
   const { elevation, azimuth } = solarPosition(date);
   if (elevation <= 0) return 0;
@@ -133,5 +131,3 @@ export function frameFor(plots: Plot[], month: number, day: number, hourLocal: n
   out.field.export_kw = +F.exp[h].toFixed(1);
   return out;
 }
-
-export const CAPACITY = { KWP, BATTERY, HUB };

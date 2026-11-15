@@ -17,9 +17,6 @@ export type Plot = {
 
 export type PlotsFile = { crs_note: string; assumptions: Record<string, string>; plots: Plot[] };
 
-export type Tree = { id: string; x: number; y: number; z: number; h: number; crown: number; species: "spruce" | "pine" | "birch"; rot: number; tint: number; cleared: boolean };
-export type TreesFile = { count: number; cleared_count: number; trees: Tree[] };
-
 export type SceneState = "today" | "cleared" | "built" | "lived";
 
 export type EnergyFrame = {

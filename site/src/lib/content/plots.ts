@@ -40,10 +40,6 @@ export const SORTS: { key: PlotSort; label: T; short: T }[] = [
   { key: "height", label: { no: "Høyde", en: "Elevation" }, short: { no: "Høyde", en: "Elevation" } },
 ];
 
-export function isSort(v: unknown): v is PlotSort {
-  return v === "row" || v === "dec" || v === "sea" || v === "height";
-}
-
 /** Sorted copy: most winter sun, most water in view or highest first; "row" keeps the plots' own order. */
 export function sortPlots<P extends { id: string; dec: number; water: number; ground: number }>(list: P[], by: PlotSort): P[] {
   const out = [...list];
