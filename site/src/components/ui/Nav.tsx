@@ -72,13 +72,16 @@ export default function Nav({ locale }: { locale: Locale; dark?: boolean }) {
     document.documentElement.style.overflow = open ? "hidden" : "";
     return () => { document.documentElement.style.overflow = ""; };
   }, [open]);
-  // the sheet covers the page: Escape closes it and the focus goes back to the button that opened it
+  // the sheet covers the page: Escape closes it and the focus goes back to the button that opened it; when the
+  // keyboard walks on past the last link, the sheet closes, so the focus is never on something hidden under it
   const toggle = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!open) return;
     const key = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); toggle.current?.focus(); } };
+    const away = (e: FocusEvent) => { if (header.current && e.target instanceof Node && !header.current.contains(e.target)) setOpen(false); };
     window.addEventListener("keydown", key);
-    return () => window.removeEventListener("keydown", key);
+    document.addEventListener("focusin", away);
+    return () => { window.removeEventListener("keydown", key); document.removeEventListener("focusin", away); };
   }, [open]);
 
   // the page this is, or the section it belongs to (a plot page belongs to Tomtene)
@@ -95,7 +98,6 @@ export default function Nav({ locale }: { locale: Locale; dark?: boolean }) {
 
   return (
     <>
-    <a className="skip" href="#innhold">{no ? "Hopp til innholdet" : "Skip to content"}</a>
     <header ref={header} className="sticky top-0 z-50 text-bone" style={{ height: "var(--nav-h)" }}>
       <div className={`absolute inset-0 transition-opacity duration-300 ${scrolled && !open ? "opacity-100" : "opacity-0"} bg-bg/85`} style={{ backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" }} />
       <div className="wrap relative h-full grid grid-cols-[auto_1fr_auto] items-center gap-3 sm:gap-6">

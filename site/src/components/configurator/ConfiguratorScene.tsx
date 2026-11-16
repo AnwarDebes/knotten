@@ -92,7 +92,9 @@ const coarseNow = () => window.matchMedia(COARSE).matches;
 
 export default function ConfiguratorScene({ config, plots, view, lang, design, className, onReady, onFailed }: ConfiguratorSceneProps) {
   const t = (k: keyof typeof T) => T[k][lang];
-  const [armed, setArmed] = useState(false);
+  // (the frame around this view mounts it only once the model is wanted: in sight on a computer, after the visitor's
+  // tap on a phone, SceneSlot's useArm3d. So it starts armed, and a phone is not asked a second time)
+  const [armed, setArmed] = useState(true);
   const [ready, setReady] = useState(false);
   const [visible, setVisible] = useState(true);
   const [focus, setFocus] = useState(false);

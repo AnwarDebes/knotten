@@ -45,7 +45,8 @@ export default function Journey({ locale }: { locale: Lang }) {
     };
     const watch = () => {
       if (!alive) return;
-      if (!("IntersectionObserver" in window)) { load(); return; }
+      // a shared view (?tomt, ?dato, ?kl) is what the visitor came for: the stage loads at once and brings itself into sight
+      if (!("IntersectionObserver" in window) || /[?&](tomt|plot|dato|kl)=/.test(window.location.search)) { load(); return; }
       io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io?.disconnect(); load(); } }, { rootMargin: "50% 0px" });
       io.observe(el);
     };

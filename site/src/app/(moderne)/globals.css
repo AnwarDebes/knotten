@@ -136,6 +136,9 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 3px; 
 .dark .seg { background: rgba(255, 255, 255, .12); }
 .dark .seg > button { color: rgba(255, 255, 255, .82); }
 .dark .seg > button[aria-selected="true"] { background: #fff; color: var(--ink); }
+/* the view tabs on the 3D stage: on a phone they wrap inside the frame instead of running out of it */
+.frame.dark .glass .seg { flex-wrap: wrap; max-width: 100%; }
+@media (max-width: 480px) { .frame.dark .glass .seg { border-radius: 18px; } }
 .dark .input { background: rgba(255, 255, 255, .08); color: #fff; border-color: rgba(255, 255, 255, .28); }
 .dark .table th { color: rgba(255, 255, 255, .6); }
 .dark .table th, .dark .table td { border-color: rgba(255, 255, 255, .12); }
@@ -235,6 +238,8 @@ a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 3px; 
 /* the step being shown is marked by its rule; the others are only a little dimmer, so their text still reads (4.5:1) */
 .jstep { padding: clamp(28px, 6vh, 64px) 0; border-top: 1px solid var(--line); opacity: .82; transition: opacity .5s ease, border-color .5s ease; }
 .jstep.on { opacity: 1; border-top-color: var(--fjord); }
+/* the small source button is the one text in a dimmed step that would fall under 4.5:1 */
+.jstep:not(.on) .src { color: #265775; }
 .jstep h3 { font-family: var(--font-display); font-weight: 600; letter-spacing: -.02em; font-size: clamp(22px, 2.2vw, 30px); line-height: 1.1; margin: 6px 0 10px; }
 .jnum { font-size: 12.5px; color: var(--ink-2); letter-spacing: .04em; }
 .jstage { position: sticky; top: calc(var(--nav-h) + 16px); }

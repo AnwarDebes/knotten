@@ -102,7 +102,7 @@ export default function EnergySimulator({ plots, locale, variant = "moderne" }: 
     const el = root.current;
     if (!el) return;
     const nav = navigator as Navigator & { connection?: { saveData?: boolean } };
-    const capable = !window.matchMedia("(pointer: coarse)").matches && !nav.connection?.saveData;
+    const capable = !window.matchMedia("(pointer: coarse)").matches && !nav.connection?.saveData && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const io = new IntersectionObserver((es) => es.forEach((e) => { setVisible(e.isIntersecting); if (e.isIntersecting && capable) setArmed(true); if (!e.isIntersecting) setFocus(false); }), { threshold: 0.1 });
     io.observe(el);
     return () => io.disconnect();

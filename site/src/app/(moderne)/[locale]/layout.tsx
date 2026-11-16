@@ -80,6 +80,8 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   return (
     <html lang={locale === "no" ? "nb" : "en"} data-scroll-behavior="smooth" className={`${bricolage.variable} ${geist.variable} ${cinzel.variable} h-full`}>
       <body className="min-h-full flex flex-col">
+        {/* first in the page, so the keyboard reaches it before the design strip */}
+        <SiteOnly hideOn="portal"><a className="skip" href="#innhold">{locale === "no" ? "Hopp til innholdet" : "Skip to content"}</a></SiteOnly>
         <SiteOnly hideOn="portal"><DesignSwitch current="moderne" locale={locale} /></SiteOnly>
         <main className="flex-1">{children}</main>
         <SiteOnly>

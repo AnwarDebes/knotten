@@ -40,12 +40,15 @@ export default function Header() {
     setShownFor(path);
     setOpen(false);
   }
-  // the open menu closes with Escape, and the focus goes back to the button that opened it
+  // the open menu closes with Escape, and the focus goes back to the button that opened it; when the keyboard walks
+  // on past the last link, the menu closes, so the focus is never on something hidden under it
   useEffect(() => {
     if (!open) return;
     const key = (e: KeyboardEvent) => { if (e.key === "Escape") { setOpen(false); toggle.current?.focus(); } };
+    const away = (e: FocusEvent) => { const top = toggle.current?.closest("header"); if (top && e.target instanceof Node && !top.contains(e.target)) setOpen(false); };
     window.addEventListener("keydown", key);
-    return () => window.removeEventListener("keydown", key);
+    document.addEventListener("focusin", away);
+    return () => { window.removeEventListener("keydown", key); document.removeEventListener("focusin", away); };
   }, [open]);
 
   // the page this is, or the section it belongs to (a plot page belongs to Tomtene)
