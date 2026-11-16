@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { peekLink } from "@/lib/server/accounts";
+import { MAIL_ON } from "@/lib/server/mail";
 import { kHref, type KLocale } from "@/lib/klassisk/locale";
 import { KChoosePasswordForm } from "@/components/klassisk/AuthForms";
 import { KConfirmLinkForm } from "@/components/klassisk/members/Forms";
@@ -58,7 +59,10 @@ export default async function KlassiskPassword({ locale, token }: { locale: KLoc
           <>
             <h1 style={h1}>{no ? "Lenken virker ikke" : "The link does not work"}</h1>
             <p className="lede mt">{no ? "Lenken er ugyldig, allerede brukt eller utløpt. Invitasjoner gjelder i sju dager og lenker for nytt passord i ett døgn. Be administratoren om en ny lenke." : "The link is invalid, already used or expired. Invitations last seven days and password links one day. Ask the administrator for a new link."}</p>
-            <p className="small mt">{m.againSignup} <Link href={registerPath("klassisk", locale)}>{m.createAccount}</Link></p>
+            {/* (a new link by email only where the site can send email) */}
+            {MAIL_ON
+              ? <p className="small mt">{m.againSignup} <Link href={registerPath("klassisk", locale)}>{m.createAccount}</Link></p>
+              : <p className="small mt">{m.againNoMail}</p>}
             <div className="cta-row"><Link className="btn" href={login}>{no ? "Til innlogging" : "To log in"}</Link></div>
           </>
         )}

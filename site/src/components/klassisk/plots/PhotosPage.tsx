@@ -3,6 +3,7 @@ import Link from "next/link";
 import PageHead from "@/components/klassisk/PageHead";
 import Reveal from "@/components/klassisk/Reveal";
 import ProofSlider from "@/components/ui/ProofSlider";
+import SightlineBands from "@/components/charts/SightlineBands";
 import { PHOTO, photoCredit, type PhotoKey } from "@/lib/content/photos";
 import { assumption, fmt, type Assumption } from "@/lib/facts";
 import { kHref, type KLocale } from "@/lib/klassisk/locale";
@@ -36,7 +37,7 @@ function Gallery({ items, locale }: { items: { key: PhotoKey; span: Span }[]; lo
 function Figure({ a, locale }: { a: Assumption; locale: KLocale }) {
   return (
     <div>
-      <b>{fmt(a.value, locale)}<small> {a.unit[locale]}</small></b>
+      <b>{fmt(a.value, locale)}{a.unit[locale].startsWith("°") ? a.unit[locale] : <small> {a.unit[locale]}</small>}</b>
       <span>{a.label[locale]}</span>
       <span className="small">{a.source[locale]}, {a.date}{a.provisional ? ` (${locale === "en" ? "provisional" : "foreløpig"})` : ""}</span>
     </div>
@@ -109,7 +110,7 @@ export default function PhotosPage({ locale }: { locale: KLocale }) {
                 : "Hver stripe er én grad. Mørk blå: siktlinjen når vann lenger unna enn 7 km, altså åpent hav. Fra det høyeste punktet på eiendommen, i stuehøyde, er korridoren 164 til 189 grader (beregnet)."}
             </p>
             <figure className="fig pk-fig">
-              <Image src="/renders/sightline_panorama.png" alt={en ? "Sight line panorama from the highest point of the property: one stripe per degree, dark blue where the sight line reaches open sea" : "Siktpanorama fra det høyeste punktet på eiendommen: én stripe per grad, mørk blå der siktlinjen når åpent hav"} width={905} height={270} unoptimized />
+              <SightlineBands locale={en ? "en" : "no"} labelClass="small" alt={en ? "Sight line panorama from the highest point of the property: one stripe per degree, dark blue where the sight line reaches open sea" : "Siktpanorama fra det høyeste punktet på eiendommen: én stripe per grad, mørk blå der siktlinjen når åpent hav"} />
               <figcaption><span>{en ? "Kartverket DTM 1 m, terrarium 20 and 80 m, refraction k = 1.17. Computed 2026-09-05." : "Kartverket DTM 1 m, terrarium 20 og 80 m, refraksjon k = 1,17. Beregnet 2026-09-05."}</span></figcaption>
             </figure>
           </Reveal>

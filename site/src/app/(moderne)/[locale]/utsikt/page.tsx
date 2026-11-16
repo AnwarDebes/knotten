@@ -3,6 +3,7 @@ import type { Locale } from "@/lib/i18n";
 import Nav from "@/components/ui/Nav";
 import PageHead from "@/components/ui/PageHead";
 import ProofSlider from "@/components/ui/ProofSlider";
+import SightlineBands from "@/components/charts/SightlineBands";
 import { Figure } from "@/components/ui/Provenance";
 import { assumption } from "@/lib/facts";
 import { PHOTO, VIEW_PHOTOS, photoCredit } from "@/lib/content/photos";
@@ -69,7 +70,7 @@ export default async function View({ params }: { params: Promise<{ locale: strin
               ? "Hver stripe er én grad. Mørk blå: siktlinjen når vann lenger unna enn 7 km, altså åpent hav. Fra det høyeste punktet på eiendommen, i stuehøyde, er korridoren 164 til 189 grader (beregnet)."
               : "Each stripe is one degree. Dark blue: the sight line reaches water beyond 7 km, which is open sea. From the highest point of the property, at living-room height, the corridor is 164 to 189 degrees (computed)."}
           </p>
-          <Image src="/renders/sightline_panorama.png" alt={no ? "Siktpanorama fra det høyeste punktet på eiendommen: én stripe per grad, mørk blå der siktlinjen når åpent hav" : "Sight line panorama from the highest point of the property: one stripe per degree, dark blue where the sight line reaches open sea"} width={905} height={270} unoptimized className="w-full h-auto mt-6 rounded-[var(--radius)] bg-bone" />
+          <div className="mt-6"><SightlineBands locale={locale} labelClass="provenance" alt={no ? "Siktpanorama fra det høyeste punktet på eiendommen: én stripe per grad, mørk blå der siktlinjen når åpent hav" : "Sight line panorama from the highest point of the property: one stripe per degree, dark blue where the sight line reaches open sea"} /></div>
           <p className="provenance mt-2.5">{no ? "Kartverket DTM 1 m, terrarium 20 og 80 m, refraksjon k = 1,17. Beregnet 2026-09-05." : "Kartverket DTM 1 m, terrarium 20 and 80 m, refraction k = 1.17. Computed 2026-09-05."}</p>
         </div>
         <figure className="frame">

@@ -34,7 +34,7 @@ export default async function Status({ params }: { params: Promise<{ locale: str
       <JsonLd data={faqJsonLd(items, locale)} />
       <Nav locale={locale} />
       <PageHead
-        title={no ? "Status og spørsmål." : "Status and questions."}
+        title={no ? "Status og spørsmål" : "Status and questions"}
         lede={no ? "Hvor prosjektet står, hva som ikke er bestemt ennå, og svar på det folk spør om. Der det ikke finnes noe svar ennå, står det her." : "Where the project stands, what is not decided yet, and answers to what people ask. Where there is no answer yet, this page says so."}
       >
         <StatusLine locale={locale} text={settings.release_note[locale]} className="mt-8" onStatusPage />

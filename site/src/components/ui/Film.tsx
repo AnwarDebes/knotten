@@ -40,7 +40,7 @@ export default function Film({ locale, className = "", variant = "moderne" }: { 
     return (
       <div ref={root} className={className ? `${ks.frame} ${className}` : ks.frame}>
         {/* eslint-disable-next-line @next/next/no-img-element -- the film's first frame until it plays; next/image adds nothing here */}
-        <img src="/renders/web/site_after_960.webp" srcSet="/renders/web/site_after_960.webp 960w, /renders/web/site_after.webp 1920w" sizes="(min-width: 1024px) 480px, 100vw" alt="" className={`${ks.fill} ${ks.poster} ${state === "poster" ? "" : ks.hidden}`} />
+        <img src="/renders/web/site_after_960.webp" srcSet="/renders/web/site_after_960.webp 960w, /renders/web/site_after.webp 1920w" sizes="(min-width: 900px) 760px, 100vw" alt="" loading="lazy" decoding="async" className={`${ks.fill} ${ks.poster} ${state === "poster" ? "" : ks.hidden}`} />
         <video ref={video} className={ks.fill} src="/renders/knotten_flyin_720p.mp4" preload={auto ? "auto" : "none"} muted playsInline aria-label={label} onEnded={() => setState("done")} />
         {state !== "playing" && (
           <div className={ks.play}>

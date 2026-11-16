@@ -108,10 +108,10 @@ export default async function PlotPage({ nr, locale }: { nr: string; locale: KLo
                 <tbody>
                   <tr><th scope="row">{en ? "Coordinates" : "Koordinater"}</th><td>{plot.lat.toFixed(6)}, {plot.lon.toFixed(6)} (UTM32 {plot.utm32_east.toFixed(0)} E, {plot.utm32_north.toFixed(0)} N)</td></tr>
                   <tr><th scope="row">{en ? "Floor level" : "Gulvnivå"}</th><td>{fmt(plot.local.z_floor, lang, 1)} {en ? "m a.s.l." : "moh."}</td></tr>
-                  <tr><th scope="row">{en ? "Sun 21 March" : "Sol 21. mars"}</th><td>{fmt(plot.sun.mar21.hours, lang)} {en ? "h" : "t"}, {sunLabel(plot.sun.mar21.first_sun_cet)} {en ? "to" : "til"} {sunLabel(plot.sun.mar21.last_sun_cet)}</td></tr>
+                  <tr><th scope="row">{en ? "Sun 21 March" : "Sol 21. mars"}</th><td>{fmt(plot.sun.mar21.hours, lang, 1)} {en ? "h" : "t"}, {sunLabel(plot.sun.mar21.first_sun_cet)} {en ? "to" : "til"} {sunLabel(plot.sun.mar21.last_sun_cet)}</td></tr>
                   <tr><th scope="row">{en ? "Farthest water in view" : "Lengste sikt over vann"}</th><td>{fmt(plot.view.farthest_water_m / 1000, lang, 1)} km</td></tr>
                   <tr><th scope="row">{en ? "House in the model" : "Hus i modellen"}</th><td>{fmt(plot.house.width_m, lang)} × {fmt(plot.house.depth_m, lang)} m, {en ? "eaves" : "gesims"} {fmt(plot.house.eaves_m, lang)} m, {en ? "ridge" : "møne"} {fmt(plot.house.ridge_m, lang)} m ({en ? "illustration" : "illustrasjon"})</td></tr>
-                  <tr><th scope="row">{en ? "Levelling" : "Planering"}</th><td>≈ {fmt(plot.terrain.level_pad_cutfill_m3, lang)} m³ ({en ? "order of magnitude" : "størrelsesorden"})</td></tr>
+                  <tr><th scope="row">{en ? "Levelling" : "Planering"}</th><td>≈ {fmt(Math.round(plot.terrain.level_pad_cutfill_m3), lang)} m³ ({en ? "order of magnitude" : "størrelsesorden"})</td></tr>
                 </tbody>
               </table>
             </div>

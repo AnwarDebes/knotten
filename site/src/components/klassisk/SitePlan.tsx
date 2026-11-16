@@ -90,8 +90,9 @@ export default function SitePlan({ numbered, selected, activeRow = "", onSelect,
       <g>
         {P.buildings.filter((b) => b.status === "existing").map((b) => <path key={b.id} d={b.d} fill={C.built} />)}
         {P.buildings.filter((b) => b.status === "planned").map((b) => <path key={b.id} d={b.d} fill="none" stroke={C.pine} strokeWidth="1.5" strokeDasharray="3 2" />)}
-        {office && <text x={office.c[0]} y={office.c[1] + 3} fontSize="9" fill="#fff" textAnchor="middle" transform={`rotate(${office.angle} ${office.c[0]} ${office.c[1]})`}>{t.office}</text>}
-        {house && <text x={house.c[0]} y={house.c[1] + 3} fontSize="9" fill="#fff" textAnchor="middle" transform={`rotate(${house.angle} ${house.c[0]} ${house.c[1]})`}>{t.house}</text>}
+        {/* (dark on a light edge: the names are longer than the buildings, and read on the building and on the ground) */}
+        {office && <text x={office.c[0]} y={office.c[1] + 3} fontSize="9" fontWeight="600" fill={C.ink} stroke={C.ground} strokeWidth="2.6" strokeLinejoin="round" paintOrder="stroke" textAnchor="middle" transform={`rotate(${office.angle} ${office.c[0]} ${office.c[1]})`}>{t.office}</text>}
+        {house && <text x={house.c[0]} y={house.c[1] + 3} fontSize="9" fontWeight="600" fill={C.ink} stroke={C.ground} strokeWidth="2.6" strokeLinejoin="round" paintOrder="stroke" textAnchor="middle" transform={`rotate(${house.angle} ${house.c[0]} ${house.c[1]})`}>{t.house}</text>}
       </g>
       <g className="layer layer-plan">
         <path d={P.road} fill="none" stroke={C.road} strokeWidth="9" strokeLinecap="round" strokeLinejoin="round" />

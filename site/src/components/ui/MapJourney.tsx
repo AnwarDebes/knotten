@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n";
@@ -48,7 +48,7 @@ export default function MapJourney({ locale }: { locale: Locale }) {
             const m = MAP[key];
             return (
               <div key={key} className={`jimg ${i === k ? "on" : ""}`}>
-                {k <= reach && <Image src={m.src} alt={m.alt[locale]} width={m.w} height={m.h} sizes="(max-width: 900px) 100vw, 56vw" quality={92} unoptimized={m.w < 900} />}
+                {k <= reach && <Image src={m.src} alt={m.alt[locale]} width={m.w} height={m.h} sizes={`(max-width: 900px) min(100vw, ${m.w}px), min(56vw, ${m.w}px)`} quality={92} unoptimized={m.w < 900} style={{ "--mw": `${m.w}px`, "--mh": `${m.h}px` } as CSSProperties} />}
               </div>
             );
           })}

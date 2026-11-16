@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n";
 import { peekLink } from "@/lib/server/accounts";
+import { MAIL_ON } from "@/lib/server/mail";
 import Logo from "@/components/ui/Logo";
 import { ChoosePasswordForm } from "@/components/auth/AuthForms";
 import { ConfirmLinkForm } from "@/components/members/MinSideForms";
@@ -69,7 +70,10 @@ export default async function ChoosePassword({ params, searchParams }: { params:
           <div className="panel p-6 md:p-7 grid gap-4">
             <h1 className="display text-[30px]">{no ? "Lenken virker ikke" : "The link does not work"}</h1>
             <p className="text-[15.5px] text-ink-2">{no ? "Lenken er ugyldig, allerede brukt eller utløpt. Invitasjoner gjelder i sju dager og lenker for nytt passord i ett døgn. Be administratoren om en ny lenke." : "The link is invalid, already used or expired. Invitations last seven days and password links one day. Ask the administrator for a new link."}</p>
-            <p className="text-[14.5px] text-ink-2">{m.againSignup} <Link href={registerPath("moderne", locale)} className="text-fjord underline underline-offset-4">{m.createAccount}</Link></p>
+            {/* (a new link by email only where the site can send email) */}
+            {MAIL_ON
+              ? <p className="text-[14.5px] text-ink-2">{m.againSignup} <Link href={registerPath("moderne", locale)} className="text-fjord underline underline-offset-4">{m.createAccount}</Link></p>
+              : <p className="text-[14.5px] text-ink-2">{m.againNoMail}</p>}
             <Link className="btn btn-sm no-underline justify-self-start" href={`/${locale}/login`}>{no ? "Til innlogging" : "To log in"}</Link>
           </div>
         )}

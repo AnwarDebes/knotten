@@ -92,7 +92,7 @@ export default async function KlassiskLogin({ locale, search }: { locale: KLocal
         )}
       </div>
       <div className="side">
-        <Image src={p.src} alt={no ? p.alt : PHOTO_EN.alt} width={p.w} height={p.h} sizes="50vw" quality={80} />
+        <Image src={p.src} alt={no ? p.alt : PHOTO_EN.alt} width={p.w} height={p.h} sizes="(max-width: 900px) 100vw, 1600px" quality={80} />
         <div className="hero-cap">{no ? p.caption : PHOTO_EN.caption}. {no ? "Foto" : "Photo"}: {p.credit}, {p.license}</div>
       </div>
     </div>

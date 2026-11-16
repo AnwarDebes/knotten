@@ -9,3 +9,6 @@
 .mar { fill: var(--fjord); }
 .jun { fill: var(--pine); }
 .legend { fill: var(--ink); font-size: 11px; }
+/* two drawings of the same chart: the narrow one, with labels that stay readable, on phones */
+.svg.narrow { display: none; }
+@media (max-width: 640px) { .svg.wide { display: none; } .svg.narrow { display: block; } }

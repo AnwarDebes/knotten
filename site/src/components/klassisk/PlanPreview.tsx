@@ -6,12 +6,12 @@ const T = {
   no: {
     label: "Situasjonsplan for Knotten", seg: "Vis terreng eller plan", today: "Terrenget i dag", plan: "Med boligene",
     north: "Nord opp. Sjøen ligger sør, nederst i kartet.", plot: "Tomt, sjøutsikt ønsket", existing: "Eksisterende bygg", planned: "Planlagt næringsbygg",
-    caption: "Prosjekteiers rekker, lagt inn i det målte terrenget innenfor eiendomsgrensen. Foreløpig utlegg; reguleringsplan er ikke vedtatt, avvik vil forekomme. Hold over en tomt for å se siktretningen.",
+    caption: "Prosjekteiers rekker, lagt inn i det målte terrenget innenfor eiendomsgrensen. Foreløpig utlegg; reguleringsplan er ikke vedtatt, avvik vil forekomme.", hover: "Hold over en tomt for å se siktretningen.",
   },
   en: {
     label: "Site plan for Knotten", seg: "Show the terrain or the plan", today: "The terrain today", plan: "With the homes",
     north: "North up. The sea lies to the south, at the bottom of the map.", plot: "Plot, sea view wanted", existing: "Existing buildings", planned: "Planned commercial building",
-    caption: "The project owner's rows, placed in the measured terrain inside the property boundary. A provisional layout; the zoning plan is not adopted, and changes will come. Hover over a plot to see which way it looks.",
+    caption: "The project owner's rows, placed in the measured terrain inside the property boundary. A provisional layout; the zoning plan is not adopted, and changes will come.", hover: "Hover over a plot to see which way it looks.",
   },
 };
 
@@ -37,7 +37,8 @@ export default function PlanPreview({ locale = "no" }: { locale?: "no" | "en" })
         <span><i style={{ background: "#7C8A9B" }} />{t.existing}</span>
         <span><i style={{ border: "1.5px dashed var(--pine)", background: "transparent" }} />{t.planned}</span>
       </div>
-      <figcaption><span>{t.caption}</span></figcaption>
+      {/* (the hover line only where there is a pointer to hover with) */}
+      <figcaption><span>{t.caption}<span className="kj-fine"> {t.hover}</span></span></figcaption>
     </figure>
   );
 }

@@ -81,7 +81,7 @@ export default async function Sources({ params }: { params: Promise<{ locale: st
                 {g.rows.map((r) => (
                   <li key={r.key} className="panel p-4 grid gap-1.5">
                     <div className="font-medium text-[15px]">{r.what[locale]}</div>
-                    <div className="num text-[26px]">{r.value[locale]} <span className="text-[14px] font-body font-normal text-ink-2">{r.unit[locale]}</span></div>
+                    <div className="num text-[26px]">{r.value[locale]}{r.unit[locale].startsWith("°") ? "" : " "}<span className="text-[14px] font-body font-normal text-ink-2">{r.unit[locale]}</span></div>
                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13.5px] text-ink-2"><span className={CHIP[r.status]}>{statusLabel(r.status, locale)}</span>{r.owner[locale]}<Src id={r.src} locale={locale} /></div>
                   </li>
                 ))}

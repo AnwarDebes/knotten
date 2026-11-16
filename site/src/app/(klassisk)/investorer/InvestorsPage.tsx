@@ -36,7 +36,7 @@ export default function InvestorsPage({ locale: l }: { locale: KLocale }) {
               return (
                 <div key={key} className="fact">
                   <small className={a.provisional ? "tag" : "tag green"}>{prov(a.provisional)}</small>
-                  <b>{fmt(a.value, l)}<small> {a.unit[l]}</small></b>
+                  <b>{fmt(a.value, l)}{a.unit[l].startsWith("°") ? a.unit[l] : <small> {a.unit[l]}</small>}</b>
                   <span>{a.label[l]} <Src id={src} /></span>
                   <span className="prov">{a.source[l]}, {dateShort(a.date, l)}</span>
                 </div>

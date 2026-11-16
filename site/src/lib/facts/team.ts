@@ -302,7 +302,7 @@ export const TEAM: Person[] = [
     },
     related: [
       PROJECT,
-      { label: { no: "Huskonfiguratoren", en: "The house configurator" }, hint: { no: "Velg tomt og sett sammen huset", en: "Choose a plot and put the house together" }, klassisk: "/konfigurator", moderne: "/konfigurator" },
+      { label: { no: "Sett sammen huset", en: "Configure your house" }, hint: { no: "Velg tomt og sett sammen huset", en: "Choose a plot and put the house together" }, klassisk: "/konfigurator", moderne: "/konfigurator" },
     ],
     photo: null,
   },

@@ -59,7 +59,7 @@ export default function SourcesPage({ locale: l }: { locale: KLocale }) {
                   {g.rows.map((r) => (
                     <li key={r.key}>
                       <span className="w">{r.what[l]}</span>
-                      <span className="v">{r.value[l]} <span>{r.unit[l]}</span></span>
+                      <span className="v">{r.value[l]}{r.unit[l].startsWith("°") ? r.unit[l] : <> <span>{r.unit[l]}</span></>}</span>
                       <span className="o"><span className={TAG[r.status]} style={{ marginBottom: 0 }}>{statusLabel(r.status, l)}</span> {r.owner[l]} <Src id={r.src} /></span>
                     </li>
                   ))}

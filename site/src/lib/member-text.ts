@@ -135,6 +135,7 @@ const no = {
   confirmButton: "Bekreft",
   confirming: "Bekrefter",
   againSignup: "Opprettet du en konto? Send skjemaet på nytt med samme adresse, så får du en ny lenke.",
+  againNoMail: "Har du allerede en konto? Logg inn med e-postadressen og passordet ditt, eller be administratoren om hjelp.",
   // login pages
   newHere: "Ny her?",
   createAccount: "Opprett konto",
@@ -271,6 +272,7 @@ const en: Text = {
   confirmButton: "Confirm",
   confirming: "Confirming",
   againSignup: "Did you create an account? Send the form again with the same address, and you get a new link.",
+  againNoMail: "Do you already have an account? Log in with your email address and password, or ask the administrator for help.",
   newHere: "New here?",
   createAccount: "Create an account",
   deletedNotice: "Your account has been deleted.",

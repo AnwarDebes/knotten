@@ -12,6 +12,7 @@ import Passport from "@/components/ui/Passport";
 import JsonLd from "@/components/JsonLd";
 import { latestNews } from "@/components/ui/home/news";
 import Journey from "./Journey";
+import Film from "@/components/ui/Film";
 import RightNow from "./RightNow";
 import { loadPlots } from "@/lib/data";
 import { FACT, dateLong, fmt, word, type Lang } from "@/lib/facts";
@@ -54,6 +55,14 @@ export default async function HomePage({ locale }: { locale: Lang }) {
             <span className="kj-fine">{no ? "Trykk «Start reisen», eller utforsk modellen selv. Klikk i modellen for å styre den; Escape gir siden tilbake." : "Press «Start the journey», or explore the model yourself. Click the model to take control; Escape hands the page back."}</span>
             <span className="kj-coarse">{no ? "Trykk «Start reisen». Trykk i modellen for å styre den, og utenfor for å bla videre." : "Tap «Start the journey». Tap the model to take control, and outside it to scroll on."}</span>
           </p>
+          {/* the fly-in film, the same one as on the Moderne front page: nothing of it loads before it is asked for or in view */}
+          <Reveal className="kfilm">
+            <div className="stack">
+              <h3>{no ? "Flyturen inn over feltet" : "The fly-in over the field"}</h3>
+              <p className="measure">{no ? "Tolv sekunder fra samme modell: over Sniksfjorden, opp langs Audna og inn over feltet på Knotten." : "Twelve seconds from the same model: over Sniksfjorden, up the Audna and in over the field on Knotten."}</p>
+            </div>
+            <Film locale={locale} variant="klassisk" />
+          </Reveal>
         </div>
       </section>
 

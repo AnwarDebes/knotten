@@ -6,7 +6,7 @@ export default function Credits({ locale }: { locale: Locale }) {
   const no = locale === "no";
   return (
     <details className="group basis-full">
-      <summary className="cursor-pointer list-none inline-flex items-baseline gap-2 text-ink-2 hover:text-ink [&::-webkit-details-marker]:hidden">
+      <summary className="cursor-pointer list-none flex flex-col items-start gap-1 sm:inline-flex sm:flex-row sm:items-baseline sm:gap-2 text-ink-2 hover:text-ink [&::-webkit-details-marker]:hidden">
         <span>{no ? "Kart, data og bilder: " : "Maps, data and photos: "}{creditsLine(locale)}.</span>
         <span className="text-fjord whitespace-nowrap underline underline-offset-4">{no ? "Alle kilder og lisenser" : "Every source and licence"}</span>
       </summary>

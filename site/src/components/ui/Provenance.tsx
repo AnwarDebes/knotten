@@ -21,7 +21,8 @@ export function Figure({ a, locale, size = "lg", src }: { a: Assumption; locale:
   return (
     <div>
       <div className={`num ${size === "lg" ? "text-[56px] md:text-[72px]" : "text-[38px]"} leading-none`}>
-        {v}<span className="text-[0.38em] ml-2 font-body font-normal opacity-70">{a.unit[locale]}</span>
+        {/* (a degree sign sits on its number, at the number's size) */}
+        {v}{a.unit[locale].startsWith("°") ? a.unit[locale] : <span className="text-[0.38em] ml-2 font-body font-normal opacity-70">{a.unit[locale]}</span>}
       </div>
       <div className="mt-2 text-[15.5px]">{a.label[locale]}{src && <Src id={src} locale={locale} />}</div>
       <Provenance source={a.source[locale]} date={a.date} provisional={a.provisional} locale={locale} />

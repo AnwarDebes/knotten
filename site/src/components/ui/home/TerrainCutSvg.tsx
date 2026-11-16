@@ -45,8 +45,16 @@ export default function TerrainCutSvg({ lang }: { lang: Lang }) {
       <rect x="470" y="228" width="22" height="12" fill="#6a7b89" /><rect x="510" y="226" width="30" height="14" fill="#6a7b89" />
       <path d="M662 172L40 194" stroke="#2f6688" strokeWidth="1.2" strokeDasharray="4 5" fill="none" />
       <circle cx="40" cy="194" r="3" fill="#2f6688" />
-      <path d="M400 300h340" stroke="#6a7b89" strokeWidth="1" /><path d="M400 295v10M740 295v10" stroke="#6a7b89" strokeWidth="1" />
-      <g fontSize="11" fill="#17283a" aria-hidden="true">
+      {/* on a phone the drawing is about 330 px wide: fewer labels, set large enough to read (about 10 px on the screen) */}
+      <style>{".tc-narrow{display:none}@media (max-width:640px){.tc-wide{display:none}.tc-narrow{display:inline}}"}</style>
+      <g className="tc-wide"><path d="M400 300h340" stroke="#6a7b89" strokeWidth="1" /><path d="M400 295v10M740 295v10" stroke="#6a7b89" strokeWidth="1" /></g>
+      <g className="tc-narrow" fontSize="24" fill="#17283a" aria-hidden="true">
+        <text x="14" y="276" fill="#2f6688" fontWeight="600">{no ? "Åpent hav" : "Open sea"}</text>
+        <text x="216" y="276">Sniksfjorden</text>
+        <text x="604" y="276" fill="#fff" fontWeight="600">Knotten</text>
+        <text x="120" y="150" fill="#2f6688" fontSize="22" fontStyle="italic">{no ? "siktlinje" : "sight line"}</text>
+      </g>
+      <g className="tc-wide" fontSize="11" fill="#17283a" aria-hidden="true">
         <text x="14" y="182" fill="#2f6688" fontWeight="600">{no ? "Åpent hav" : "Open sea"}</text>
         <text x="260" y="182">Sniksfjorden</text>
         <text x="404" y="262">{no ? "Audna elvas utløp" : "The mouth of the Audna"}</text>
@@ -54,7 +62,7 @@ export default function TerrainCutSvg({ lang }: { lang: Lang }) {
         <text x="600" y="262" fill="#fff" fontWeight="600">Knotten</text>
         <text x="600" y="278" fill="#dce8e0" fontSize="10">{no ? "Boligrekker mot sør" : "Rows facing south"}</text>
         <text x="754" y="70" fill="#7a5312" fontSize="10" textAnchor="end">{no ? "Felles solanlegg bak feltet" : "Shared solar plant behind the field"}</text>
-        <text x="404" y="318" fill="#3a4d60" fontSize="10">{no ? `Terrengprofil ${fmt(FACT.profile_m, lang)} m, 0 til ${FACT.knotten_m} moh.` : `Terrain profile ${fmt(FACT.profile_m, lang)} m, 0 to ${FACT.knotten_m} m above sea level`}</text>
+        <text x="552" y="318" fill="#3a4d60" fontSize="10" textAnchor="end">{no ? `Terrengprofil ${fmt(FACT.profile_m, lang)} m, 0 til ${FACT.knotten_m} moh.` : `Terrain profile ${fmt(FACT.profile_m, lang)} m, 0 to ${FACT.knotten_m} m above sea level`}</text>
         <text x="80" y="200" fill="#2f6688" fontSize="10" fontStyle="italic">{no ? "siktlinje" : "sight line"}</text>
       </g>
     </svg>

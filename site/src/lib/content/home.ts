@@ -1,6 +1,7 @@
 import { BUDGET, EED, FACT, MEASURES, MEASURES_COMPARED, STATUS_SOLAR, fmt, fmtRound, type Lang, type Measure, type SourceId, type T } from "@/lib/facts";
 import type { Plot } from "@/lib/types";
 import { PHOTO, type PhotoKey } from "./photos";
+import { STAGES } from "./status";
 
 /**
  * What both front pages show (Klassisk at / and /english, Moderne at /no and /en), written once so the two designs say
@@ -64,12 +65,14 @@ export const JOURNEY_TEXT: T = {
   en: "The model is built from measured data: Kartverket's one-metre laser scan of the terrain, the trees found in the same dataset and the sun's real path. The journey runs from Sniksfjorden, over the field, down onto a plot and into the living room of the example house, which shows one house type and is not a designed home.",
 };
 
-/** Where the project stands, in the order it happens. Sale goes through an estate agent; no dates or prices are set. */
-export const HOME_PHASES: { title: T; text: T; now?: boolean }[] = [
+/**
+ * Where the project stands, in the order it happens. Sale goes through an estate agent; no dates or prices are set.
+ * Which steps are under way is not said here: it comes from the status page's list (STAGES in ./status), step by step.
+ */
+export const HOME_PHASES: { title: T; text: T; now?: boolean }[] = ([
   {
     title: { no: "Regulering", en: "Zoning" },
     text: { no: "Reguleringsplanen er ikke vedtatt. Prosjektet starter før planen, så energikonsept og marked utvikles samtidig.", en: "The zoning plan is not adopted. The project starts before the plan, so the energy concept and the market are developed together." },
-    now: true,
   },
   {
     title: { no: "Energikonsept", en: "Energy concept" },
@@ -83,7 +86,7 @@ export const HOME_PHASES: { title: T; text: T; now?: boolean }[] = [
     title: { no: "Bygging og måling", en: "Building and measuring" },
     text: { no: "Ingen dato er satt. Faktisk ytelse publiseres når boligene står, målt mot de eksisterende byggene.", en: "No date is set. Actual performance is published once the homes stand, measured against the existing buildings." },
   },
-];
+] as { title: T; text: T }[]).map((p, i) => ({ ...p, now: !!STAGES[i]?.now }));
 
 /** One of the energy budget's key figures, with what it covers and how sure it is. */
 export type EnergyKey = { key: string; value: string; unit: string; label: string; note: string; src?: SourceId };

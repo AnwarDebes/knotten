@@ -18,7 +18,7 @@ function SunRow({ label, day, small = false, summer = false, lang }: { label: st
           <div className={small ? "text-[12.5px]" : "text-[14.5px]"}>{label}</div>
           <div className="provenance">{sunLabel(day.first_sun_cet, summer)} {lang === "no" ? "til" : "to"} {sunLabel(day.last_sun_cet, summer)}</div>
         </div>
-        <div className={`num leading-none ${small ? "text-[19px]" : "text-[28px]"}`}>{fmt(day.hours, lang, 1)}<span className="text-[12px] font-body opacity-70 ml-1">h</span></div>
+        <div className={`num leading-none ${small ? "text-[19px]" : "text-[28px]"}`}>{fmt(day.hours, lang, 1)}<span className="text-[12px] font-body opacity-70 ml-1">{lang === "no" ? "t" : "h"}</span></div>
       </div>
       <div className="mt-2 h-[3px] rounded bg-ink/10 overflow-hidden"><div className="h-full bg-amber" style={{ width: `${pct * 100}%` }} /></div>
     </div>
@@ -54,7 +54,7 @@ export default function Passport({ plot, locale, compact = false, here = false, 
       <div className={`grid grid-cols-3 gap-2 whitespace-nowrap ${compact ? "mt-2.5 text-[11.5px]" : "mt-4 text-[14px]"}`}>
         <div><div className="provenance">{P.openSea}</div><div className={plot.view.open_sea_visible ? "text-pine font-medium" : ""}>{plot.view.open_sea_visible ? `${P.yes}, ${plot.view.open_sea_deg}°` : P.no}</div></div>
         <div><div className="provenance">{P.slope}</div><div>{plot.terrain.slope_deg.toFixed(0)}°</div></div>
-        <div><div className="provenance">{P.cutfill}</div><div>≈ {plot.terrain.level_pad_cutfill_m3.toFixed(0)} m³</div></div>
+        <div><div className="provenance">{P.cutfill}</div><div>≈ {fmt(Math.round(plot.terrain.level_pad_cutfill_m3), lang)} m³</div></div>
       </div>
 
       <div className={compact ? "hidden" : "provenance mt-4"}>
@@ -86,7 +86,7 @@ function KlassiskSunRow({ label, day, summer = false, lang }: { label: string; d
           <div className={ks.rowLabel}>{label}</div>
           <div className={ks.when}>{sunLabel(day.first_sun_cet, summer)} {lang === "no" ? "til" : "to"} {sunLabel(day.last_sun_cet, summer)}</div>
         </div>
-        <div className={ks.hours}>{fmt(day.hours, lang, 1)}<span className={ks.unit}>h</span></div>
+        <div className={ks.hours}>{fmt(day.hours, lang, 1)}<span className={ks.unit}>{lang === "no" ? "t" : "h"}</span></div>
       </div>
       <div className={ks.bar}><span style={{ width: `${pct * 100}%` }} /></div>
     </div>
@@ -122,7 +122,7 @@ function KlassiskPassport({ plot, locale, compact, here }: { plot: Plot; locale:
       <dl className={ks.facts}>
         <div><dt>{P.openSea}</dt><dd className={plot.view.open_sea_visible ? ks.yes : undefined}>{plot.view.open_sea_visible ? `${P.yes}, ${plot.view.open_sea_deg}°` : P.no}</dd></div>
         <div><dt>{P.slope}</dt><dd>{plot.terrain.slope_deg.toFixed(0)}°</dd></div>
-        <div><dt>{P.cutfill}</dt><dd>≈ {plot.terrain.level_pad_cutfill_m3.toFixed(0)} m³</dd></div>
+        <div><dt>{P.cutfill}</dt><dd>≈ {fmt(Math.round(plot.terrain.level_pad_cutfill_m3), lang)} m³</dd></div>
       </dl>
 
       {!compact && (
