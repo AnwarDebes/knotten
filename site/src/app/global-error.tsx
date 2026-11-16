@@ -1,5 +1,7 @@
 "use client";
 
+import { Analytics } from "@vercel/analytics/next";
+
 /*
  * Klassisk's colours, written out for this page alone (like the 404), with the system's own fonts: when this page
  * shows, the site's layout and its stylesheets are what failed.
@@ -45,6 +47,7 @@ export default function GlobalError({ error, retry }: { error: Error & { digest?
           <p className="ge-en" lang="en">The page could not be shown. Try again in a moment, or go to <a href="/en" hrefLang="en">Knotten in English</a>.</p>
           {error.digest && <p className="ge-code">Feilkode: {error.digest}</p>}
         </main>
+        <Analytics />
       </body>
     </html>
   );
