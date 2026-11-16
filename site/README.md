@@ -1,44 +1,68 @@
 # Knotten: the website and the project portal (site)
 
-Next.js 16 · React 19 · three.js / react-three-fiber · Tailwind 4 · TypeScript.
-The public site in two designs, and the project portal behind a real login: data room, resident portal, energy dashboard with smart control and energy sharing, project room, documents, municipality and research rooms, and the administration with the key figures the project owner asked for.
+Next.js 16.4, React 19, three.js with react-three-fiber, Tailwind 4, TypeScript.
+The public site in two designs and two languages, buyer accounts with Min side, a house configurator, and the project portal behind a login: data room, resident portal, energy dashboard with smart control and energy sharing, project room, documents, municipality and research rooms, and the administration with the key figures the project owner asked for.
 
 ## Run
 
 ```bash
-npm install
-npm run dev        # http://localhost:3000  (Klassisk; Moderne at /no)
+npm ci
+npm run dev        # http://localhost:3000  (Klassisk at / and /english, Moderne at /no and /en)
 npm run build && npm run start
+npm run lint
 ```
+
+Node.js 20.9 or newer. Copy `.env.example` to `.env.local` if you need any variable; empty values are fine for a first local run (records go to `data/`, email is off).
 
 ## Two designs, one site
 
-Sigve liked both designs, so the site carries both and the visitor chooses with the strip above the header ("Utseende: Klassisk | Moderne").
+The site carries two designs with the same content, and the visitor chooses with the strip above the header ("Utseende: Klassisk | Moderne").
 
 | | Klassisk (default) | Moderne |
 |---|---|---|
-| Addresses | `/`, `/tomtene`, `/prosjektet`, ... (Norwegian only) | `/no/...`, `/en/...` |
-| Code | `src/app/(klassisk)`, `src/components/klassisk`, `src/lib/klassisk`, `public/img` | `src/app/(moderne)`, `src/components/ui`, `scene`, `charts`, `portal` |
+| Addresses | Norwegian at `/`, `/tomtene`, `/prosjektet`, ...; English under `/english/...` with the same path names | `/no/...`, `/en/...` |
+| Code | `src/app/(klassisk)`, `src/app/(klassisk-en)`, `src/components/klassisk`, `src/lib/klassisk`, `public/img` | `src/app/(moderne)`, `src/components/ui`, `scene`, `charts`, `portal` |
 | Styles | `src/app/(klassisk)/globals.css`, plain CSS | `src/app/(moderne)/globals.css`, Tailwind 4 |
 
-- Each design is its own root layout (a route group), so their stylesheets never meet: switching is a full page load. Moderne's root layout is `src/app/(moderne)/[locale]/layout.tsx`, once per language, so `<html lang>` is `nb` or `en`.
-- Moderne is in Norwegian and English throughout: the pages, the portal, page titles and link previews (`src/lib/meta.ts`), the figure cards, the emails people receive and the weekly summary (its language is a setting). The header's NO | EN switch keeps the page. A new Moderne page needs `export const generateMetadata = pageMeta(...)` and the line `if (!isLocale(l)) notFound();` after it reads its locale.
-- `src/lib/design.ts` maps every page to its twin in the other design; pages that exist in only one design open the closest match. Add a new page there too.
-- The switch (`src/components/DesignSwitch.tsx`) remembers the choice in the `knotten_design` cookie for a year; `src/proxy.ts` sends a visitor who chose Moderne from `/` to `/no`, and a visitor without a login from the portal to the login page. Links to a specific page always open that page.
-- Shared by both: the interest form (`/api/leads`, the source says which design), the visitor statistics (`/api/collect`), the login (`/logg-inn` and `/no/login` post to the same actions) and the project portal, which has one look (Moderne) for both. `src/app/global-not-found.tsx` is the 404 for unknown addresses (Klassisk look, with its own small stylesheet: every route carries this page, so anything it imports, such as Klassisk's fonts, would otherwise be preloaded on the Moderne pages too); `src/app/(moderne)/[locale]/not-found.tsx` covers missing Moderne pages in the visitor's language.
-- If one design is chosen later: remove `DesignSwitch`, `design.ts`, `proxy.ts` and the other design's pages and components. The leads API, `src/lib` (store, auth) and the portal stay either way. Dropping Klassisk also means moving the front page back to `/` (or redirecting `/` to `/no`) and replacing `global-not-found.tsx`.
+- Each design is its own root layout (a route group), so their stylesheets never meet: switching is a full page load. English Klassisk has its own root layout in `src/app/(klassisk-en)`. Moderne's root layout is `src/app/(moderne)/[locale]/layout.tsx`, once per language.
+- Both designs are in Norwegian and English: the pages, page titles and link previews (`src/lib/meta.ts` for Moderne), the emails people receive and the weekly summary (its language is a setting). The portal is in both languages too. A new Moderne page needs `export const generateMetadata = pageMeta(...)` and the line `if (!isLocale(l)) notFound();` after it reads its locale.
+- **The page registry, `src/lib/pages.ts`,** lists every page once: its address in each design, its name and a line about it in both languages, where each design's header, menu and footer link to it, and how search engines and the visitor statistics treat it. The design switch (`src/lib/design.ts`), the headers, menus and footers of both designs, the sitemap, robots.txt and the statistics are built from it. Add a new page there; a page that exists in only one design names the closest page in the other (`twin`).
+- The switch (`src/components/DesignSwitch.tsx`) remembers the choice in a cookie. `src/proxy.ts` sends a visitor who chose Moderne from `/` to `/no` and from `/english` to `/en`, and a visitor without a login cookie from the portal or Min side to the login page of their design and language. Links to a specific page always open that page. The proxy is a shortcut only: every portal page and Min side check the signed session themselves.
+- Shared by both: the content (`src/lib/content`, below), the facts (`src/lib/facts`), the interest form (`/api/leads`, the source says which design), the visitor statistics (`/api/collect`), the login actions, the configurator's logic, Knotten AI and the project portal, which has one look (Moderne) for both. `src/app/global-not-found.tsx` is the 404 for unknown addresses (Klassisk look, with its own small stylesheet: every route carries this page, so anything it imports, such as Klassisk's fonts, would otherwise be preloaded on the Moderne pages too); `src/app/(moderne)/[locale]/not-found.tsx` covers missing Moderne pages in the visitor's language.
+- If one design is chosen later: remove `DesignSwitch`, `design.ts`, the design half of `proxy.ts` and the other design's pages and components. The leads API, `src/lib` (store, auth) and the portal stay either way. Dropping Klassisk also means moving the front page back to `/` (or redirecting `/` to `/no`) and replacing `global-not-found.tsx`.
 
 ## What is where
 
-| Route | What |
-|---|---|
-| `/no`, `/en` | landing: hero → *Stå på Knotten* stage (wipe · stand on plot · living field) → measured numbers → proof slider → best passports → energy → the basis → CTA |
-| `/no/tomter`, `/no/tomter/plot-NN` | plot list (sortable), plot page with 3D viewpoint, sun passport, horizon chart; OG image per plot |
-| `/no/utsikt` | the view: corridor panorama, photo-vs-model slider |
-| `/no/energi`, `/no/energi/eksisterende` | energy concept with the living field; the office and the house with measured history once the owner loads and publishes it in the portal |
-| `/no/omradet`, `/no/prosjektet`, `/no/investor`, `/no/nyheter`, `/no/kontakt`, `/no/interesse`, `/no/personvern` | content pages; interest registration posts to `/api/leads` |
-| `/no/login`, `/logg-inn` | login, first-time setup, invitation and new-password links (`/no/login/passord?token=`) |
-| `/no/portal/...` | the project portal, see below |
+The Klassisk column gives the Norwegian address; the English page is the same path after `/english`. The Moderne column gives the path after `/no` or `/en`.
+
+| Page | Klassisk | Moderne |
+|---|---|---|
+| Front page, with the 3D journey and the weather and power price right now (`/api/now`) | `/` | (front page) |
+| Plot picker and a page per plot | `/tomtene`, `/tomtene/[nr]` | `/tomter`, `/tomter/[id]` (`plot-NN`) |
+| The view | (opens `/galleri`) | `/utsikt` |
+| The area, maps and photos | `/kart`, `/galleri` | `/omradet` (sections `#kart`, `#bilder`) |
+| Energy; the buildings that stand today, with measured history once the owner loads and publishes it in the portal | `/energi`, `/eksisterende-bygg` | `/energi`, `/energi/eksisterende` |
+| The project, status and questions, news | `/prosjektet`, `/status`, `/nyheter` | `/prosjektet`, `/status`, `/nyheter` |
+| Team, and a page per person | `/teamet`, `/teamet/[slug]` | `/team`, `/team/[slug]` |
+| Investors, document bank, sources | `/investorer`, `/dokumentbank`, `/kilder` | `/investor`, `/dokumenter`, `/kilder` |
+| House configurator | `/konfigurator` | `/konfigurator` |
+| Contact and the interest form (posts to `/api/leads`) | `/kontakt` (both) | `/kontakt`, `/interesse` |
+| Privacy | `/personvern` | `/personvern` |
+| Login, first-time setup, invitation and new-password links | `/logg-inn`, `/logg-inn/passord` | `/login`, `/login/passord` |
+| Sign-up and Min side | `/registrer`, `/min-side` | `/registrer`, `/min-side` |
+| The project portal, see below | (uses Moderne's) | `/portal/...` |
+
+Shared content: `src/lib/content` holds what both designs say, written once per subject in both languages (`home.ts`, `plots.ts`, `energy.ts`, `buildings.ts`, `project.ts`, `status.ts`, `faq.ts`, `investors.ts`, `documents.ts`, `sources.ts`, `contact.ts`, `company.ts`, `privacy.ts`, `maps.ts`, `photos.ts`, `credits.ts`, `jsonld.ts`). Each design keeps its own markup and look. Numbers, dates and contact details come from `src/lib/facts` (see "Data and assumptions").
+
+Public pages and the database: plot status and price, the status line and company facts, published news, the configurator's price list and the published meter readings are read through a tagged cache (`src/lib/server/publicRecords.ts`). The action or route that changes one of them names its tag, and the next page load reads storage again; the cache also asks storage again once an hour. When the database does not answer, a page still renders with the cached value, else the last value the server read, else the starting point in the code, and such a page is made again after a minute.
+
+## The house configurator
+
+`/konfigurator` in both designs and both languages. The steps are plot, house, facade and roof, energy, interior and outdoors (`src/lib/configurator/catalog.ts`); the house is the model's example house, an illustration, and the choices are wishes passed on to the project owner, not an offer. `state.ts` keeps the configuration in the address, so a link reopens the same house, and a draft is kept in the browser. Each design has its own page components (`src/components/configurator/klassisk` and `moderne`) on shared logic (`useConfigurator.ts`).
+
+- Prices: the catalogue has none. An administrator sets the price list in the portal (`/no/portal/admin/konfigurator`, "Husvalg og priser"); until then a choice says "Pris på forespørsel". Pages read the list through `/api/configurator/prices` and the public cache.
+- Saved houses: a logged-in buyer saves configurations to Min side (`/api/configurator/saved`).
+- "Send the setup": `/api/configurator/send` creates or updates a lead and stores the configuration with the lead's id only (`src/lib/server/configurations.ts`). Every configuration is cleaned before it is stored: unknown options are dropped and a choice the plot cannot take falls back to the standard.
 
 ## The project portal
 
@@ -58,7 +82,7 @@ One login for everyone who works with the project. Three roles, as the project o
 | `dokumenter` | every document shared with the person; uploads, versions, download log; the checklist of the working documents the public document bank refers to (`src/lib/docRegister.ts`), uploaded under their titles |
 | `municipality` | printable regulation basis (`municipality/rapport`), GeoJSON in EPSG:25832 or WGS84 (`/api/geo`), road grades, questions and remarks |
 | `research` | the datasets with fields, licence and citation, counted downloads (`/api/datasett/...`) |
-| `admin` | key figures (registrations, conversion, investor interest, website engagement, stakeholder participation, reply time) with targets; leads; website visits and Knotten AI questions; plots and prices; news; users and access; settings, service status, the weekly summary and the backup download; features and status (the owner's six feedback points, with live state) |
+| `admin` | key figures (registrations, conversion, investor interest, website engagement, stakeholder participation, reply time) with targets; leads; website visits and Knotten AI questions; plots and prices; the configurator's price list; news; users and access; settings, service status, the weekly summary and the backup download; features and status (the owner's six feedback points, with live state) |
 | `konto` | profile, password, log out everywhere |
 
 How it is built:
@@ -69,7 +93,7 @@ How it is built:
 - Files: `src/lib/server/files.ts`; downloads go only through `/api/files/[id]`, which checks access and logs.
 - Visitor statistics: `src/components/Track.tsx` and `/api/collect`, counted in `src/lib/server/stats.ts` without cookies or stored addresses; logged-in people, robots and Do Not Track are not counted.
 - "Se som" (view as): an administrator sees the portal as an investor, the municipality, a researcher, the project group or a resident. A cookie narrows the administrator's own session (`getSession` in `src/lib/auth.ts`); it can never widen anyone's access, and changes are switched off while it is on.
-- Knotten AI (the chat on the Moderne pages): `/api/ask` and `src/lib/server/assistant.ts` answer from the project's own data, including the NO2 power price and MET weather right now. With a language model configured (`ANTHROPIC_API_KEY` and `KNOTTEN_AI_MODEL`), questions the data does not cover go to it with the same facts. Topics are counted and unanswered questions kept (without emails or numbers) for the owner under Website visits.
+- Knotten AI (the chat on the pages of both designs, `src/components/ui/Chat.tsx`): `/api/ask` and `src/lib/server/assistant.ts` answer from the project's own data, including the NO2 power price and MET weather right now. With a language model configured (`ANTHROPIC_API_KEY` and `KNOTTEN_AI_MODEL`), questions the data does not cover go to it with the same facts, up to a daily number of calls (`KNOTTEN_AI_DAILY_LIMIT`, `src/lib/server/aiBudget.ts`); over that number it answers from the data only. Topics are counted and unanswered questions kept (without emails or numbers) for the owner under Website visits.
 - Weekly summary: `src/lib/server/digest.ts`, sent by Vercel Cron (`vercel.json`, Mondays 06:00 UTC) through `/api/cron/digest` when switched on in Settings. Settings shows a preview and can send a test.
 - Backup: `/api/backup` gives administrators everything stored as one JSON file (accounts without passwords; document files are listed, not included).
 - The public document bank (both designs) links its internal documents to `/no/portal/dokumenter?dok=key`, through the login.
@@ -80,11 +104,11 @@ Buyers make their own accounts. These are "members" (`kind: "member"` on the acc
 
 | Page | Klassisk | Moderne |
 |---|---|---|
-| Sign-up | `/registrer` (`?tomt=7` or `?plot=plot-07` chooses plots) | `/no/registrer`, `/en/registrer` |
-| Min side | `/min-side` | `/no/min-side`, `/en/min-side` |
+| Sign-up | `/registrer`, `/english/registrer` (`?tomt=7` or `?plot=plot-07` chooses plots) | `/no/registrer`, `/en/registrer` |
+| Min side | `/min-side`, `/english/min-side` | `/no/min-side`, `/en/min-side` |
 | Data export | `/api/min-side/eksport` (JSON, own session, refused when another site sends the browser) | same |
 
-The Klassisk components (`src/components/klassisk/members`) take a `locale` prop and carry English, so an English Klassisk can use them as they are. The Moderne ones are in `src/components/members`. Both post to the same server actions in `src/lib/server/members.ts`; the records behind them are in `src/lib/server/member-store.ts` (record set `members`: followed plots, the consent log, the purpose from sign-up, the link to the person's own lead). Addresses for both designs come from `src/lib/member-paths.ts`, the words from `src/lib/member-text.ts`.
+The Klassisk components (`src/components/klassisk/members`) take a `locale` prop and carry both languages. The Moderne ones are in `src/components/members`. Both post to the same server actions in `src/lib/server/members.ts`; the records behind them are in `src/lib/server/member-store.ts` (record set `members`: followed plots, the consent log, the purpose from sign-up, the link to the person's own lead). Addresses for both designs come from `src/lib/member-paths.ts`, the words from `src/lib/member-text.ts`.
 
 **How sign-up works depends on email.** `signupByEmail()` in `src/lib/server/member-store.ts` decides it, and the page and the action always agree:
 
@@ -135,26 +159,38 @@ To test the Redis path without a database: run a small HTTP server that answers 
 
 ## Deploying (Vercel)
 
-1. Import the repository in Vercel with `site` as the root directory. Set the function region to Frankfurt (`fra1`) and create the database in the same region.
-2. Storage: add a Redis database (Upstash) from the Vercel marketplace and a Blob store, and connect both to the project. Their variables are set automatically. Without the database the site runs, but nothing can be saved (temp mode above).
-3. Environment variables (`.env.example` lists every one the app reads):
+1. Import the repository in Vercel with `site` as the root directory. `vercel.json` puts the functions in Frankfurt (`fra1`); create the database in the same region.
+2. Storage: add a Redis database (Upstash) from the Vercel marketplace with the environment variable prefix `KV`, and a private Blob store, and connect both to the project. Their variables are set automatically (the Blob store works through `BLOB_STORE_ID`, or `BLOB_READ_WRITE_TOKEN` on older stores). Without the database the site runs, but nothing can be saved (temp mode above).
+3. Scheduled jobs: `vercel.json` has two, the weekly summary (`/api/cron/digest`, Mondays 06:00 UTC) and the cleanup (`/api/cron/cleanup`, daily 02:30 UTC). Both need `CRON_SECRET`; without it they do not run.
+4. Security headers are set for every response in `next.config.ts`: a content security policy (everything from the site itself, plus Cloudflare Turnstile), no framing by other sites, no MIME sniffing, a referrer policy, a permissions policy and HTTPS only (HSTS). A new outside script, frame or font must be added there.
+5. Environment variables. `.env.example` lists every one the app reads, with the same names as this table:
 
 | Variable | Needed | What |
 |---|---|---|
-| `AUTH_SECRET` | yes | at least 32 random characters; signs the sessions (`openssl rand -base64 48`). A shorter value is ignored, and Settings says so |
-| `SITE_URL` | yes | the public address, e.g. `https://knotten.no`. Links in emails use only this (or Vercel's production domain, `VERCEL_PROJECT_PRODUCTION_URL`), never the address a request claims; also robots.txt and the sitemap |
-| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | yes | set by the Redis integration (or `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`) |
+| `KV_REST_API_URL`, `KV_REST_API_TOKEN` | yes | the Redis database's REST address and token; set by Vercel when the Upstash database is connected with the prefix `KV` |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | instead of the KV pair | the same pair under Upstash's own names, read when the KV pair is not complete |
 | `KV_PREFIX` | no | the start of every Redis key; default `knotten`, and `knotten-preview` on preview deployments |
-| `BLOB_READ_WRITE_TOKEN` or `BLOB_STORE_ID` | for documents | set when a Blob store is connected to the project: older stores get the token, newer ones the store id and sign in with the deployment's OIDC token (`VERCEL_OIDC_TOKEN`, provided by Vercel). Either one switches uploads on; without both they are switched off |
-| `MAIL_FROM` and `RESEND_API_KEY` or `SMTP_URL` | recommended | email for invitations, password links, "your password was changed" and alerts about new leads, e.g. `Knotten <post@knotten.no>`. Resend needs the sender's domain verified; `SMTP_URL` is any mail server, e.g. `smtps://user:password@smtp.example.com:465`. Without email the portal shows the links to copy and queues password requests for the administrators; a failed send is queued the same way and shown in Settings |
-| `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | recommended | Cloudflare Turnstile on the public forms (the interest form, sign-up and the configurator's "send the setup"), in both designs; the server checks each answer. Without them the forms rely on the hidden field, the time check and the limits per network and address |
-| `CRON_SECRET` | yes | a long random text; Vercel Cron sends it to the weekly summary and the nightly cleanup, so nobody else can start them |
-| `ANTHROPIC_API_KEY`, `KNOTTEN_AI_MODEL` | optional | lets Knotten AI hand questions the data does not cover to a hosted language model (the key, and the model's name in `KNOTTEN_AI_MODEL`). Without both, the assistant answers from the data only |
+| `BLOB_READ_WRITE_TOKEN` or `BLOB_STORE_ID` | for documents | set by Vercel when a Blob store is connected to the project: older stores get the token, newer ones the store id (the deployment then signs in with its own OIDC token, which Vercel provides). Either one switches uploads on; without both they are off, except on a computer without Redis, where files go to `data/private/files` |
+| `AUTH_SECRET` | yes | at least 32 random characters that sign the login sessions (`openssl rand -base64 48`). A shorter value is ignored, and Settings says so. Without it the site signs with a key it makes itself and keeps with the accounts. Setting or changing it ends every session |
+| `SITE_URL` | yes, with a custom domain | the public address, e.g. `https://knotten.no`: links in emails, link previews, robots.txt and the sitemap. Without it Vercel's production domain is used; the address a request claims is never used. Build again after changing it |
 | `KNOTTEN_SETUP_CODE` | optional | a code of your own for the first-time setup; otherwise one is made, shared by all servers, and written to the server log. Remove it after the setup |
-| `MAIL_DEV_OUTBOX` | tests only | `1` writes every email as an `.eml` file to `data/private/outbox` instead of sending it (never on Vercel) |
+| `MAIL_FROM` | for email | the sender, e.g. `Knotten <post@knotten.no>`; needs `RESEND_API_KEY` or `SMTP_URL` |
+| `RESEND_API_KEY` | for email | Resend API key (the sender's domain must be verified at Resend) |
+| `SMTP_URL` | for email | any SMTP server instead of Resend, e.g. `smtps://user:password@smtp.example.com:465` |
+| `MAIL_DEV_OUTBOX` | tests only | `1` writes every email as an `.eml` file to `data/private/outbox` instead of sending it; for a computer only |
+| `TURNSTILE_SECRET_KEY`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | recommended | Cloudflare Turnstile on the public forms (the interest form, sign-up and the configurator's "send the setup"), in both designs; both or neither. The server checks each answer. The site key is read when the site is built: build again after changing it. Without them the forms rely on the hidden field, the time check and the limits per network and address |
+| `CRON_SECRET` | yes | a long random text that Vercel Cron sends as a bearer token to the two scheduled jobs, so nobody else can start them |
+| `ANTHROPIC_API_KEY` | optional | API key for the language model provider behind Knotten AI. Without the key and the model's name, Knotten AI answers from the data only |
+| `KNOTTEN_AI_MODEL` | optional | the model's name; it is kept here and nowhere in the code |
+| `ANTHROPIC_MODEL` | optional | older name for the same, read when `KNOTTEN_AI_MODEL` is empty |
+| `KNOTTEN_AI_DAILY_LIMIT` | optional | most answers a day from the language model (Norwegian time): 200 when the variable is not set at all; `0` or an empty value switches the language model off |
 
-4. Deploy, open `/no/login` (or `/logg-inn`) and complete the first-time setup with the setup code. The first account is the super administrator (the project owner's email is suggested). Everyone else is invited from Users and access.
-5. Open `/api/health` and Settings in the portal: they show which services are in place. Vercel takes at most 4.5 MB per upload; larger documents need a normal server.
+   Set by the platform and read by the site; never set these yourself: `VERCEL` (without a database it switches storage to temp), `VERCEL_ENV` (preview deployments get their own `KV_PREFIX`), `VERCEL_PROJECT_PRODUCTION_URL` (the address when `SITE_URL` is empty), `VERCEL_REGION` and `VERCEL_GIT_COMMIT_SHA` (shown by `/api/health`), `npm_package_version` (the version `/api/health` shows when there is no commit) and `NODE_ENV`.
+
+   Email without a provider: the portal shows invitation and password links to copy and queues password requests for the administrators; a failed send is queued the same way and shown in Settings.
+
+6. Deploy, open `/logg-inn` (or `/no/login`) and complete the first-time setup with the setup code. The first account is the super administrator (the project owner's email is suggested). Everyone else is invited from Users and access.
+7. Open `/api/health` while logged in as an administrator (see "Where data is kept") and Settings in the portal: they show which services are in place. On Vercel the site accepts documents up to 4 MB each (Vercel takes at most 4.5 MB in one request); on a normal server up to 25 MB.
 
 On a normal server: `npm run build && npm run start`, set the same variables except KV and Blob, and keep `data/` on persistent disk with a backup. File mode is for one server process; run several processes only with the Redis variables set. Behind your own proxy, make sure it overwrites `X-Forwarded-For`: the limits per network read its first entry.
 
@@ -182,7 +218,7 @@ Hour by hour through a typical year at Knotten (EU PVGIS, sun from satellite, te
 ## Data and assumptions
 
 - `public/data/plots.json`, `trees.json`, `road.json`, `clearing.json` come from `../data` (pipeline outputs). Re-copy after re-running the pipeline.
-- `src/lib/facts/` is the single source of the project's facts, shared by both designs and the portal: `sources.ts` (the quotes behind every "Kilde" chip), `figures.ts` (the key numbers in `FACT`, the assumptions with source, date and `provisional` flag, and the Klassisk figures table), `energy.ts` (energy budget, EED borehole field, the measures with their verdicts, and the owner's direction), `project.ts` (contact details, the internship, the work plan and the document register) and `core.ts` (number formatting). Pages keep their own markup and wording but take every shared number, date and contact detail from `@/lib/facts`, so one change there reaches both designs. Facts were checked against the project material on 27 September 2026.
+- `src/lib/facts/` is the single source of the project's facts, shared by both designs and the portal: `sources.ts` (the quotes behind every "Kilde" chip), `figures.ts` (the key numbers in `FACT`, the assumptions with source, date and `provisional` flag, and the Klassisk figures table), `energy.ts` (energy budget, EED borehole field, the measures with their verdicts, and the owner's direction), `project.ts` (contact details, the internship, the work plan and the document register), `team.ts` (the people on the team pages), `model.ts`, `core.ts` (number formatting) and `index.ts` (what `@/lib/facts` exports). Pages keep their own markup and wording but take every shared number, date and contact detail from `@/lib/facts`, so one change there reaches both designs. Facts were checked against the project material on 27 September 2026.
 - Registrations land in the CRM records (see "Where data is kept"); the old `data/leads.json` from the first form is taken over once if it exists.
 
 ## The owner's images
@@ -191,10 +227,44 @@ The originals (photographs and maps from the project owner) are in `../assets-sr
 
 ## Before launch
 
-1. Replace the Esri imagery in `public/twin` (each terrain ring's aerial photo, which also gives the trees their colour) with Norge i bilder or a drone orthophoto (licence): `../pipeline/twin_fetch.py`, then `twin_terrain.py` and the steps after it.
-2. Confirm the terms of NIBIO's AR5 map service (the twin's water and forest masks) or move to open data, and credit the twin's sources where the site names the model's data (see the table in the README one level up).
-3. When the site plan changes: `../pipeline/plan_layout_v6.py` (it copies `../data/*.json` here), then `build_klassisk_plan.py`.
-4. Storage, email and the environment variables above; first-time setup; invite the project group.
-5. Read the privacy statement (`/personvern`, `/no/personvern`) with the project owner; it is marked as a draft.
-6. Set the targets for the key figures after two months of real traffic, as the website plan says.
-7. Later, when there are homes: meters and the equipment interfaces (Energy, Smart home), BankID for residents if wanted.
+The owner's checklist. The portal addresses below are given in Norwegian (`/no/portal/...`); `/en/portal/...` is the same in English.
+
+Accounts and secrets
+
+1. Set `AUTH_SECRET` (32 characters or more) and `CRON_SECRET` in Vercel and deploy again. Setting `AUTH_SECRET` ends every session, so do it before people are invited.
+2. Do the first-time setup on `/logg-inn`: enter the setup code (the value of `KNOTTEN_SETUP_CODE` if you set one, otherwise the code written to the server log in Vercel) and create the super administrator. Remove `KNOTTEN_SETUP_CODE` afterwards. Invite the project group from Users and access (`/no/portal/admin/brukere`).
+3. Open `/api/health` while logged in and check that `storage` is `kv`, `files` is `blob`, `authSecret` is `set` and `cron` is `true`.
+
+Content the owner fills in (all in the portal's administration)
+
+4. Company facts in Settings (`/no/portal/admin/innstillinger`): organisation number, postal address, email and phone, and the status line. A detail that is not entered is left out of the pages, never guessed.
+5. Plot statuses and prices (`/no/portal/admin/tomter`).
+6. The configurator's price list (`/no/portal/admin/konfigurator`). Until a price is set, a choice says "Pris på forespørsel".
+7. News (`/no/portal/admin/nyheter`): write and publish the first items.
+8. Upload the internal documents through the portal (`/no/portal/dokumenter`), under the titles in the checklist there, so the links from the public document bank open them.
+
+Services
+
+9. Email, once a sending domain exists: set `MAIL_FROM` with `RESEND_API_KEY` (verify the domain at Resend) or `SMTP_URL`. Until then sign-up works without confirmation by email and the portal shows links to copy (see "Buyer accounts and Min side").
+10. A custom domain: add it in Vercel, set `SITE_URL` to it and build again.
+11. Turnstile: create the keys at Cloudflare for the domain, set `TURNSTILE_SECRET_KEY` and `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, and build again.
+12. The language model for Knotten AI, if wanted: the key in `ANTHROPIC_API_KEY` and the model's name in `KNOTTEN_AI_MODEL`, as environment variables only; neither is ever written in the code. Adjust `KNOTTEN_AI_DAILY_LIMIT` if needed. The privacy page names the provider while this is on.
+
+Texts that wait for the owner's approval
+
+13. The privacy text (`/personvern` in both designs, `src/lib/content/privacy.ts`).
+14. The consent texts (`src/lib/consent.ts`). To change one, give it a new id, keep the old one for the records given under it, and bump `PRIVACY_VERSION`.
+15. The headline claim on the front pages (`src/lib/content/home.ts` and the front pages of each design).
+16. The answer to "What does it cost to live there?" (`src/lib/content/investors.ts`).
+17. The team pages and quotes (`src/lib/facts/team.ts`): each person approves their own page.
+
+Data and licences
+
+18. Replace the Esri imagery in `public/twin` (each terrain ring's aerial photo, which also gives the trees their colour) with Norge i bilder or a drone orthophoto (licence): `../pipeline/twin_fetch.py`, then `twin_terrain.py` and the steps after it.
+19. Confirm the terms of NIBIO's AR5 map service (the twin's water and forest masks) or move to open data, and credit the twin's sources where the site names the model's data (see the table in the README one level up).
+20. When the site plan changes: `../pipeline/plan_layout_v6.py` (it copies `../data/*.json` here), then `build_klassisk_plan.py`.
+
+After launch
+
+21. Set the targets for the key figures after two months of real traffic.
+22. Later, when there are homes: meters and the equipment interfaces (Energy, Smart home), BankID for residents if wanted.

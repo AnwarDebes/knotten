@@ -1,11 +1,33 @@
 # Knotten: Sjøutsikt i Rødberg
 
-The website, project portal and measured 3D digital twin for Knotten, a planned development of 30 very
+The website, project portal and measured 3D digital twin for Knotten, a planned development of about 30 very
 energy-efficient homes on the Knotten knoll at Rødberg (Raudberg), Lindesnes in Agder, above the Audna's outlet
 into Sniksfjorden. The project owner is Sigve Simonsen AS.
 
 Reference point **58.068057 N, 7.278401 E** = local origin (0, 0). Everything in the model is derived from
 measured data; where something is a working assumption it is labelled provisional in the data and on the site.
+
+## What the site does
+
+The site is a Next.js 16 application (React 19, three.js) that runs on Vercel. It has two designs with the same
+content, and the visitor chooses between them: **Klassisk** (Norwegian at `/`, English under `/english`) and
+**Moderne** (`/no` and `/en`).
+
+- **The 3D journey and the walk-in house:** a digital twin of the site and its surroundings built from measured
+  data, with the 30 example houses on their plots and a house the visitor can walk into.
+- **Plots:** a plot picker and a page per plot in both designs, with measured sun hours, sea view and height, and
+  the status and price the administrator sets.
+- **House configurator:** a buyer puts together wishes for a home, saves them and sends them to the project owner.
+- **Buyer accounts and Min side:** followed plots, saved houses, alerts, data export and account deletion.
+- **Project portal:** one login with roles and areas for investors, residents, the project group, the municipality
+  and researchers, with documents, questions and an administration for the owner.
+- **Interest form:** one form for both designs, with a consent log.
+- **Knotten AI:** a chat that answers from the project's own data.
+- **Energy:** the energy concept, an hour-by-hour energy simulator, and the buildings that stand today.
+- **Also:** team pages, status and questions, news, the document bank, sources, and the weather and power price at
+  Knotten right now.
+
+## Folders
 
 ```
 knotten/
@@ -13,8 +35,8 @@ knotten/
   pipeline/      every script that produces the data and the 3D model, re-runnable
   data/          pipeline outputs read by later steps: plots, road, clearing, trees, parcels, buildings, schemas/
   source/        the measured inputs the pipeline starts from; source/twin/ is the download cache (not in git)
-  renders/       stills rendered from the live 3D model, turned into WebP by pipeline/optimise_images.py
-  assets-src/    the project owner's original photographs and maps (the site serves optimised copies)
+  renders/       stills rendered from the 3D model, turned into WebP by pipeline/optimise_images.py
+  assets-src/    the project owner's original photographs and maps, in incoming/ (the site serves optimised copies)
 ```
 
 ## Quick start
@@ -22,13 +44,16 @@ knotten/
 ```bash
 cd site
 npm ci
-npm run dev          # http://localhost:3000 : Klassisk at /, Moderne at /no and /en
+npm run dev          # http://localhost:3000 : Klassisk at / and /english, Moderne at /no and /en
 npm run build && npm run start
+npm run lint
 ```
 
-Node.js 20.9 or newer. The first visit to the login page starts the first-time setup of the super administrator
-(the setup code is printed in the server log, or set your own with `KNOTTEN_SETUP_CODE`). Deployment, storage and
-every environment variable are described in `site/README.md`.
+Node.js 20.9 or newer. No environment variables are needed for a first local run: records then go to
+`site/data` (git ignores the private parts) and email is off. The first visit to the login page starts the
+first-time setup of the super administrator (the setup code is printed in the server log, or set your own with
+`KNOTTEN_SETUP_CODE`). The app, deployment, storage, every environment variable and the owner's checklist before
+launch are described in `site/README.md`.
 
 ## Coordinate systems
 
@@ -74,7 +99,10 @@ open sea in view with the neighbouring houses standing.
 4. Stills and the fly-in film are rendered from the live model in the browser with `?twindebug`
    (`pipeline/twin_flyin.js`); `pipeline/optimise_images.py` writes the WebP copies the pages load.
 
-Python 3 with numpy, scipy, Pillow and matplotlib (`pipeline/requirements.txt`).
+Python 3 with numpy, scipy, Pillow and matplotlib (`pip install -r pipeline/requirements.txt`). Two files are
+shared helpers and are not run on their own: `knotten_terrain.py` (terrain samplers, parcel, view and sun functions
+for the layout script) and `twin_common.py` (the scene frame, map projections, cached downloads and a small glTF
+writer for the `twin_*.py` steps).
 
 ### The digital twin (`site/public/twin`)
 
