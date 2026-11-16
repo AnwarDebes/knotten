@@ -7,6 +7,7 @@ import SourceProvider from "./Source";
 import DesignSwitch from "@/components/DesignSwitch";
 import Track from "@/components/Track";
 import Chat from "@/components/ui/Chat";
+import { Analytics } from "@vercel/analytics/next";
 
 /**
  * The whole Klassisk page around the content, used by the Klassisk layouts: Norwegian at the root and English
@@ -27,6 +28,7 @@ export default function Shell({ children, locale = "no" }: { children: React.Rea
           <Track design="klassisk" />
           <Chat locale={locale} variant="klassisk" />
         </SourceProvider>
+        <Analytics />
       </body>
     </html>
   );

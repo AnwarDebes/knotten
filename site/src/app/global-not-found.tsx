@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { serif, sans } from "@/components/klassisk/fonts-404";
 import NotFoundPage from "@/components/NotFoundPage";
 import { brand } from "@/lib/meta";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = { title: brand("Denne siden finnes ikke"), robots: { index: false } };
 
@@ -15,6 +16,7 @@ export default function GlobalNotFound() {
     <html lang="nb" className={`${serif.variable} ${sans.variable}`}>
       <body className="nf-body">
         <NotFoundPage />
+        <Analytics />
       </body>
     </html>
   );

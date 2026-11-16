@@ -11,6 +11,7 @@ import Chat from "@/components/ui/Chat";
 import Motion from "@/components/ui/Motion";
 import DesignSwitch from "@/components/DesignSwitch";
 import SiteOnly from "@/components/ui/SiteOnly";
+import { Analytics } from "@vercel/analytics/next";
 
 const bricolage = Bricolage_Grotesque({
   variable: "--font-bricolage",
@@ -90,6 +91,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
           <Motion />
         </SiteOnly>
         <Track design="moderne" />
+        <Analytics />
       </body>
     </html>
   );
